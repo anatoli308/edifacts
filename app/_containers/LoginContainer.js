@@ -1,22 +1,30 @@
 'use client';
 
-import { VisibilityOff, Visibility } from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import {
-    Container, Box, Card,
-    CardContent, Typography,
-    TextField, Button,
-    InputAdornment, IconButton,
-    Alert, CircularProgress
+    Alert,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CircularProgress,
+    Container,
+    IconButton,
+    InputAdornment,
+    TextField,
+    Typography
 } from '@mui/material';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 //app imports
-import { useUser } from '@/app/_contexts/UserContext';
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
+import { useUser } from '@/app/_contexts/UserContext';
+import { useAlreadyAuthenticatedRoute } from '@/app/_hooks/useAlreadyAuthenticatedRoute';
 
 function LoginContainer() {
+    useAlreadyAuthenticatedRoute('/'); // Redirect to home if already logged in
     const router = useRouter();
     const { login } = useUser();
     const { handlers } = useThemeConfig();

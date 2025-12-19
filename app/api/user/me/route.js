@@ -7,28 +7,22 @@ import User from '@/app/models/User';
 
 export async function GET(request) {
     try {
-        const authHeader = request.headers.get('authorization');
+        // User-ID kommt von Middleware (bereits verifiziert)
+        const userId = request.headers.get('x-user-id');
 
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        if (!userId) {
             return NextResponse.json(
-                { error: 'No token provided' },
+                { error: 'Unauthorized' },
                 { status: 401 }
             );
         }
 
-        const token = authHeader.substring(7);
-        const decoded = jwt.verify(token, process.env.JWT_KEY);
-
         await dbConnect();
-        const user = await User.findOne({
-            _id: decoded._id,
-            'tokens.token': token
-        });
-
+        const user = await User.findById(userId);
         if (!user || user.banned) {
             return NextResponse.json(
                 { error: 'User not found or banned' },
-                { status: 404 }
+                { status: 403 }
             );
         }
 

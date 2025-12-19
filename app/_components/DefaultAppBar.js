@@ -35,7 +35,7 @@ function DefaultAppBar({ children }) {
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const { themeBackground, handlers } = useThemeConfig();
     const { user, logout } = useUser();
-    const settings = [{ name: "Account" }, {
+    const settings = [{ name: "Account", link: "/auth/account" }, {
         name: 'Logout', clickHandler: () => {
             handlers.restartSplashscreen();
             logout();
@@ -154,7 +154,9 @@ function DefaultAppBar({ children }) {
                         >
                             {settings.map((setting, index) => (
                                 <MenuItem key={index} onClick={setting.clickHandler || handleCloseUserMenu}>
-                                    <Typography sx={{ textAlign: 'center' }}>{setting.name}</Typography>
+                                    <MuiLink href={setting.link || '#'} as={Link} color="inherit" underline='none'>
+                                        <Typography sx={{ textAlign: 'center' }}>{setting.name}</Typography>
+                                    </MuiLink>
                                 </MenuItem>
                             ))}
                         </Menu>

@@ -17,17 +17,10 @@ export function UserProvider({ children }) {
         try {
             console.log('Loading user...');
             setIsLoading(true);
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                setIsLoading(false);
-                return;
-            }
-
             const response = await fetch('/api/user/me', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                credentials: 'include'
             });
+
             if (!response.ok) {
                 throw new Error('Failed to load user');
             }
@@ -36,9 +29,10 @@ export function UserProvider({ children }) {
             console.log('User loaded:', userData);
             setUser(userData);
         } catch (err) {
-            console.error('Error loading user:', err);
+            console.log('Error loading user:', err);
             setError(err.message);
-            localStorage.removeItem('authToken');
+            // Clear cookie on error
+            document.cookie = 'authToken=; path=/; max-age=0';
         } finally {
             setIsLoading(false);
         }
@@ -48,7 +42,8 @@ export function UserProvider({ children }) {
         const response = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password }),
+            credentials: 'include'
         });
 
         if (!response.ok) {
@@ -56,13 +51,17 @@ export function UserProvider({ children }) {
         }
 
         const { user, token } = await response.json();
-        localStorage.setItem('authToken', token);
+
+        // Set token in cookie (7 days expiry)
+        document.cookie = `authToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`;
+
         setUser(user);
         return user;
     };
 
     const logout = () => {
-        localStorage.removeItem('authToken');
+        // Clear authentication cookie
+        document.cookie = 'authToken=; path=/; max-age=0';
         setUser(null);
     };
 

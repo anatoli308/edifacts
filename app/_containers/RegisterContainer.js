@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -23,10 +23,12 @@ import Image from 'next/image';
 //app imports
 import { useUser } from '@/app/_contexts/UserContext';
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
+import { useAlreadyAuthenticatedRoute } from '@/app/_hooks/useAlreadyAuthenticatedRoute';
 
 function RegisterContainer() {
+    useAlreadyAuthenticatedRoute('/'); // Redirect to home if already logged in
     const router = useRouter();
-    const { login } = useUser();
+    const { user, login } = useUser();
     const { handlers } = useThemeConfig();
 
     const [formData, setFormData] = useState({
@@ -106,7 +108,8 @@ function RegisterContainer() {
                     email: formData.email,
                     password: formData.password,
                     tosAccepted: formData.tosAccepted
-                })
+                }),
+                credentials: 'include'
             });
 
             const data = await response.json();
@@ -115,8 +118,8 @@ function RegisterContainer() {
                 throw new Error(data.error || 'Registration failed');
             }
 
-            // Save token and user data
-            localStorage.setItem('authToken', data.token);
+            // Set token in cookie (7 days expiry)
+            document.cookie = `authToken=${data.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`;
 
             // Auto-login after registration
             await login(formData.email, formData.password);
@@ -130,6 +133,7 @@ function RegisterContainer() {
     };
 
     return (
+
         <Container maxWidth="sm">
             <Box sx={{
                 display: 'flex',

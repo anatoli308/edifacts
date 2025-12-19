@@ -77,18 +77,12 @@ export function ThemeConfigProvider({ children }) {
 
     // Versuche API-Update wenn User eingeloggt ist
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-      if (token) {
-        console.log(`Updating background in for user ${user?.name || 'GUEST'} to: ${value}`);
-        await fetch('/api/user/settings/updateBackground', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ backgroundMode: value })
-        });
-      }
+      console.log(`Updating background in for user ${user?.name || 'GUEST'} to: ${value}`);
+      await fetch('/api/user/settings/updateBackground', {
+        method: 'PATCH',
+        credentials: 'include',
+        body: JSON.stringify({ backgroundMode: value })
+      });
     } catch (error) {
       console.error('Failed to update background in database:', error);
       // Fehler werden ignoriert, lokaler State ist bereits aktualisiert

@@ -55,11 +55,7 @@ function ThemeProviderContent({ children }) {
         <CssBaseline />
         {isLoaded && (
           <Box sx={{ display: 'block', height: '100%' }}>
-            <SplashScreen
-              updateFontColor={handlers.updateFontColor}
-              updateBackground={handlers.updateBackground}
-              updateFontSize={handlers.updateFontSize}
-            >
+            <SplashScreen>
               {children}
             </SplashScreen>
           </Box>

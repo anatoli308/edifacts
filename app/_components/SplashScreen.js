@@ -13,16 +13,7 @@ export default function SplashScreen({ children }) {
     const [isVisible, setIsVisible] = useState(true);
     const [startTime, setStartTime] = useState(Date.now());
     const { isLoading: userLoading, user } = useUser();
-    const { isLoaded: themeLoaded, splashTrigger, handlers } = useThemeConfig();
-
-    // Theme von User anwenden
-    useEffect(() => {
-        if (user && user.theme) {
-            handlers.updateFontColor(user.theme.fontColor);
-            handlers.updateBackground(user.theme.backgroundMode);
-            handlers.updateFontSize(user.theme.fontSize);
-        }
-    }, [user, handlers]);
+    const { isLoaded: themeLoaded, splashTrigger } = useThemeConfig();
 
     useEffect(() => {
         setIsVisible(true);

@@ -73,11 +73,11 @@ proxy.js                # Route middleware
   - Next.js App Router for modern file-based routing
   - Client-side Link navigation with next/link for faster transitions
   - Module path aliases for cleaner imports (configured in jsconfig.json)
-  - Protected routes with automatic redirection (hooks and middleware)
+  - Protected routes with automatic redirection (clientside hooks and serverside middleware)
 
 - **API & Backend**
   - Next.js API routes with App Router
-  - JWT token validation in middleware(proxy.js) and routes
+  - JWT token validation in middleware(proxy.js) and secured routes
   - User session management
   - Settings update endpoints (background mode, etc.)
 
@@ -99,7 +99,7 @@ proxy.js                # Route middleware
   - ESLint for code quality
   - Responsive design patterns
   - Clean component structure with containers and components
-
+  - Modular and reusable code organization
 
 ## Installation
 1. Clone the repository:
@@ -110,11 +110,7 @@ proxy.js                # Route middleware
    ```
 
 4. Set up environment variables:
-   Create a `.env` file in the root directory and add the following variables looking like this:
-   ```
-      GOOGLE_TAG_MANAGER_ID=your_google_analytics_id
-      GOOGLE_SITE_VERIFICATION=your_google_site_verification
-   ```
+   Create a `.env` file in the root directory (look at `.env.example` for reference)
 
 5. Run the development server:
    ```bash
@@ -124,7 +120,7 @@ proxy.js                # Route middleware
 6. Open your browser and navigate to `http://localhost:3010` to access the application.
 
 ## Usage
-Once the application is running, you can upload your EDIFACT files and start reading and managing your data through the intuitive interface.
+WIP
 
 ## Known Issues
 - Start vscode with admin rights to avoid issues with turbopack on Windows.

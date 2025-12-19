@@ -1,4 +1,4 @@
-import StartContainer from "./_components/StartContainer";
+import StartContainer from "@/app/_containers/StartContainer";
 
 export const metadata = {
     title: 'Home / EDIFACTS',

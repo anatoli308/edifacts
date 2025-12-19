@@ -7,12 +7,15 @@ import {
   createTheme,
 } from '@mui/material/styles';
 import { useMemo } from 'react';
-import componentsOverride from './overrides';
-import palette from './palette';
-import shadows, { customShadows } from './shadows';
-import typography from './typography';
-import SplashScreen from '../app/_components/SplashScreen';
-import { ThemeConfigProvider, useThemeConfig } from './ThemeContext';
+
+//app imports
+import componentsOverride from '@/app/theme/overrides';
+import palette from '@/app/theme/palette';
+import shadows, { customShadows } from '@/app/theme/shadows';
+import typography from '@/app/theme/typography';
+import { ThemeConfigProvider, useThemeConfig } from '@/app/theme/ThemeContext';
+
+import SplashScreen from '@/app/_components/SplashScreen';
 
 function ThemeProviderContent({ children }) {
   const {

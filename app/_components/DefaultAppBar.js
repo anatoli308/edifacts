@@ -18,14 +18,15 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Link from 'next/link';
 import * as React from 'react';
-import { useThemeConfig } from '../../theme/ThemeContext';
-import { useUser } from '../_contexts/UserContext';
-
 import Avatar from '@mui/material/Avatar';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
 import Image from 'next/image';
+
+//app imports
+import { useThemeConfig } from '@/app/theme/ThemeContext';
+import { useUser } from '@/app/_contexts/UserContext';
 
 const drawerWidth = 240;
 const navItems = [{ name: 'Home', link: '/' }];

@@ -15,9 +15,10 @@ export function UserProvider({ children }) {
 
     const loadUser = async () => {
         try {
+            console.log('Loading user...');
             setIsLoading(true);
             const token = localStorage.getItem('authToken');
-
+            console.log('Auth token:', token);
             if (!token) {
                 setIsLoading(false);
                 return;
@@ -28,14 +29,16 @@ export function UserProvider({ children }) {
                     'Authorization': `Bearer ${token}`
                 }
             });
-
+            console.log('Response status:', response.status);
             if (!response.ok) {
                 throw new Error('Failed to load user');
             }
 
             const userData = await response.json();
+            console.log('User loaded:', userData);
             setUser(userData);
         } catch (err) {
+            console.error('Error loading user:', err);
             setError(err.message);
             localStorage.removeItem('authToken');
         } finally {

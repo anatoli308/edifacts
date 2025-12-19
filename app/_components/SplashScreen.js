@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { Box, CircularProgress, Container, Typography } from '@mui/material';
-import { useUser } from '../_contexts/UserContext';
-import { useThemeConfig } from '../../theme/ThemeContext';
 
-const MIN_LOADING_TIME = 1500;
+//app imports
+import { useUser } from '@/app/_contexts/UserContext';
+import { useThemeConfig } from '@/app/theme/ThemeContext';
+
+const MIN_LOADING_TIME = 1500; // in milliseconds
 
 export default function SplashScreen({ children }) {
     const [isVisible, setIsVisible] = useState(true);

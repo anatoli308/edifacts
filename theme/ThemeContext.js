@@ -2,8 +2,10 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { COLOR_CODES, getColorScheme } from './colors';
-import { getBackgroundMode } from './backgroundModes';
+
+// app imports
+import { COLOR_CODES, getColorScheme } from '@/app/theme/colors';
+import { getBackgroundMode } from '@/app/theme/backgroundModes';
 
 const ThemeContext = createContext(undefined);
 

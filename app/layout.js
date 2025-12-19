@@ -1,9 +1,13 @@
 import { Roboto } from 'next/font/google';
 import Script from 'next/script';
-import ThemeProvider from '../theme';
-import { UserProvider } from './_contexts/UserContext';
-import SplashScreen from './_components/SplashScreen';
-import DefaultAppBar from './_components/DefaultAppBar';
+
+//app imports
+import ThemeProvider from '@/app/theme/index';
+
+import { UserProvider } from '@/app/_contexts/UserContext';
+
+import SplashScreen from '@/app/_components/SplashScreen';
+import DefaultAppBar from '@/app/_components/DefaultAppBar';
 
 const roboto = Roboto({
     weight: ["300", "400", "500", "700"],

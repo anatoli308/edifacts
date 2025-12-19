@@ -2,6 +2,12 @@
 
 EDIFACTS is a web application designed to help users read and manage their EDIFACT data easily online.
 
+## Technology Stack
+- Next.js
+- React
+- Material-UI (MUI)
+- Google Analytics
+
 ## Features
 - User-friendly interface for reading EDIFACT files
 - Theme customization with light and dark modes

@@ -1,4 +1,4 @@
-import LoginContainer from './_components/LoginContainer';
+import LoginContainer from '@/app/_containers/LoginContainer';
 
 export const metadata = {
     title: 'Login',

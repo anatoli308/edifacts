@@ -1,6 +1,8 @@
 // material
 import { alpha } from '@mui/material/styles';
-import palette from './palette';
+
+// app imports
+import palette from '@/app/theme/palette';
 
 // ----------------------------------------------------------------------
 

@@ -91,13 +91,12 @@ userSchema.methods.toJSON = function () {
     return user;
 };
 
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
     // Hash the password before saving the user model
     const user = this
     if (user.isModified('password')) {
         user.password = await bcrypt.hash(user.password, 8)
     }
-    next()
 })
 
 userSchema.methods.generateAuthToken = async function (device = 'web') {
@@ -113,8 +112,8 @@ userSchema.methods.generateAuthToken = async function (device = 'web') {
         { expiresIn: '7d' }
     );
 
-    // Optional: Limit tokens per user (z.B. max 5 Geräte)
-    if (user.tokens.length >= 5) {
+    // Optional: Limit tokens per user (z.B. max 2 Geräte)
+    if (user.tokens.length >= 2) {
         user.tokens.shift(); // Entferne ältestes Token
     }
 

@@ -7,13 +7,13 @@ import { Box, CircularProgress, Container, Typography } from '@mui/material';
 import { useUser } from '@/app/_contexts/UserContext';
 import { useThemeConfig } from '@/app/theme/ThemeContext';
 
-const MIN_LOADING_TIME = 1500; // in milliseconds
+const MIN_LOADING_TIME = 1000; // in milliseconds
 
 export default function SplashScreen({ children }) {
     const [isVisible, setIsVisible] = useState(true);
-    const [startTime] = useState(Date.now());
+    const [startTime, setStartTime] = useState(Date.now());
     const { isLoading: userLoading, user } = useUser();
-    const { isLoaded: themeLoaded, handlers } = useThemeConfig();
+    const { isLoaded: themeLoaded, splashTrigger, handlers } = useThemeConfig();
 
     // Theme von User anwenden
     useEffect(() => {
@@ -22,7 +22,12 @@ export default function SplashScreen({ children }) {
             handlers.updateBackground(user.theme.backgroundMode);
             handlers.updateFontSize(user.theme.fontSize);
         }
-    }, [user]);
+    }, [user, handlers]);
+
+    useEffect(() => {
+        setIsVisible(true);
+        setStartTime(Date.now());
+    }, [splashTrigger]);
 
     useEffect(() => {
         // Warte bis User geladen ist UND Mindestzeit vorbei ist

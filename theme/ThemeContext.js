@@ -16,6 +16,7 @@ export function ThemeConfigProvider({ children }) {
   const [fontColor, setFontColor] = useState(COLOR_CODES.blue);
   const [themeFontSize, setThemeFontSize] = useState(3);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [splashTrigger, setSplashTrigger] = useState(0);
 
   // Only set state after hydration is complete
   useEffect(() => {
@@ -35,10 +36,15 @@ export function ThemeConfigProvider({ children }) {
         backgroundMode,
         colorScheme,
         isLoaded,
+        splashTrigger,
         handlers: {
           updateFontColor: setFontColor,
           updateBackground: setThemeBackground,
           updateFontSize: setThemeFontSize,
+          restartSplashscreen: () => {
+            setSplashTrigger((value) => value + 1);
+            setIsLoaded(true);
+          },
         },
       }}
     >

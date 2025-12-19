@@ -3,10 +3,9 @@
 EDIFACTS is a web application designed to help users read and manage their EDIFACT data easily online.
 
 ## Technology Stack
-- Next.js
-- React
+- Next / React
 - Material-UI (MUI)
-- Google Analytics
+- mongoDB / mongoose
 
 ## Features
 - User-friendly interface for reading EDIFACT files
@@ -47,3 +46,7 @@ EDIFACTS is a web application designed to help users read and manage their EDIFA
 
 ## Usage
 Once the application is running, you can upload your EDIFACT files and start reading and managing your data through the intuitive interface.
+
+
+## Known Issues
+- Start vscode with admin rights to avoid issues with turbopack on Windows.

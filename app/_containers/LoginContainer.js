@@ -1,26 +1,25 @@
 'use client';
 
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CircularProgress from '@mui/material/CircularProgress';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
+import { VisibilityOff, Visibility } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import {
+    Container, Box, Card,
+    CardContent, Typography,
+    TextField, Button,
+    InputAdornment, IconButton,
+    Alert, CircularProgress
+} from '@mui/material';
+import Image from 'next/image';
 
 //app imports
 import { useUser } from '@/app/_contexts/UserContext';
+import { useThemeConfig } from '@/app/theme/ThemeContext';
 
 function LoginContainer() {
     const router = useRouter();
     const { login } = useUser();
+    const { handlers } = useThemeConfig();
 
     const [formData, setFormData] = useState({
         email: '',
@@ -46,6 +45,7 @@ function LoginContainer() {
 
         try {
             await login(formData.email, formData.password);
+            handlers.restartSplashscreen();
             router.push('/'); // Redirect to home after successful login
         } catch (err) {
             setError(err.message || 'Login failed. Please try again.');
@@ -55,97 +55,102 @@ function LoginContainer() {
     };
 
     return (
-        <Box sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-        }}>
-            <Card sx={{ width: '100%' }}>
-                <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 3 }}>
-                        Welcome Back
-                    </Typography>
+        <Container maxWidth="sm">
+            <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <Card sx={{ width: '100%' }}>
+                    <CardContent sx={{ p: 2 }}>
+                        <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={200} height={150}
+                            style={{ display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
 
-                    <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 4 }}>
-                        Sign in to your account to continue
-                    </Typography>
+                        <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 3 }}>
+                            Welcome back
+                        </Typography>
 
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 3 }}>
-                            {error}
-                        </Alert>
-                    )}
+                        <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 4 }}>
+                            Sign in to your account to continue
+                        </Typography>
 
-                    <Box component="form" onSubmit={handleSubmit} noValidate>
-                        <TextField
-                            fullWidth
-                            label="Email Address"
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            autoComplete="email"
-                            autoFocus
-                            required
-                            disabled={isLoading}
-                            sx={{ mb: 2 }}
-                        />
+                        {error && (
+                            <Alert severity="error" sx={{ mb: 3 }}>
+                                {error}
+                            </Alert>
+                        )}
 
-                        <TextField
-                            fullWidth
-                            label="Password"
-                            name="password"
-                            type={showPassword ? 'text' : 'password'}
-                            value={formData.password}
-                            onChange={handleChange}
-                            autoComplete="current-password"
-                            required
-                            disabled={isLoading}
-                            sx={{ mb: 3 }}
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            edge="end"
-                                            disabled={isLoading}
-                                        >
-                                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                )
-                            }}
-                        />
-
-                        <Button
-                            fullWidth
-                            type="submit"
-                            variant="contained"
-                            size="large"
-                            disabled={isLoading || !formData.email || !formData.password}
-                            sx={{ mb: 2 }}
-                        >
-                            {isLoading ? (
-                                <CircularProgress size={24} color="inherit" />
-                            ) : (
-                                'Sign In'
-                            )}
-                        </Button>
-
-                        <Box sx={{ textAlign: 'center' }}>
-                            <Button
-                                variant="text"
-                                size="small"
+                        <Box component="form" onSubmit={handleSubmit} noValidate>
+                            <TextField
+                                fullWidth
+                                label="Email Address"
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                autoComplete="email"
+                                autoFocus
+                                required
                                 disabled={isLoading}
-                                onClick={() => router.push('/auth/register')}
+                                sx={{ mb: 2 }}
+                            />
+
+                            <TextField
+                                fullWidth
+                                label="Password"
+                                name="password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={formData.password}
+                                onChange={handleChange}
+                                autoComplete="current-password"
+                                required
+                                disabled={isLoading}
+                                sx={{ mb: 3 }}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                edge="end"
+                                                disabled={isLoading}
+                                            >
+                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    )
+                                }}
+                            />
+
+                            <Button
+                                fullWidth
+                                type="submit"
+                                variant="contained"
+                                size="large"
+                                disabled={isLoading || !formData.email || !formData.password}
+                                sx={{ mb: 2 }}
                             >
-                                Don&apos;t have an account? Sign up
+                                {isLoading ? (
+                                    <CircularProgress size={24} color="inherit" />
+                                ) : (
+                                    'Sign In'
+                                )}
                             </Button>
+
+                            <Box sx={{ textAlign: 'center' }}>
+                                <Button
+                                    variant="text"
+                                    size="small"
+                                    disabled={isLoading}
+                                    onClick={() => router.push('/auth/register')}
+                                >
+                                    Don&apos;t have an account? Sign up here
+                                </Button>
+                            </Box>
                         </Box>
-                    </Box>
-                </CardContent>
-            </Card>
-        </Box>
+                    </CardContent>
+                </Card>
+            </Box>
+        </Container>
     );
 }
 

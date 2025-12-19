@@ -30,12 +30,17 @@ import { useUser } from '@/app/_contexts/UserContext';
 
 const drawerWidth = 240;
 const navItems = [{ name: 'Home', link: '/' }];
-const settings = ['Account', 'Settings', 'Logout'];
 
 function DefaultAppBar({ children }) {
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const { themeBackground, handlers } = useThemeConfig();
-    const { user } = useUser();
+    const { user, logout } = useUser();
+    const settings = [{ name: "Account" }, {
+        name: 'Logout', clickHandler: () => {
+            handlers.restartSplashscreen();
+            logout();
+        }
+    }];
 
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);
@@ -128,7 +133,7 @@ function DefaultAppBar({ children }) {
                     {user !== null ? <Box sx={{ flexGrow: 0 }}>
                         <Tooltip title="Open settings">
                             <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                                <Avatar alt="Remy Sharp" src="/images/avatar_fallback.png" />
                             </IconButton>
                         </Tooltip>
                         <Menu
@@ -147,9 +152,9 @@ function DefaultAppBar({ children }) {
                             open={Boolean(anchorElUser)}
                             onClose={handleCloseUserMenu}
                         >
-                            {settings.map((setting) => (
-                                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                                    <Typography sx={{ textAlign: 'center' }}>{setting}</Typography>
+                            {settings.map((setting, index) => (
+                                <MenuItem key={index} onClick={setting.clickHandler || handleCloseUserMenu}>
+                                    <Typography sx={{ textAlign: 'center' }}>{setting.name}</Typography>
                                 </MenuItem>
                             ))}
                         </Menu>
@@ -173,7 +178,7 @@ function DefaultAppBar({ children }) {
             >
                 {drawer}
             </Drawer>
-            <Box component="main" sx={{ p: 3 }}>
+            <Box component="main" sx={{ p: 3, width: '100%' }}>
                 <Toolbar />
                 {children}
             </Box>

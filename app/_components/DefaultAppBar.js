@@ -16,14 +16,19 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Stack from '@mui/material/Stack';
+import { useThemeConfig } from '../../theme/ThemeContext';
 
 const drawerWidth = 240;
-const navItems = ['Home', 'About', 'Contact'];
+const navItems = ['Home', 'About', 'Settings'];
 
 function DefaultAppBar(props) {
     const { window } = props;
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [mounted, setMounted] = React.useState(false);
+    const { themeBackground, handlers } = useThemeConfig();
 
     React.useEffect(() => {
         setMounted(true);
@@ -36,7 +41,7 @@ function DefaultAppBar(props) {
     const drawer = (
         <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
             <Typography variant="h6" sx={{ my: 2 }}>
-                MUI
+                EDIFACTS
             </Typography>
             <Divider />
             <List>
@@ -72,7 +77,7 @@ function DefaultAppBar(props) {
                         component="div"
                         sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
                     >
-                        MUI
+                        EDIFACTS
                     </Typography>
                     <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
                         {navItems.map((item) => (
@@ -81,6 +86,25 @@ function DefaultAppBar(props) {
                             </Button>
                         ))}
                     </Box>
+                    <Stack direction="row" spacing={2} sx={{ ml: 2 }}>
+                        <ToggleButtonGroup
+                            size="small"
+                            color="primary"
+                            value={themeBackground}
+                            exclusive
+                            onChange={(_, value) => value && handlers.updateBackground(value)}
+                            sx={{
+                                backgroundColor: 'rgba(255,255,255,0.08)',
+                                borderRadius: 2,
+                                '& .MuiToggleButton-root': { color: 'white', border: 'none' },
+                                '& .Mui-selected': { backgroundColor: 'rgba(255,255,255,0.16)' },
+                            }}
+                        >
+                            <ToggleButton value="white">Light</ToggleButton>
+                            <ToggleButton value="#1a2a3b">Dim</ToggleButton>
+                            <ToggleButton value="black">Dark</ToggleButton>
+                        </ToggleButtonGroup>
+                    </Stack>
                 </Toolbar>
             </AppBar>
             <nav>

@@ -50,7 +50,7 @@ export default function SplashScreen({ children }) {
                     <CircularProgress size={60} />
                     <Box sx={{ textAlign: 'center' }}>
                         <Typography variant="h2" gutterBottom>
-                            Edifacts
+                            EDIFACTS
                         </Typography>
                         <Typography variant="body1">
                             {user ? `Welcome back, ${user.name}!` : 'Preparing your personalized experience.'}

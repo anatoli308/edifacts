@@ -3,6 +3,7 @@ import Script from 'next/script';
 import ThemeProvider from '../theme';
 import { UserProvider } from './_contexts/UserContext';
 import SplashScreen from './_components/SplashScreen';
+import DefaultAppBar from './_components/DefaultAppBar';
 
 const roboto = Roboto({
     weight: ["300", "400", "500", "700"],
@@ -12,8 +13,8 @@ const roboto = Roboto({
 
 export const metadata = {
     title: {
-        template: '%s / edifacts',
-        default: 'edifacts',
+        template: '%s / EDIFACTS',
+        default: 'EDIFACTS',
     },
     description: {
         template: '%s',
@@ -30,7 +31,9 @@ export default function RootLayout({ children }) {
                 <UserProvider>
                     <ThemeProvider>
                         <SplashScreen>
-                            {children}
+                            <DefaultAppBar>
+                                {children}
+                            </DefaultAppBar>
                         </SplashScreen>
                     </ThemeProvider>
                 </UserProvider>

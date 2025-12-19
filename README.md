@@ -7,12 +7,24 @@ EDIFACTS is a web application designed to help users read and manage their EDIFA
 - Material-UI (MUI)
 - mongoDB / mongoose
 
-## Features
-- User-friendly interface for reading EDIFACT files
-- Theme customization with light and dark modes
+## Features 
+- Next.js App Router for server-side rendering and routing
+- MUI for UI components and theming
+- MongoDB / mongoose for data storage
+- jsonwebtoken / jose for authentication
+- bcrypt for password hashing
+- Google Analytics for tracking
+- React Context for state management
+- Custom hooks for reusable logic
+- Next.js API routes for backend functionality with App Router routes
+- Environment variables for configuration
+- Splash screen for improved user experience during loading
 - Responsive design for various devices
-- Google Analytics integration for usage tracking
-- Splash screen for better user experience during loading
+- Light, dim and dark theming support
+- Override MUI theme components with user preferences
+- User authentication and registration
+- Next.js middleware for route protection with proxy.js
+- Module path aliases for cleaner imports configured in jsconfig.json
 
 ## Installation
 1. Clone the repository:

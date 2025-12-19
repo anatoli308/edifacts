@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@/app/*": [
+        "app/*"
+      ],
+      "@/app/models/*": [
+        "models/*"
+      ],
+      "@/app/theme/*": [
+        "theme/*"
+      ],
+      "@/app/lib/*": [
+        "lib/*"
+      ]
+    }
+  }
+}

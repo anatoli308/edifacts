@@ -118,9 +118,6 @@ function RegisterContainer() {
                 throw new Error(data.error || 'Registration failed');
             }
 
-            // Set token in cookie (7 days expiry)
-            document.cookie = `authToken=${data.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`;
-
             // Auto-login after registration
             await login(formData.email, formData.password);
             handlers.restartSplashscreen();

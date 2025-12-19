@@ -79,10 +79,6 @@ const userSchema = mongoose.Schema({
     timestamps: true // Automatisch createdAt und updatedAt
 })
 
-// Indexes für bessere Performance
-userSchema.index({ email: 1 });
-userSchema.index({ name: 1 });
-
 // Password nicht in JSON responses zurückgeben
 userSchema.methods.toJSON = function () {
     const user = this.toObject();

@@ -2,7 +2,7 @@
 
 export default function Lists(theme) {
   return {
-    /*MuiListItemIcon: {
+    MuiListItemIcon: {
       styleOverrides: {
         root: {
           color: 'inherit',
@@ -28,13 +28,13 @@ export default function Lists(theme) {
           marginBottom: 0,
         },
       },
-    },*/
-    /*MuiListItemSecondaryAction: {
+    },
+    MuiListItemSecondaryAction: {
       styleOverrides: {
         root: {
           top: theme.spacing(2)
         },
       },
-    },*/
+    },
   };
 }

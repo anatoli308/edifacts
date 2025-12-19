@@ -1,6 +1,8 @@
 import { Roboto } from 'next/font/google';
 import Script from 'next/script';
 import ThemeProvider from '../theme';
+import { UserProvider } from './_contexts/UserContext';
+import SplashScreen from './_components/SplashScreen';
 
 const roboto = Roboto({
     weight: ["300", "400", "500", "700"],
@@ -21,13 +23,17 @@ export const metadata = {
     icons: { icon: '/logo/logo-color-no-bg.png' }
 }
 
-export default async function RootLayout({ children }) {
+export default function RootLayout({ children }) {
     return (
         <html lang="en" className={roboto.className}>
             <body>
-                <ThemeProvider>
-                    {children}
-                </ThemeProvider>
+                <UserProvider>
+                    <ThemeProvider>
+                        <SplashScreen>
+                            {children}
+                        </SplashScreen>
+                    </ThemeProvider>
+                </UserProvider>
             </body>
 
             <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.GOOGLE_TAG_MANAGER_ID || ''}`}

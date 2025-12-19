@@ -2,49 +2,58 @@
 
 import { useEffect, useState } from 'react';
 import { Box, CircularProgress, Container, Typography } from '@mui/material';
+import { useUser } from '../_contexts/UserContext';
+import { useThemeConfig } from '../../theme/ThemeContext';
 
-const MIN_LOADING_TIME = 1500; // 1.5 seconds minimum display time
+const MIN_LOADING_TIME = 1500;
 
-export default function SplashScreen({
-    children,
-    updateFontColor,
-    updateBackground,
-    updateFontSize,
-}) {
+export default function SplashScreen({ children }) {
     const [isVisible, setIsVisible] = useState(true);
     const [startTime] = useState(Date.now());
+    const { isLoading: userLoading, user } = useUser();
+    const { isLoaded: themeLoaded, handlers } = useThemeConfig();
+
+    // Theme von User anwenden
+    useEffect(() => {
+        if (user && user.theme) {
+            handlers.updateFontColor(user.theme.fontColor);
+            handlers.updateBackground(user.theme.backgroundMode);
+            handlers.updateFontSize(user.theme.fontSize);
+        }
+    }, [user]);
 
     useEffect(() => {
-        const elapsedTime = Date.now() - startTime;
-        const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsedTime);
+        // Warte bis User geladen ist UND Mindestzeit vorbei ist
+        if (!userLoading && themeLoaded) {
+            const elapsedTime = Date.now() - startTime;
+            const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsedTime);
 
-        const timer = setTimeout(() => {
-            setIsVisible(false);
-        }, remainingTime);
+            const timer = setTimeout(() => {
+                setIsVisible(false);
+            }, remainingTime);
 
-        return () => clearTimeout(timer);
-    }, [startTime]);
+            return () => clearTimeout(timer);
+        }
+    }, [userLoading, themeLoaded, startTime]);
 
     if (isVisible) {
         return (
             <Container maxWidth="sm">
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        minHeight: '100vh',
-                        gap: 3,
-                    }}
-                >
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '100vh',
+                    gap: 3,
+                }}>
                     <CircularProgress size={60} />
                     <Box sx={{ textAlign: 'center' }}>
                         <Typography variant="h2" gutterBottom>
                             Edifacts
                         </Typography>
                         <Typography variant="body1">
-                            Preparing your personalized experience.
+                            {user ? `Welcome back, ${user.name}!` : 'Preparing your personalized experience.'}
                         </Typography>
                     </Box>
                 </Box>

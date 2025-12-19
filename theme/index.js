@@ -13,7 +13,7 @@ import componentsOverride from '@/app/theme/overrides';
 import palette from '@/app/theme/palette';
 import shadows, { customShadows } from '@/app/theme/shadows';
 import typography from '@/app/theme/typography';
-import { ThemeConfigProvider, useThemeConfig } from '@/app/theme/ThemeContext';
+import { ThemeConfigProvider, useThemeConfig } from '@/app/_contexts/ThemeContext';
 
 import SplashScreen from '@/app/_components/SplashScreen';
 

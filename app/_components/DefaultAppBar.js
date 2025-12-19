@@ -25,7 +25,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Image from 'next/image';
 
 //app imports
-import { useThemeConfig } from '@/app/theme/ThemeContext';
+import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 import { useUser } from '@/app/_contexts/UserContext';
 
 const drawerWidth = 240;

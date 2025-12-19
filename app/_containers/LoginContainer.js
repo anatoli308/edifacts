@@ -14,7 +14,7 @@ import Image from 'next/image';
 
 //app imports
 import { useUser } from '@/app/_contexts/UserContext';
-import { useThemeConfig } from '@/app/theme/ThemeContext';
+import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 
 function LoginContainer() {
     const router = useRouter();

@@ -5,7 +5,7 @@ import { Box, CircularProgress, Container, Typography } from '@mui/material';
 
 //app imports
 import { useUser } from '@/app/_contexts/UserContext';
-import { useThemeConfig } from '@/app/theme/ThemeContext';
+import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 
 const MIN_LOADING_TIME = 1000; // in milliseconds
 

@@ -2,10 +2,7 @@ import { Roboto } from 'next/font/google';
 import Script from 'next/script';
 
 //app imports
-import ThemeProvider from '@/app/theme/index';
-
-import { UserProvider } from '@/app/_contexts/UserContext';
-
+import Providers from '@/app/_contexts/providers';
 import SplashScreen from '@/app/_components/SplashScreen';
 import DefaultAppBar from '@/app/_components/DefaultAppBar';
 
@@ -32,15 +29,13 @@ export default function RootLayout({ children }) {
     return (
         <html lang="en" className={roboto.className}>
             <body>
-                <UserProvider>
-                    <ThemeProvider>
-                        <SplashScreen>
-                            <DefaultAppBar>
-                                {children}
-                            </DefaultAppBar>
-                        </SplashScreen>
-                    </ThemeProvider>
-                </UserProvider>
+                <Providers>
+                    <SplashScreen>
+                        <DefaultAppBar>
+                            {children}
+                        </DefaultAppBar>
+                    </SplashScreen>
+                </Providers>
             </body>
 
             <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.GOOGLE_TAG_MANAGER_ID || ''}`}

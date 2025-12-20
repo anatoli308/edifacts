@@ -1,8 +1,10 @@
 "use client";
 
-import { Container, Box, Typography, TextField, Badge,
+import {
+    Container, Box, Typography, TextField, Badge,
     Button, Autocomplete, Tabs, Tab, Accordion, AccordionSummary,
-    AccordionDetails, Alert, CircularProgress ,Chip, Tooltip} from '@mui/material';
+    AccordionDetails, Alert, CircularProgress, Chip, Tooltip
+} from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useEffect, useRef, useState } from 'react';
 import Dropzone from 'dropzone';
@@ -203,7 +205,7 @@ function StartContainer(props) {
                     onChange={handleAccordionChange('input')}
                 >
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6">📤 Upload EDIFACT File <Tooltip title="Worker active"><Chip label={<Typography color="textPrimary">✓</Typography>} color="success" size="small"/></Tooltip></Typography>
+                        <Typography variant="h6">📤 Upload EDIFACT File</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <Tabs value={inputTab} onChange={handleInputTabChange}

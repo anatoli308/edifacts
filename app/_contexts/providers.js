@@ -1,0 +1,18 @@
+'use client';
+
+import ThemeProvider from '@/app/theme/index';
+import { UserProvider } from '@/app/_contexts/UserContext';
+import { SocketProvider } from '@/app/_contexts/SocketContext';
+
+export default function Providers({ children }) {
+    return (
+        <UserProvider>
+            <SocketProvider>
+                <ThemeProvider>
+                    {children}
+                </ThemeProvider>
+            </SocketProvider>
+
+        </UserProvider>
+    );
+}

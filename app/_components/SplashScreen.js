@@ -5,6 +5,7 @@ import { Box, CircularProgress, Container, Typography } from '@mui/material';
 
 //app imports
 import { useUser } from '@/app/_contexts/UserContext';
+import { useSocket } from '@/app/_contexts/SocketContext';
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 
 const MIN_LOADING_TIME = 1000; // in milliseconds
@@ -13,6 +14,7 @@ export default function SplashScreen({ children }) {
     const [isVisible, setIsVisible] = useState(true);
     const [startTime, setStartTime] = useState(Date.now());
     const { isLoading: userLoading, user } = useUser();
+    const { isLoading: socketLoading } = useSocket();
     const { isLoaded: themeLoaded, splashTrigger } = useThemeConfig();
 
     useEffect(() => {
@@ -21,8 +23,8 @@ export default function SplashScreen({ children }) {
     }, [splashTrigger]);
 
     useEffect(() => {
-        // Warte bis User geladen ist UND Mindestzeit vorbei ist
-        if (!userLoading && themeLoaded) {
+        // Warte bis User & Socket geladen sind UND Mindestzeit vorbei ist
+        if (!userLoading && !socketLoading && themeLoaded) {
             const elapsedTime = Date.now() - startTime;
             const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsedTime);
 
@@ -32,7 +34,7 @@ export default function SplashScreen({ children }) {
 
             return () => clearTimeout(timer);
         }
-    }, [userLoading, themeLoaded, startTime]);
+    }, [userLoading, socketLoading, themeLoaded, startTime]);
 
     if (isVisible) {
         return (
@@ -52,6 +54,9 @@ export default function SplashScreen({ children }) {
                         </Typography>
                         <Typography variant="body1">
                             {user ? `Welcome back, ${user.name}!` : 'Preparing your personalized experience.'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                            {socketLoading ? 'Connecting to realtime service…' : 'Realtime service ready'}
                         </Typography>
                     </Box>
                 </Box>

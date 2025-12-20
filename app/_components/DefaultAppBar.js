@@ -23,10 +23,12 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
 import Image from 'next/image';
+import { Chip } from '@mui/material';
 
 //app imports
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 import { useUser } from '@/app/_contexts/UserContext';
+import { useSocket } from '@/app/_contexts/SocketContext';
 
 const drawerWidth = 240;
 const navItems = [{ name: 'Home', link: '/' }];
@@ -35,6 +37,7 @@ function DefaultAppBar({ children }) {
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const { themeBackground, handlers } = useThemeConfig();
     const { user, logout } = useUser();
+    const { isConnected, isLoading } = useSocket();
     const settings = [{ name: "Account", link: "/auth/account" }, {
         name: 'Logout', clickHandler: () => {
             handlers.restartSplashscreen();
@@ -117,7 +120,19 @@ function DefaultAppBar({ children }) {
                         ))}
                     </Box>
 
-                    <Stack direction="row" spacing={2} sx={{ mr: 2, ml: 2, flexGrow: 1 }}>
+                    <Stack direction="row" spacing={2} sx={{ mr: 2, ml: 2, flexGrow: 1, alignItems: 'center' }}>
+                        <Tooltip title={isLoading ? "Worker connecting..." : isConnected ? "Worker ready" : "Worker disconnected"}>
+                            <Chip
+                                label={
+                                    <Typography color="textPrimary">
+                                        {isLoading ? "⟳" : isConnected ? "✓" : "✕"}
+                                    </Typography>
+                                }
+                                color={isLoading ? "warning" : isConnected ? "success" : "error"}
+                                size="small"
+                            />
+                        </Tooltip>
+
                         <ToggleButtonGroup
                             size="small"
                             color="primary"
@@ -180,7 +195,7 @@ function DefaultAppBar({ children }) {
             >
                 {drawer}
             </Drawer>
-            <Box component="main" sx={{ mb: 2, width: '100%' }}>
+            <Box component="main" sx={{ my: 2, width: '100%' }}>
                 <Toolbar />
                 {children}
             </Box>

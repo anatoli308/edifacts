@@ -43,23 +43,27 @@ proxy.js                # Route middleware
 
 ## Development Features
 - **Authentication & Authorization**
-  - User registration and login with JWT-based authentication
-  - Secure password hashing with bcryptjs
-  - HTTP-only cookies for secure token storage
-  - Server-side route protection with Next.js middleware (proxy.js)
-  - Client-side navigation guards with custom hooks (useProtectedRoute, useAlreadyAuthenticatedRoute)
-  - Token verification in Middleware (jose) and API routes
+   - User registration and login with JWT-based authentication
+   - Secure password hashing with bcryptjs
+   - HTTP-only cookies for secure token storage (SameSite=Strict)
+   - Server-side route protection with Next.js middleware (proxy.js)
+   - Client-side navigation guards with custom hooks
+   - Token verification in middleware (jose) and API routes
+   - Multi-device token management (max 2 devices configured)
   
 - **User Management**
   - User profiles with customizable settings
   - Theme preferences (font color, background mode, font size)
-  - Persistent theme storage per user (localStorage for guests, MongoDB for users)
+  - Persistent theme storage (localStorage for guests, MongoDB for users)
   - Account ban capability
+  - Email validation with validator.js
+  - Terms of Service acceptance tracking
 
 - **State Management**
   - React Context API for global state (UserContext, ThemeContext)
   - Custom hooks for reusable logic
   - Session persistence across page reloads
+  - Automatic theme synchronization with user settings
 
 - **Theming & UI**
   - Light, Dim, and Dark theme support
@@ -79,25 +83,31 @@ proxy.js                # Route middleware
   - Next.js API routes with App Router
   - JWT token validation in middleware(proxy.js) and secured routes
   - User session management
+  - RESTful API design
+  - Error handling and validation
   - Settings update endpoints (background mode, etc.)
 
 - **Database**
   - MongoDB with Mongoose ODM
   - User schema with authentication and theme preferences
   - Token management with device tracking
-  - User edit timestamp tracking
+  - Timestamp tracking
 
 - **Performance & Security**
   - Edge Runtime compatible middleware for fast authentication checks
   - Secure HTTP-only cookies (SameSite=Strict)
-  - Password hashing and validation
+  - Password hashing and validation (8 salt rounds)
   - Server-side JWT verification
   - Environment-based configuration
+  - Token expiration (7 days)
+  - CSRF protection with SameSite cookies
 
 - **Developer Experience**
   - Next.js 16 with Turbopack (dev) / SWC (production)
   - ESLint for code quality
   - Responsive design patterns
+  - Module path aliases (@/app/*)
+  - Hot Module Replacement (HMR) for faster development
   - Clean component structure with containers and components
   - Modular and reusable code organization
 

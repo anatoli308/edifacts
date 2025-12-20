@@ -180,7 +180,7 @@ function DefaultAppBar({ children }) {
             >
                 {drawer}
             </Drawer>
-            <Box component="main" sx={{ p: 3, width: '100%' }}>
+            <Box component="main" sx={{ mb: 2, width: '100%' }}>
                 <Toolbar />
                 {children}
             </Box>

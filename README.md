@@ -14,31 +14,41 @@ EDIFACTS is a web application designed to help users read and manage their EDIFA
 
 ## Project Structure
 ```
-app/                    # Next.js App Router structure
-├── _components/        # Reusable UI components
-├── _contexts/          # React Context providers
-├── _hooks/             # Custom client hooks 
-├── api/                # Next.js API routes
-├── auth/               # Next.js App Router auth pages
-├── layout.js           # Root layout with providers
-└── page.js             # Root Home page
+app/                       # Next.js App Router structure
+├── _components/           # Reusable UI components
+├── _contexts/             # React Context providers
+├── _containers/           # Page containers/layouts
+├── _hooks/                # Custom client hooks
+├── api/                   # Next.js API routes
+├── auth/                  # Next.js App Router pages (login, register, account)
+├── layout.js              # Root layout with Providers wrapper
+└── page.js                # Root Home page
 
-lib/                    # Library utilities
-├── dbConnect.js        # MongoDB connection utility
+lib/                       # Library utilities & helpers
+├── dbConnect.js           # MongoDB connection utility
 
-models/                 # Mongoose ODM models 
-├── User.js             # User schema and methods
+models/                    # Mongoose ODM models
+├── User.js                # User schema and authentication methods
 
-theme/                  # MUI theme configurations
-├── colors.js           # font color definitions
-├── backgroundModes.js  # Theme background mode definitions
-├── [index.js]          # Theme provider wrapper
-├── typography.js       # Typography definitions
-└── overrides/          # MUI component overrides
+theme/                     # MUI theme configurations
+├── colors.js              # Font color definitions
+├── backgroundModes.js     # Theme background mode definitions
+├── palette.js             # MUI palette theme
+├── shadows.js             # MUI shadow definitions
+├── typography.js          # Typography definitions
+├── index.js               # Theme provider wrapper
+└── overrides/             # MUI component overrides
 
-.env.example            # Example environment variables
-jsconfig.json           # Module path aliases
-proxy.js                # Route middleware
+public/                    # Static assets
+uploads/                   # Directory for runtime uploads
+
+server.js                  # Express server with Socket.IO & Next.js integration
+.env.example               # Example environment variables
+docker-compose.yml         # Docker compose for development
+jsconfig.json              # Module path aliases
+package.json               # Project dependencies & scripts
+proxy.js                   # Next.js Route middleware for authentication
+socketproxy.js             # Socket.IO middleware for authentication
 ```
 
 ## Development Features
@@ -86,6 +96,30 @@ proxy.js                # Route middleware
   - RESTful API design
   - Error handling and validation
   - Settings update endpoints (background mode, etc.)
+  - EDIFACT file parsing and visualization API endpoint
+  - WebSocket support with Socket.IO for real-time status updates
+
+- **EDIFACT Processing & Visualization**
+  - File upload with drag-and-drop support (Upload Tab)
+  - Custom text input with a character limit (Custom Tab)
+  - Optional standard EDIFACT subset selection (EANCOM, ODETTE, HIPAA, etc.)
+  - Multiple visualization perspectives:
+    - **Segment Tree View**: Technical hierarchical view for EDI experts
+    - **Business View**: User-friendly presentation for stakeholders
+    - **JSON/XML View**: Machine-readable format for developers
+    - **Rule Editor**: Interface for defining custom validation rules
+  - File metadata detection (message type, line count, file size)
+  - Preview generation from parsed EDIFACT data
+  - Backend worker support for heavy parsing operations
+
+- **Real-time Communication**
+  - WebSocket (Socket.IO) integration for live status updates
+  - Automatic socket connection on app startup
+  - Token-based WebSocket authentication via `authToken` cookie
+  - Socket context provider with safe defaults for client components
+  - Real-time worker status indication (Connected/Connecting/Disconnected)
+  - Status badge in AppBar showing WebSocket connection state
+  - Auto-reconnection with exponential backoff
 
 - **Database**
   - MongoDB with Mongoose ODM

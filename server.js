@@ -20,12 +20,36 @@ app.prepare().then(() => {
         maxHttpBufferSize: 1e8
     });
 
+    // Make io globally available for Worker broadcasts
+    global.io = io;
+
     io.use(socketAuth);
 
     // Socket connection handler
     io.on('connection', async socket => {
-        // Handle connection
-        //await handleConnection(socket);
+        console.log(`Socket connected: ${socket.id}`);
+
+        // Subscribe to job updates
+        socket.on('subscribe', ({ jobId }) => {
+            if (!jobId) {
+                console.warn(`[Socket ${socket.id}] Subscribe failed: missing jobId`);
+                return;
+            }
+            console.log(`[Socket ${socket.id}] Subscribing to job: ${jobId}`);
+            socket.join(`job:${jobId}`);
+            socket.emit('subscribed', { jobId });
+        });
+
+        // Unsubscribe from job updates
+        socket.on('unsubscribe', ({ jobId }) => {
+            if (!jobId) {
+                console.warn(`[Socket ${socket.id}] Unsubscribe failed: missing jobId`);
+                return;
+            }
+            console.log(`[Socket ${socket.id}] Unsubscribing from job: ${jobId}`);
+            socket.leave(`job:${jobId}`);
+            socket.emit('unsubscribed', { jobId });
+        });
 
         // Socket event listeners
         socket.on('disconnect', () => handleDisconnect(socket));

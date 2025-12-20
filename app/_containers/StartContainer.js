@@ -12,6 +12,7 @@ import Dropzone from 'dropzone';
 
 //app imports
 import { useUser } from '@/app/_contexts/UserContext';
+import { useSocket } from '@/app/_contexts/SocketContext';
 
 // Disable autoDiscover
 if (typeof window !== 'undefined') {
@@ -35,6 +36,7 @@ const STANDARD_SUBSETS = [
 
 function StartContainer(props) {
     const { user } = useUser();
+    const { socket, isConnected } = useSocket();
     const [edifactContent, setEdifactContent] = useState('');
     const [selectedSubset, setSelectedSubset] = useState(null);
     const [showVisualization, setShowVisualization] = useState(false);
@@ -50,6 +52,8 @@ function StartContainer(props) {
     const [visualizationData, setVisualizationData] = useState(null);
     const dropzoneRef = useRef(null);
     const dropzoneInstance = useRef(null);
+    const [currentJobId, setCurrentJobId] = useState(null);
+    const [progress, setProgress] = useState({ percent: 0, message: '' });
 
     useEffect(() => {
         if (dropzoneRef.current && !dropzoneInstance.current) {
@@ -80,13 +84,61 @@ function StartContainer(props) {
         };
     }, []);
 
+    // Socket event listeners for job progress
+    useEffect(() => {
+        if (!socket || !isConnected || !currentJobId) return;
+
+        const handleProgress = (data) => {
+            if (data.jobId === currentJobId) {
+                console.log('[Progress]', data);
+                setProgress({ percent: data.percent, message: data.message });
+            }
+        };
+
+        const handleComplete = (data) => {
+            if (data.jobId === currentJobId) {
+                console.log('[Complete]', data);
+                setVisualizationData(data.result);
+                setShowVisualization(true);
+                setExpandedAccordion('results');
+                setActiveTab(0);
+                setIsLoading(false);
+                setProgress({ percent: 100, message: 'Complete!' });
+            }
+        };
+
+        const handleError = (data) => {
+            if (data.jobId === currentJobId) {
+                console.error('[Error]', data);
+                setError(data.error);
+                setIsLoading(false);
+                setProgress({ percent: 0, message: '' });
+            }
+        };
+
+        socket.on('progress', handleProgress);
+        socket.on('complete', handleComplete);
+        socket.on('error', handleError);
+
+        return () => {
+            socket.off('progress', handleProgress);
+            socket.off('complete', handleComplete);
+            socket.off('error', handleError);
+        };
+    }, [socket, isConnected, currentJobId]);
+
     const handleVisualize = async () => {
         const currentContent = inputTab === 0 ? edifactContent : customContentRef.current;
         if (!currentContent.trim()) return;
+        if (!isConnected) {
+            setError('Socket not connected. Please wait and try again.');
+            return;
+        }
         try {
             setIsLoading(true);
             setError(null);
             setVisualizationData(null);
+            setProgress({ percent: 0, message: 'Starting...' });
 
             const formData = new FormData();
             if (inputTab === 0) {
@@ -112,13 +164,15 @@ function StartContainer(props) {
             if (!res.ok || !data.ok) {
                 throw new Error(data?.error || 'Failed to visualize');
             }
-            setVisualizationData(data);
-            setShowVisualization(true);
-            setExpandedAccordion('results');
-            setActiveTab(0);
+
+            // Got jobId, subscribe to updates
+            const jobId = data.jobId;
+            setCurrentJobId(jobId);
+            console.log('[Job started]', jobId);
+            socket.emit('subscribe', { jobId });
+
         } catch (e) {
             setError(e.message);
-        } finally {
             setIsLoading(false);
         }
     };
@@ -285,17 +339,25 @@ function StartContainer(props) {
                                 color="primary"
                                 size="large"
                                 onClick={handleVisualize}
-                                disabled={!currentContent.trim() || isLoading}
+                                disabled={!currentContent.trim() || isLoading || !isConnected}
                             >
                                 {isLoading ? (
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <CircularProgress size={20} color="inherit" />
-                                        Parsing...
+                                        {progress.percent > 0 ? `${progress.percent}%` : 'Parsing...'}
                                     </Box>
                                 ) : (
                                     'Visualize'
                                 )}
                             </Button>
+                            {isLoading && progress.message && (
+                                <Chip
+                                    label={progress.message}
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                />
+                            )}
                         </Box>
                     </AccordionDetails>
                 </Accordion>

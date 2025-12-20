@@ -1,4 +1,18 @@
 import { NextResponse } from 'next/server';
+import { Worker } from 'worker_threads';
+import { randomUUID } from 'crypto';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { writeFile, mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// In-memory job storage (in production, use Redis or DB)
+const jobs = new Map();
+
+// Temp upload directory
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 
 function detectMessageType(edifactText) {
   if (!edifactText) return null;
@@ -58,28 +72,108 @@ export async function POST(req) {
       return NextResponse.json({ ok: false, error: 'Unsupported file type. Allowed: .edi, .edifact, .txt' }, { status: 400 });
     }
 
-    const text = await file.text();
-    const lines = text.split(/\r?\n/);
-    const messageType = detectMessageType(text);
+    // Ensure upload directory exists
+    if (!existsSync(UPLOAD_DIR)) {
+      await mkdir(UPLOAD_DIR, { recursive: true });
+    }
 
-    // Placeholder: Here you would parse into canonical JSON tree.
-    // For now, return basic metadata + preview. UI can display in tabs.
-    const response = {
+    // Save file to disk (for streaming, avoids loading entire file into RAM)
+    const jobId = randomUUID();
+    const filePath = path.join(UPLOAD_DIR, `${jobId}.edi`);
+    const arrayBuffer = await file.arrayBuffer();
+    await writeFile(filePath, Buffer.from(arrayBuffer));
+
+    console.log(`[API] File saved to: ${filePath} (${size} bytes)`);
+    
+    // Create and start Worker Thread
+    const workerPath = path.resolve(process.cwd(), '_workers/edifactParser.worker.js');
+    const worker = new Worker(workerPath);
+
+    // Store job metadata
+    jobs.set(jobId, {
+      jobId,
+      status: 'processing',
+      worker,
+      filePath,
+      startedAt: new Date(),
+    });
+
+    // Listen for Worker messages
+    worker.on('message', (msg) => {
+      if (msg.type === 'progress') {
+        // Broadcast progress via Socket.IO
+        if (global.io) {
+          global.io.to(`job:${jobId}`).emit('progress', {
+            jobId: msg.jobId,
+            percent: msg.percent,
+            message: msg.message,
+          });
+        }
+      } else if (msg.type === 'complete') {
+        // Update job status and broadcast completion
+        const job = jobs.get(jobId);
+        if (job) {
+          job.status = 'complete';
+          job.result = msg.result;
+          job.completedAt = new Date();
+        }
+        
+        if (global.io) {
+          global.io.to(`job:${jobId}`).emit('complete', {
+            jobId: msg.jobId,
+            result: msg.result,
+          });
+        }
+        
+        // Clean up worker
+        worker.terminate();
+      } else if (msg.type === 'error') {
+        // Update job status and broadcast error
+        const job = jobs.get(jobId);
+        if (job) {
+          job.status = 'error';
+          job.error = msg.error;
+        }
+        
+        if (global.io) {
+          global.io.to(`job:${jobId}`).emit('error', {
+            jobId: msg.jobId,
+            error: msg.error,
+          });
+        }
+        
+        // Clean up worker
+        worker.terminate();
+      }
+    });
+
+    worker.on('error', (error) => {
+      console.error(`[Worker ${jobId}] Error:`, error);
+      const job = jobs.get(jobId);
+      if (job) {
+        job.status = 'error';
+        job.error = error.message;
+      }
+      
+      if (global.io) {
+        global.io.to(`job:${jobId}`).emit('error', {
+          jobId,
+          error: error.message,
+        });
+      }
+    });
+
+    // Start the worker with job data (filePath for streaming)
+    worker.postMessage({ jobId, filePath, subset, fileName: name });
+
+    // Return immediately with jobId
+    return NextResponse.json({
       ok: true,
-      subset: subset ? { value: subset, label: getSubsetLabel(subset) } : null,
+      jobId,
       file: { name, size },
-      detected: { messageType },
-      stats: { bytes: text.length, lines: lines.length },
-      views: {
-        segments: { ready: false, note: 'Segment Tree view TBD' },
-        business: { ready: false, note: 'Business view TBD' },
-        jsonXml: { ready: false, note: 'JSON/XML view TBD' },
-        rules: { ready: false, note: 'Rule Editor view TBD' },
-      },
-      preview: text.slice(0, 4000),
-    };
+      message: 'Processing started. Subscribe to job updates via WebSocket.',
+    }, { status: 202 }); // 202 Accepted
 
-    return NextResponse.json(response, { status: 200 });
   } catch (err) {
     console.error('Visualization upload error:', err);
     return NextResponse.json({ ok: false, error: 'Unexpected error' }, { status: 500 });

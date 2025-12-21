@@ -146,7 +146,21 @@ function DefaultAppBar({ children }) {
 
     const mobileDrawerContent = (
         <Box sx={{ textAlign: 'center' }}>
-            <Stack direction={"row"} spacing={1} justifyContent="center" alignItems="center" sx={{ my: 2 }}>
+            <Stack direction={"row"} spacing={1} justifyContent="center" alignItems="center" sx={{
+                my: 2,
+                "&:hover": {
+                    background: "linear-gradient(270deg, #ff6a00, #ee0979, #00f0ff)",
+                    backgroundSize: "600% 600%",
+                    animation: "gradientShift 3s ease infinite",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                },
+                "@keyframes gradientShift": {
+                    "0%": { backgroundPosition: "0% 50%" },
+                    "50%": { backgroundPosition: "100% 50%" },
+                    "100%": { backgroundPosition: "0% 50%" },
+                }
+            }}>
                 <MuiLink href="/" as={Link} sx={{ display: { xs: 'flex' }, mr: 1 }} >
                     <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={25} height={25} />
                 </MuiLink>
@@ -172,7 +186,20 @@ function DefaultAppBar({ children }) {
     const desktopDrawerContent = (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: 'background.paper' }}>
-                <DrawerHeader>
+                <DrawerHeader sx={{
+                    "&:hover": {
+                        background: "linear-gradient(270deg, #ff6a00, #ee0979, #00f0ff)",
+                        backgroundSize: "600% 600%",
+                        animation: "gradientShift 3s ease infinite",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                    },
+                    "@keyframes gradientShift": {
+                        "0%": { backgroundPosition: "0% 50%" },
+                        "50%": { backgroundPosition: "100% 50%" },
+                        "100%": { backgroundPosition: "0% 50%" },
+                    }
+                }}>
                     <MuiLink href="/" as={Link} underline='none' color='inherit' sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         {desktopOpen && <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={30} height={30} />}
                         {desktopOpen && (
@@ -309,13 +336,7 @@ function DefaultAppBar({ children }) {
             <AppBar component="nav" sx={{ background: 'transparent', boxShadow: 'none' }}>
                 <Toolbar>
                     <MuiLink href="/" as={Link} sx={{ display: { xs: 'none', sm: 'flex' }, mr: 1 }} >
-                        <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={55} height={55} />
-                    </MuiLink>
-                    <MuiLink href="/" sx={{
-                        mr: 2,
-                        display: { xs: 'none', sm: 'flex' },
-                    }} as={Link} underline='none' color='inherit'>
-                        EDIFACTS
+                        <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={85} height={55} />
                     </MuiLink>
 
                     <IconButton
@@ -342,22 +363,39 @@ function DefaultAppBar({ children }) {
                         </Tooltip>
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, }}>
-                            <Typography variant="h6"><Tooltip title="Session Settings">
+                            <Tooltip title="Session Settings">
                                 <IconButton
                                     size="small"
                                     onClick={() => router.push('?tab=settings', { scroll: false })}
                                     sx={{ ml: 'auto' }}
                                 >
-                                    <SettingsIcon />
+                                    {'⚙️'}
                                 </IconButton>
-                            </Tooltip> EDIFACTS Assistant</Typography>
+                            </Tooltip>
+                            <Typography variant="h6" color='text.primary' sx={{
+                                "&:hover": {
+                                    background: "linear-gradient(270deg, #ff6a00, #ee0979, #00f0ff)",
+                                    backgroundSize: "600% 600%",
+                                    animation: "gradientShift 3s ease infinite",
+                                    WebkitBackgroundClip: "text",
+                                    WebkitTextFillColor: "transparent",
+                                },
+                                "@keyframes gradientShift": {
+                                    "0%": { backgroundPosition: "0% 50%" },
+                                    "50%": { backgroundPosition: "100% 50%" },
+                                    "100%": { backgroundPosition: "0% 50%" },
+                                }
+                            }}>
+                                EDIFACTS Assistant</Typography>
                         </Box>
 
                     </Stack>
 
                     {user !== null ? <Box sx={{ flexGrow: 0 }}>
-                        <Button onClick={handleOpenUserMenu} color="secondary" size='small'>
-                            <MoreHorizIcon />
+                        <Button onClick={handleOpenUserMenu} color="inherit" size='small'>
+                            <Typography variant="caption" color="textPrimary" sx={{ display: "flex" }}>
+                                <MoreHorizIcon />
+                            </Typography>
                         </Button>
                         <Popover
                             id="menu-appbar"
@@ -392,8 +430,9 @@ function DefaultAppBar({ children }) {
                                 ))}
                             </List>
                         </Popover>
-                    </Box> : <Box sx={{ flexGrow: 0 }}>
-                        <MuiLink href="/auth/login" as={Link} color="inherit" underline='none'>Login</MuiLink>
+                    </Box> : <Box sx={{ flexGrow: 0, gap: 1, display: 'flex' }}>
+                        <MuiLink href="/auth/login" as={Link} color="text.primary" underline='none'>Login</MuiLink>
+                        <MuiLink href="/auth/register" as={Link} color="text.primary" underline='none'>Register</MuiLink>
                     </Box>}
                 </Toolbar>
             </AppBar>
@@ -511,7 +550,7 @@ function DefaultAppBar({ children }) {
                 onClose={() => setOpenLogoutDialog(false)}
             >
                 <Box sx={{ p: 3, minWidth: 350, display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
-                    <Box sx={{ width: 200 }}>
+                    <Box sx={{ width: 200, textAlign: 'center' }}>
                         <Typography variant="h4" sx={{ mb: 1 }}>Are you sure you want to logout?</Typography>
                         <Typography variant="h5" color="text.secondary" sx={{ mb: 3 }}>
                             Logout with {user?.email}

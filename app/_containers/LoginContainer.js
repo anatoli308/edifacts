@@ -12,11 +12,13 @@ import {
     IconButton,
     InputAdornment,
     TextField,
+    Link as MuiLink,
     Typography
 } from '@mui/material';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import Link from 'next/link';
 
 //app imports
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
@@ -145,14 +147,10 @@ function LoginContainer() {
                             </Button>
 
                             <Box sx={{ textAlign: 'center' }}>
-                                <Button
-                                    variant="text"
-                                    size="small"
-                                    disabled={isLoading}
-                                    onClick={() => router.push('/auth/register')}
-                                >
-                                    Don&apos;t have an account? Sign up here
-                                </Button>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                    Don&apos;t have an account? Sign up <MuiLink href="/auth/register" as={Link}
+                                        color='inherit'>here</MuiLink>.
+                                </Typography>
                             </Box>
                         </Box>
                     </CardContent>

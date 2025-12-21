@@ -15,10 +15,11 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Link from '@mui/material/Link';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Image from 'next/image';
+import { Link as MuiLink } from '@mui/material';
+import Link from 'next/link';
 
 //app imports
 import { useUser } from '@/app/_contexts/UserContext';
@@ -249,13 +250,13 @@ function RegisterContainer() {
                                 label={
                                     <Typography variant="body2">
                                         I accept the{' '}
-                                        <Link href="/tos" target="_blank" underline="hover">
+                                        <MuiLink as={Link} href="/tos" underline="hover" color='inherit'>
                                             Terms of Service
-                                        </Link>
+                                        </MuiLink>
                                         {' '}and{' '}
-                                        <Link href="/privacy" target="_blank" underline="hover">
+                                        <MuiLink as={Link} href="/privacy" underline="hover" color='inherit'>
                                             Privacy Policy
-                                        </Link>
+                                        </MuiLink>
                                     </Typography>
                                 }
                                 sx={{ mb: 3 }}
@@ -277,14 +278,10 @@ function RegisterContainer() {
                             </Button>
 
                             <Box sx={{ textAlign: 'center' }}>
-                                <Button
-                                    variant="text"
-                                    size="small"
-                                    disabled={isLoading}
-                                    onClick={() => router.push('/auth/login')}
-                                >
-                                    Already have an account? Sign in
-                                </Button>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                    Already have an account? Sign in <MuiLink href="/auth/login" as={Link}
+                                        color='inherit'>here</MuiLink>.
+                                </Typography>
                             </Box>
                         </Box>
                     </CardContent>

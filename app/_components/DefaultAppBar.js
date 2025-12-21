@@ -4,12 +4,10 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import HomeIcon from '@mui/icons-material/Home';
 import { styled, useTheme } from '@mui/material/styles';
-import { Button, Link as MuiLink, ListSubheader } from "@mui/material";
+import { Button, Link as MuiLink, ListSubheader, useMediaQuery } from "@mui/material";
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
-import CssBaseline from '@mui/material/CssBaseline';
 import Divider from '@mui/material/Divider';
 import MuiDrawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
@@ -17,8 +15,6 @@ import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Link from 'next/link';
@@ -38,15 +34,14 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import PaletteIcon from '@mui/icons-material/Palette';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useRouter, useSearchParams } from 'next/navigation';
+
 //app imports
-import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 import { useUser } from '@/app/_contexts/UserContext';
 import { useSocket } from '@/app/_contexts/SocketContext';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
-import CommentIcon from '@mui/icons-material/Comment';
 import SettingsDialog from '@/app/_components/SettingsDialog';
 
-const drawerWidth = 240;
+const drawerWidth = 260;
 const navItems = [{ name: 'New Analysis', link: '/', icon: <AddchartIcon /> },
 { name: 'Search Session', icon: <SearchIcon />, clickHandler: () => handleSearchSessionClick() },];
 
@@ -114,6 +109,8 @@ function DefaultAppBar({ children }) {
     const searchParams = useSearchParams();
     const { user, logout } = useUser();
     const { isConnected, isLoading } = useSocket();
+
+    const isAbove768 = useMediaQuery('(min-width:768px)');
 
     // Handle settings dialog from URL
     React.useEffect(() => {
@@ -215,20 +212,23 @@ function DefaultAppBar({ children }) {
                 <Divider />
                 <List sx={{ p: 1 }}>
                     {navItems.map((item, index) => (
-                        <MuiLink key={index} color="inherit" as={item.link ? Link : Box}
-                            onClick={item.clickHandler ? item.clickHandler : undefined}
-                            href={item.link ? item.link : undefined} underline="none">
-                            <ListItemButton as={Button} color='inherit'>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                                    {item.icon}
-                                    {desktopOpen && <ListItemText primary={item.name} />}
-                                </Box>
-                            </ListItemButton>
-                        </MuiLink>
+                        <Tooltip key={index} title={!desktopOpen ? item.name : ''} placement="right">
+                            <MuiLink color="inherit" as={item.link ? Link : Box}
+                                onClick={item.clickHandler ? item.clickHandler : undefined}
+                                href={item.link ? item.link : undefined} underline="none">
+                                <ListItemButton as={Button} color='inherit'>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                                        {item.icon}
+                                        {desktopOpen && <ListItemText primary={item.name} />}
+                                    </Box>
+                                </ListItemButton>
+                            </MuiLink>
+                        </Tooltip>
                     ))}
                 </List>
             </Box>
 
+            {/* Sessions List */}
             <Box sx={{
                 flex: 1, overflowY: 'auto',
                 //scrollbarWidth: 'none',   // Firefox
@@ -303,9 +303,11 @@ function DefaultAppBar({ children }) {
                 </List>}
             </Box>
 
-            {desktopOpen && <Box sx={{ position: 'sticky', bottom: 0, p: 1 }}>
+            {/* Account Box */}
+            <Box sx={{ position: 'sticky', bottom: 0, p: 1 }}>
                 <List sx={{ p: 0 }}>
                     <ListItem sx={{ p: 0 }}>
+                        <Tooltip title={!desktopOpen ? user?.name || 'User' : ''} placement="right">
                         <ListItemButton
                             as={Button}
                             color='inherit'
@@ -322,9 +324,10 @@ function DefaultAppBar({ children }) {
                                 </Typography>
                             </Box>
                         </ListItemButton>
+                        </Tooltip>
                     </ListItem>
                 </List>
-            </Box>}
+            </Box>
         </Box>
     );
 
@@ -332,11 +335,10 @@ function DefaultAppBar({ children }) {
 
     return (
         <Box sx={{ display: 'flex', height: "100%" }}>
-            <CssBaseline />
             <AppBar component="nav" sx={{ background: 'transparent', boxShadow: 'none' }}>
                 <Toolbar>
-                    <MuiLink href="/" as={Link} sx={{ display: { xs: 'none', sm: 'flex' }, mr: 1 }} >
-                        <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={85} height={55} />
+                    <MuiLink href="/" as={Link} sx={{ display: isAbove768 ? 'flex' : 'none', mr: 1, width: desktopOpen ? (drawerWidth - 20) : 45 }} >
+                        <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={75} height={55} />
                     </MuiLink>
 
                     <IconButton
@@ -344,13 +346,14 @@ function DefaultAppBar({ children }) {
                         aria-label="open drawer"
                         edge="start"
                         onClick={handleDrawerToggle}
-                        sx={{ mr: 2, display: { sm: 'none' } }}
+                        sx={{ mr: 2, display: isAbove768 ? 'none' : 'block' }}
                     >
                         <MenuIcon />
                     </IconButton>
 
-                    <Stack direction="row" spacing={2} sx={{ mr: 2, ml: 2, flexGrow: 1, alignItems: 'center' }}>
-                        <Tooltip title={isLoading ? "Worker connecting..." : isConnected ? "Worker ready" : "Worker disconnected"}>
+                    <Stack direction="row" spacing={1} sx={{ flexGrow: 1, alignItems: 'center' }}>
+                        <Tooltip
+                            title={isLoading ? "Worker connecting..." : isConnected ? "Worker ready" : "Worker disconnected"}>
                             <Chip
                                 label={
                                     <Typography color="textPrimary">
@@ -372,20 +375,21 @@ function DefaultAppBar({ children }) {
                                     {'⚙️'}
                                 </IconButton>
                             </Tooltip>
-                            <Typography variant="h6" color='text.primary' sx={{
-                                "&:hover": {
-                                    background: "linear-gradient(270deg, #ff6a00, #ee0979, #00f0ff)",
-                                    backgroundSize: "600% 600%",
-                                    animation: "gradientShift 3s ease infinite",
-                                    WebkitBackgroundClip: "text",
-                                    WebkitTextFillColor: "transparent",
-                                },
-                                "@keyframes gradientShift": {
-                                    "0%": { backgroundPosition: "0% 50%" },
-                                    "50%": { backgroundPosition: "100% 50%" },
-                                    "100%": { backgroundPosition: "0% 50%" },
-                                }
-                            }}>
+                            <Typography onClick={() => router.push('?tab=settings', { scroll: false })}
+                                variant="h6" color='text.primary' sx={{
+                                    "&:hover": {
+                                        background: "linear-gradient(270deg, #ff6a00, #ee0979, #00f0ff)",
+                                        backgroundSize: "600% 600%",
+                                        animation: "gradientShift 3s ease infinite",
+                                        WebkitBackgroundClip: "text",
+                                        WebkitTextFillColor: "transparent",
+                                    },
+                                    "@keyframes gradientShift": {
+                                        "0%": { backgroundPosition: "0% 50%" },
+                                        "50%": { backgroundPosition: "100% 50%" },
+                                        "100%": { backgroundPosition: "0% 50%" },
+                                    }
+                                }}>
                                 EDIFACTS Assistant</Typography>
                         </Box>
 
@@ -441,7 +445,7 @@ function DefaultAppBar({ children }) {
             {user !== null ? <MiniDrawer
                 variant="permanent"
                 open={desktopOpen}
-                sx={{ display: { xs: 'none', sm: 'block' } }}
+                sx={{ display: isAbove768 ? 'block' : 'none' }}
             >
                 {desktopDrawerContent}
             </MiniDrawer> : null}
@@ -456,7 +460,7 @@ function DefaultAppBar({ children }) {
                     keepMounted: true, // Better open performance on mobile.
                 }}
                 sx={{
-                    display: { xs: 'block', sm: 'none' },
+                    display: isAbove768 ? 'none' : 'block',
                     '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
                 }}
             >

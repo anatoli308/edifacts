@@ -140,7 +140,12 @@ function StartContainer(props) {
 
     return (
         <Container maxWidth="md">
-            <Box>
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                minHeight: '100vh',
+                flexDirection: 'column',
+            }}>
                 <Typography variant="h4" gutterBottom>
                     Welcome, {user ? user.name : 'Guest'}!
                 </Typography>

@@ -1,21 +1,21 @@
 "use client";
 
-import {
-    Container, Box, Typography, TextField,
-    Button, Card, CardContent, Alert, CircularProgress, Chip, Tooltip,
-    Paper, IconButton, InputAdornment, Tabs, Tab
-} from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
-import PersonIcon from '@mui/icons-material/Person';
-import SettingsIcon from '@mui/icons-material/Settings';
+import {
+    Box,
+    Container,
+    IconButton, InputAdornment,
+    Paper,
+    TextField,
+    Typography,
+    Link as MuiLink
+} from '@mui/material';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Dropzone from 'dropzone';
+import Link from 'next/link';
 
 //app imports
-import { useUser } from '@/app/_contexts/UserContext';
-import { useSocket } from '@/app/_contexts/SocketContext';
 import ChatMessage from '@/app/_components/ChatMessage';
 
 function AnalysisChatPage(props) {
@@ -78,7 +78,7 @@ function AnalysisChatPage(props) {
     };
 
     return (
-        <Container maxWidth="md" sx={{ height: "100%", display: 'flex', flexDirection: 'column', p: 0 }}>
+        <Container maxWidth="md" disableGutters sx={{ height: "100%", display: 'flex', flexDirection: 'column', p: 0 }}>
             <Box sx={{ p: 0, height: "100%", display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ height: "100%", display: 'flex', flexDirection: 'column', p: 0, overflow: 'hidden' }}>
 
@@ -180,7 +180,7 @@ function AnalysisChatPage(props) {
                                     fontSize: '0.75rem'
                                 }}
                             >
-                                EDIFACTS-Assistant kann Fehler machen. Überprüfe wichtige Informationen. Siehe Cookie-Voreinstellungen.
+                                EDIFACTS Assistant can make mistakes. Please verify important information. See <MuiLink href="/cookie-preferences" as={Link} underline="always" color='inherit'>cookie preferences</MuiLink>.
                             </Typography>
                         </Box>
                     </Box>

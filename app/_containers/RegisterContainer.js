@@ -137,6 +137,7 @@ function RegisterContainer() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                minHeight: '100vh',
             }}>
                 <Card sx={{ width: '100%' }}>
                     <CardContent sx={{ p: 2 }}>
@@ -250,11 +251,11 @@ function RegisterContainer() {
                                 label={
                                     <Typography variant="body2">
                                         I accept the{' '}
-                                        <MuiLink as={Link} href="/tos" underline="hover" color='inherit'>
+                                        <MuiLink as={Link} href="/tos" underline="always" color='inherit'>
                                             Terms of Service
                                         </MuiLink>
                                         {' '}and{' '}
-                                        <MuiLink as={Link} href="/privacy" underline="hover" color='inherit'>
+                                        <MuiLink as={Link} href="/privacy" underline="always" color='inherit'>
                                             Privacy Policy
                                         </MuiLink>
                                     </Typography>

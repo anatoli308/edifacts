@@ -1,12 +1,10 @@
 "use client";
 
 import {
-    Container, Box, Typography, TextField, Badge,
-    Button, Autocomplete, Accordion, AccordionSummary,
-    AccordionDetails, Alert, CircularProgress, Chip, Tooltip,
+    Container, Box, Typography, TextField,
+    Button, Card, CardContent, Alert, CircularProgress, Chip, Tooltip,
     Paper, IconButton, InputAdornment, Tabs, Tab
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SendIcon from '@mui/icons-material/Send';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PersonIcon from '@mui/icons-material/Person';
@@ -18,108 +16,106 @@ import Dropzone from 'dropzone';
 //app imports
 import { useUser } from '@/app/_contexts/UserContext';
 import { useSocket } from '@/app/_contexts/SocketContext';
-
+import ChatMessage from '@/app/_components/ChatMessage';
 
 function AnalysisChatPage(props) {
 
+    const router = useRouter();
+    const [messages, setMessages] = useState([]);
+    const [userMessage, setUserMessage] = useState('');
+    const [isAssistantTyping, setIsAssistantTyping] = useState(false);
+    const messagesEndRef = useRef(null);
+
+    // Auto-scroll to latest message
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const handleSendMessage = async () => {
+        if (!userMessage.trim()) return;
+
+        const newUserMessage = {
+            role: 'user',
+            content: userMessage,
+            timestamp: new Date().toISOString()
+        };
+
+        setMessages(prev => [...prev, newUserMessage]);
+        setUserMessage('');
+        setIsAssistantTyping(true);
+
+        // Simulate AI response (replace with actual API call later)
+        setTimeout(() => {
+            const assistantMessage = {
+                role: 'assistant',
+                content: {
+                    reasoning: 'Let me analyze your EDIFACT data and provide a comprehensive response.',
+                    steps: [
+                        'Parsing the EDIFACT message structure',
+                        'Identifying message segments',
+                        'Extracting business data',
+                        'Validating against standards'
+                    ],
+                    toolCalls: [
+                        { name: 'parse_edifact', result: 'Successfully parsed 15 segments' },
+                        { name: 'validate_message', result: 'Message type: ORDERS' }
+                    ],
+                    text: `I received your message: "${userMessage}". This is a placeholder response. In production, I'll analyze your EDIFACT data and provide detailed answers.`,
+                    status: 'completed'
+                },
+                timestamp: new Date().toISOString()
+            };
+            setMessages(prev => [...prev, assistantMessage]);
+            setIsAssistantTyping(false);
+        }, 1500);
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    };
+
     return (
-        <Container maxWidth="xxl">
-            <Accordion
-                expanded={expandedAccordion === 'results'}
-                onChange={handleAccordionChange('results')}
-            >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-                        <Typography variant="h6">🤖 AI Assistant</Typography>
-                        <Tooltip title="Settings">
-                            <IconButton
-                                size="small"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    router.push('?tab=settings', { scroll: false });
-                                }}
-                                sx={{ ml: 'auto' }}
-                            >
-                                <SettingsIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </Box>
-                </AccordionSummary>
-                <AccordionDetails>
-                    <Box sx={{ width: '100%' }}>
-                        {/* File Info */}
-                        {visualizationData && (
-                            <Paper sx={{ p: 2, mb: 2, backgroundColor: 'background.default' }}>
+        <Container maxWidth="md" sx={{ height: "100%", display: 'flex', flexDirection: 'column', p: 0 }}>
+            <Box sx={{ p: 0, height: "100%", display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ height: "100%", display: 'flex', flexDirection: 'column', p: 0, overflow: 'hidden' }}>
+
+                    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%' }}>
+
+                        {props.visualizationData && (
+                            <Paper sx={{ p: 2, mb: 2, backgroundColor: 'background.default', flexShrink: 0 }}>
                                 <Typography variant="body2" color="textSecondary">
-                                    📄 File: <strong>{visualizationData.file?.name}</strong> • {visualizationData.file?.size} bytes
+                                    📄 File: <strong>{props.visualizationData.file?.name}</strong> • {props.visualizationData.file?.size} bytes
                                 </Typography>
                                 <Typography variant="body2" color="textSecondary">
-                                    📋 Message Type: <strong>{visualizationData.detected?.messageType || 'Unknown'}</strong>
+                                    📋 Message Type: <strong>{props.visualizationData.detected?.messageType || 'Unknown'}</strong>
                                 </Typography>
-                                {visualizationData.subset && (
+                                {props.visualizationData.subset && (
                                     <Typography variant="body2" color="textSecondary">
-                                        🔖 Subset: <strong>{visualizationData.subset?.label}</strong>
+                                        🔖 Subset: <strong>{props.visualizationData.subset?.label}</strong>
                                     </Typography>
                                 )}
                             </Paper>
                         )}
 
                         {/* Chat Messages */}
-                        <Paper
+                        <Box
                             sx={{
                                 p: 2,
-                                height: '500px',
+                                flex: 1,
                                 overflowY: 'auto',
                                 backgroundColor: 'background.paper',
-                                mb: 2,
+                                mb: 0,
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: 2
+                                gap: 2,
+                                minHeight: 0
                             }}
                         >
                             {messages.map((message, index) => (
-                                <Box
-                                    key={index}
-                                    sx={{
-                                        display: 'flex',
-                                        gap: 1.5,
-                                        alignItems: 'flex-start',
-                                        flexDirection: message.role === 'user' ? 'row-reverse' : 'row'
-                                    }}
-                                >
-                                    <Box
-                                        sx={{
-                                            width: 36,
-                                            height: 36,
-                                            borderRadius: '50%',
-                                            backgroundColor: message.role === 'user' ? 'primary.main' : 'secondary.main',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexShrink: 0
-                                        }}
-                                    >
-                                        {message.role === 'user' ? (
-                                            <PersonIcon sx={{ color: 'white', fontSize: 20 }} />
-                                        ) : (
-                                            <SmartToyIcon sx={{ color: 'white', fontSize: 20 }} />
-                                        )}
-                                    </Box>
-                                    <Paper
-                                        sx={{
-                                            p: 2,
-                                            maxWidth: '70%',
-                                            backgroundColor: message.role === 'user'
-                                                ? 'primary.main'
-                                                : 'background.default',
-                                            color: message.role === 'user' ? 'white' : 'text.primary'
-                                        }}
-                                    >
-                                        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                                            {message.content}
-                                        </Typography>
-                                    </Paper>
-                                </Box>
+                                <ChatMessage key={index} message={message} />
                             ))}
 
                             {isAssistantTyping && (
@@ -132,7 +128,8 @@ function AnalysisChatPage(props) {
                                             backgroundColor: 'secondary.main',
                                             display: 'flex',
                                             alignItems: 'center',
-                                            justifyContent: 'center'
+                                            justifyContent: 'center',
+                                            flexShrink: 0
                                         }}
                                     >
                                         <SmartToyIcon sx={{ color: 'white', fontSize: 20 }} />
@@ -146,35 +143,49 @@ function AnalysisChatPage(props) {
                             )}
 
                             <div ref={messagesEndRef} />
-                        </Paper>
+                        </Box>
 
                         {/* Input Field */}
-                        <TextField
-                            fullWidth
-                            multiline
-                            maxRows={4}
-                            value={userMessage}
-                            onChange={(e) => setUserMessage(e.target.value)}
-                            onKeyPress={handleKeyPress}
-                            placeholder="Ask me anything about your EDIFACT data..."
-                            variant="outlined"
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                            color="primary"
-                                            onClick={handleSendMessage}
-                                            disabled={!userMessage.trim() || isAssistantTyping}
-                                        >
-                                            <SendIcon />
-                                        </IconButton>
-                                    </InputAdornment>
-                                )
-                            }}
-                        />
+                        <Box sx={{ flexShrink: 0 }}>
+                            <TextField
+                                fullWidth
+                                multiline
+                                maxRows={4}
+                                value={userMessage}
+                                onChange={(e) => setUserMessage(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                placeholder="Ask me anything about your EDIFACT data..."
+                                variant="outlined"
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                color="primary"
+                                                onClick={handleSendMessage}
+                                                disabled={!userMessage.trim() || isAssistantTyping}
+                                            >
+                                                <SendIcon />
+                                            </IconButton>
+                                        </InputAdornment>
+                                    )
+                                }}
+                            />
+                            <Typography
+                                variant="caption"
+                                color="textSecondary"
+                                sx={{
+                                    display: 'block',
+                                    mt: 1,
+                                    textAlign: 'center',
+                                    fontSize: '0.75rem'
+                                }}
+                            >
+                                EDIFACTS-Assistant kann Fehler machen. Überprüfe wichtige Informationen. Siehe Cookie-Voreinstellungen.
+                            </Typography>
+                        </Box>
                     </Box>
-                </AccordionDetails>
-            </Accordion>
+                </Box>
+            </Box>
         </Container>
     );
 }

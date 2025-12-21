@@ -2,13 +2,17 @@
 
 import {
     Dialog, Box, Typography, List, ListItem, ListItemText, ListItemButton,
-    Divider, IconButton, Paper, useMediaQuery, useTheme, Tabs, Tab
+    Divider, IconButton, Paper, useMediaQuery, useTheme, Tabs, Tab, ToggleButton, ToggleButtonGroup
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+//app imports
+import { useThemeConfig } from '@/app/_contexts/ThemeContext';
+
 function SettingsDialog({ open, onClose }) {
+    const { themeBackground, handlers } = useThemeConfig();
     const [activeSection, setActiveSection] = useState('settings');
     const theme = useTheme();
     const router = useRouter();
@@ -22,7 +26,7 @@ function SettingsDialog({ open, onClose }) {
             if (section) {
                 console.log("SettingsDialog - tab param:", section);
                 setActiveSection(section);
-            }else{
+            } else {
                 handleClose();
             }
         }
@@ -76,6 +80,16 @@ function SettingsDialog({ open, onClose }) {
                                 General settings and preferences coming soon...
                             </Typography>
                         </Box>
+                        <ToggleButtonGroup
+                            size="small"
+                            color="primary"
+                            value={themeBackground}
+                            exclusive
+                            onChange={(_, value) => value && handlers.updateBackground(value)}>
+                            <ToggleButton value="white">Light</ToggleButton>
+                            <ToggleButton value="#1a2a3b">Dim</ToggleButton>
+                            <ToggleButton value="black">Dark</ToggleButton>
+                        </ToggleButtonGroup>
                     </Box>
                 );
         }

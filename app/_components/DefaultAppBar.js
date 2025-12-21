@@ -112,8 +112,6 @@ function DefaultAppBar({ children }) {
     const [openSettingsDialog, setOpenSettingsDialog] = React.useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
-    const theme = useTheme();
-    const { themeBackground, handlers } = useThemeConfig();
     const { user, logout } = useUser();
     const { isConnected, isLoading } = useSocket();
 
@@ -204,7 +202,15 @@ function DefaultAppBar({ children }) {
                 </List>
             </Box>
 
-            <Box sx={{ flex: 1, overflowY: 'auto' }}>
+            <Box sx={{
+                flex: 1, overflowY: 'auto',
+                //scrollbarWidth: 'none',   // Firefox
+
+                // Chrome, Edge, Safari
+                //'&::-webkit-scrollbar': {
+                //    display: 'none',
+                //},
+            }}>
                 {desktopOpen && <List sx={{ p: 1, pt: 0 }}>
                     <ListItem
                         onClick={() => setSessionsExpanded(!sessionsExpanded)}
@@ -298,9 +304,9 @@ function DefaultAppBar({ children }) {
     const container = typeof window !== 'undefined' ? () => window.document.body : undefined;
 
     return (
-        <Box sx={{ display: 'flex' }}>
+        <Box sx={{ display: 'flex', height: "100%" }}>
             <CssBaseline />
-            <AppBar component="nav" >
+            <AppBar component="nav" sx={{ background: 'transparent', boxShadow: 'none' }}>
                 <Toolbar>
                     <MuiLink href="/" as={Link} sx={{ display: { xs: 'none', sm: 'flex' }, mr: 1 }} >
                         <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={55} height={55} />
@@ -335,20 +341,22 @@ function DefaultAppBar({ children }) {
                             />
                         </Tooltip>
 
-                        <ToggleButtonGroup
-                            size="small"
-                            color="primary"
-                            value={themeBackground}
-                            exclusive
-                            onChange={(_, value) => value && handlers.updateBackground(value)}>
-                            <ToggleButton value="white">Light</ToggleButton>
-                            <ToggleButton value="#1a2a3b">Dim</ToggleButton>
-                            <ToggleButton value="black">Dark</ToggleButton>
-                        </ToggleButtonGroup>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, }}>
+                            <Typography variant="h6"><Tooltip title="Session Settings">
+                                <IconButton
+                                    size="small"
+                                    onClick={() => router.push('?tab=settings', { scroll: false })}
+                                    sx={{ ml: 'auto' }}
+                                >
+                                    <SettingsIcon />
+                                </IconButton>
+                            </Tooltip> EDIFACTS Assistant</Typography>
+                        </Box>
+
                     </Stack>
 
                     {user !== null ? <Box sx={{ flexGrow: 0 }}>
-                        <Button onClick={handleOpenUserMenu} color="inherit" size='small'>
+                        <Button onClick={handleOpenUserMenu} color="secondary" size='small'>
                             <MoreHorizIcon />
                         </Button>
                         <Popover
@@ -532,10 +540,8 @@ function DefaultAppBar({ children }) {
             </Dialog>
 
             <Box component="main" sx={(theme) => ({
-                my: 2,
                 width: '100%',
             })}>
-                <Toolbar />
                 {children}
             </Box>
 

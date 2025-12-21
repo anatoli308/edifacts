@@ -175,11 +175,11 @@ export async function POST(req) {
     }, { status: 202 }); // 202 Accepted
 
   } catch (err) {
-    console.error('Visualization upload error:', err);
+    console.error('Session upload error:', err);
     return NextResponse.json({ ok: false, error: 'Unexpected error' }, { status: 500 });
   }
 }
 
 export async function GET() {
-  return NextResponse.json({ ok: true, message: 'Visualization upload endpoint' });
+  return NextResponse.json({ ok: true, message: 'Session upload endpoint' });
 }

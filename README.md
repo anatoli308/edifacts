@@ -71,7 +71,7 @@ socketproxy.js             # Socket.IO middleware for authentication
   - Terms of Service acceptance tracking
 
 - **State Management**
-  - React Context API for global state (UserContext, ThemeContext)
+  - React Context API for global state (UserContext, ThemeContext, SocketContext)
   - Custom hooks for reusable logic
   - Session persistence across page reloads
   - Automatic theme synchronization with user settings

@@ -1,6 +1,7 @@
 # EDIFACTS
 
-EDIFACTS is a web application designed to help users read and manage their EDIFACT data easily online.
+EDIFACTS is a web application designed to help users read and manage their EDIFACT data easily online with the help of 
+an AI chat assistant. 
 
 ## Requirements
 - Node.js (version 18 or higher) ideally latest stable version
@@ -96,18 +97,13 @@ socketproxy.js             # Socket.IO middleware for authentication
   - RESTful API design
   - Error handling and validation
   - Settings update endpoints (background mode, etc.)
-  - EDIFACT file parsing and visualization API endpoint
+  - EDIFACT file parsing and analyze API endpoint
   - WebSocket support with Socket.IO for real-time status updates
 
-- **EDIFACT Processing & Visualization**
+- **EDIFACT Processing & analyze**
   - File upload with drag-and-drop support (Upload Tab)
   - Custom text input with a character limit (Custom Tab)
   - Optional standard EDIFACT subset selection (EANCOM, ODETTE, HIPAA, etc.)
-  - Multiple visualization perspectives:
-    - **Segment Tree View**: Technical hierarchical view for EDI experts
-    - **Business View**: User-friendly presentation for stakeholders
-    - **JSON/XML View**: Machine-readable format for developers
-    - **Rule Editor**: Interface for defining custom validation rules
   - File metadata detection (message type, line count, file size)
   - Preview generation from parsed EDIFACT data
   - Backend worker support for heavy parsing operations

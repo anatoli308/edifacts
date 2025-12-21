@@ -11,6 +11,11 @@ const userSchema = mongoose.Schema({
         unique: true,
         trim: true
     },
+    displayName: {
+        type: String,
+        trim: true,
+        default: ""
+    },
     theme: {
         fontColor: {
             type: String,
@@ -74,6 +79,76 @@ const userSchema = mongoose.Schema({
     tosAccepted: {
         type: Boolean,
         default: false
+    },
+    geoData: {
+        query: {
+            type: String,
+            default: ""
+        },
+        timezone: {
+            type: String,
+            default: ""
+        },
+        utcOffset: {
+            type: String,
+            default: ""
+        },
+        asn: {
+            type: String,
+            default: ""
+        },
+        success: {
+            type: Boolean,
+            default: false
+        },
+        lat: {
+            type: String,
+            default: ""
+        },
+        lon: {
+            type: String,
+            default: ""
+        },
+        ipName: {
+            type: String,
+            default: ""
+        },
+        asnName: {
+            type: String,
+            default: ""
+        },
+        continent: {
+            type: String,
+            default: ""
+        },
+        org: {
+            type: String,
+            default: ""
+        },
+        region: {
+            type: String,
+            default: ""
+        },
+        city: {
+            type: String,
+            default: ""
+        },
+        country: {
+            type: String,
+            default: ""
+        },
+        countryCode: {
+            type: String,
+            default: ""
+        },
+        isp: {
+            type: String,
+            default: ""
+        },
+        ipType: {
+            type: String,
+            default: ""
+        },
     },
 }, {
     timestamps: true // Automatisch createdAt und updatedAt

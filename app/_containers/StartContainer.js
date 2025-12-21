@@ -1,18 +1,28 @@
 "use client";
 
 import {
-    Container, Box, Typography, TextField, Badge,
-    Button, Autocomplete, Tabs, Tab, Accordion, AccordionSummary,
-    AccordionDetails, Alert, CircularProgress, Chip, Tooltip
+    Alert,
+    Autocomplete,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CardHeader,
+    Chip,
+    CircularProgress,
+    Container,
+    Tab,
+    Tabs,
+    TextField,
+    Typography
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { useEffect, useRef, useState } from 'react';
 import Dropzone from 'dropzone';
-//import 'dropzone/dist/dropzone.css';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
 //app imports
-import { useUser } from '@/app/_contexts/UserContext';
 import { useSocket } from '@/app/_contexts/SocketContext';
+import { useUser } from '@/app/_contexts/UserContext';
 
 // Disable autoDiscover
 if (typeof window !== 'undefined') {
@@ -37,12 +47,12 @@ const STANDARD_SUBSETS = [
 function StartContainer(props) {
     const { user } = useUser();
     const { socket, isConnected } = useSocket();
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [edifactContent, setEdifactContent] = useState('');
     const [selectedSubset, setSelectedSubset] = useState(null);
     const [showVisualization, setShowVisualization] = useState(false);
-    const [activeTab, setActiveTab] = useState(0);
     const [inputTab, setInputTab] = useState(0); // 0 = Upload, 1 = Custom
-    const [expandedAccordion, setExpandedAccordion] = useState('input');
     const [uploadedFile, setUploadedFile] = useState(null);
     const MAX_CUSTOM_CHARS = 500000; // (~500 KB)
     const customContentRef = useRef('');
@@ -54,6 +64,10 @@ function StartContainer(props) {
     const dropzoneInstance = useRef(null);
     const [currentJobId, setCurrentJobId] = useState(null);
     const [progress, setProgress] = useState({ percent: 0, message: '' });
+    const [messages, setMessages] = useState([]);
+    const [userMessage, setUserMessage] = useState('');
+    const [isAssistantTyping, setIsAssistantTyping] = useState(false);
+    const messagesEndRef = useRef(null);
 
     useEffect(() => {
         if (dropzoneRef.current && !dropzoneInstance.current) {
@@ -100,10 +114,16 @@ function StartContainer(props) {
                 console.log('[Complete]', data);
                 setVisualizationData(data.result);
                 setShowVisualization(true);
-                setExpandedAccordion('results');
-                setActiveTab(0);
                 setIsLoading(false);
                 setProgress({ percent: 100, message: 'Complete!' });
+
+                // Initialize chat with welcome message
+                const welcomeMessage = {
+                    role: 'assistant',
+                    content: `Hi! I'm your EDIFACT AI Assistant. I've analyzed your file "${data.result?.file?.name || 'your file'}". I can help you understand the data, answer questions about segments, or export it in different formats. What would you like to know?`,
+                    timestamp: new Date().toISOString()
+                };
+                setMessages([welcomeMessage]);
             }
         };
 
@@ -127,7 +147,12 @@ function StartContainer(props) {
         };
     }, [socket, isConnected, currentJobId]);
 
-    const handleVisualize = async () => {
+    // Auto-scroll to latest message
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const handleAnalyze = async () => {
         const currentContent = inputTab === 0 ? edifactContent : customContentRef.current;
         if (!currentContent.trim()) return;
         if (!isConnected) {
@@ -162,7 +187,7 @@ function StartContainer(props) {
             });
             const data = await res.json();
             if (!res.ok || !data.ok) {
-                throw new Error(data?.error || 'Failed to visualize');
+                throw new Error(data?.error || 'Failed to analyze EDIFACT data.');
             }
 
             // Got jobId, subscribe to updates
@@ -175,14 +200,6 @@ function StartContainer(props) {
             setError(e.message);
             setIsLoading(false);
         }
-    };
-
-    const handleAccordionChange = (panel) => (event, isExpanded) => {
-        setExpandedAccordion(isExpanded ? panel : false);
-    };
-
-    const handleTabChange = (event, newValue) => {
-        setActiveTab(newValue);
     };
 
     const handleInputTabChange = (event, newValue) => {
@@ -198,6 +215,38 @@ function StartContainer(props) {
         setCustomCount(next.length);
     };
 
+    const handleSendMessage = async () => {
+        if (!userMessage.trim()) return;
+
+        const newUserMessage = {
+            role: 'user',
+            content: userMessage,
+            timestamp: new Date().toISOString()
+        };
+
+        setMessages(prev => [...prev, newUserMessage]);
+        setUserMessage('');
+        setIsAssistantTyping(true);
+
+        // Simulate AI response (replace with actual API call later)
+        setTimeout(() => {
+            const assistantMessage = {
+                role: 'assistant',
+                content: `I received your message: "${userMessage}". This is a placeholder response. In production, I'll analyze your EDIFACT data and provide detailed answers.`,
+                timestamp: new Date().toISOString()
+            };
+            setMessages(prev => [...prev, assistantMessage]);
+            setIsAssistantTyping(false);
+        }, 1500);
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    };
+
     const currentContent = inputTab === 0 ? edifactContent : customContentRef.current;
 
     return (
@@ -208,29 +257,14 @@ function StartContainer(props) {
                 </Typography>
 
                 <Typography variant="body2">
-                    Upload an EDIFACT file to get started. After clicking <strong>Visualize</strong>,
-                    you'll get an interactive view with multiple perspectives of your data:
+                    Select an EDIFACT file to get started. After clicking <strong>Analyze</strong>,
+                    you'll get an interactive AI Assistant to help you explore and understand your EDIFACT data.
                 </Typography>
 
-                <Typography variant="caption" component="div">
-                    <Box component="p" >
-                        📊 <strong>Segment Tree</strong> — technical view for EDI experts
-                    </Box>
-                    <Box component="p" >
-                        💼 <strong>Business View</strong> — for non-technical stakeholders
-                    </Box>
-                    <Box component="p" >
-                        📄 <strong>JSON/XML View</strong> — for developers & integration
-                    </Box>
-                    <Box component="p" >
-                        ⚙️ <strong>Rule Editor</strong> — to define custom validation rules
-                    </Box>
-                </Typography>
-
-                <Box sx={{ my: 2, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                <Box sx={{ my: 1, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
                     <Box>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                            Select a subset for better visualization results
+                            Select a subset for better results
                         </Typography>
                         {error && (
                             <Alert severity="error" sx={{ mb: 2 }}>
@@ -254,23 +288,24 @@ function StartContainer(props) {
                     </Box>
                 </Box>
 
-                <Accordion
-                    expanded={expandedAccordion === 'input'}
-                    onChange={handleAccordionChange('input')}
-                >
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6">📤 Upload EDIFACT File</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
+                <Card sx={{ mt: 2 }}>
+                    <CardHeader title={
+                        <Typography variant="h6">📤 Select your EDIFACT File</Typography>
+                    } />
+                    <CardContent>
                         <Tabs value={inputTab} onChange={handleInputTabChange}
-                            sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
+                            sx={{ mb: 0, borderBottom: 1, borderColor: 'divider' }}
                         >
                             <Tab label="Upload" />
                             <Tab label="Custom" />
                         </Tabs>
 
                         {inputTab === 0 ? (
-                            <Box
+                            <Box sx={{
+                                p: 1, '& .dz-default.dz-message': {
+                                    display: 'none'
+                                }
+                            }}><Box
                                 ref={dropzoneRef}
                                 className="dropzone"
                                 sx={{
@@ -287,29 +322,28 @@ function StartContainer(props) {
                                     '&:hover': {
                                         backgroundColor: 'background.paper',
                                         borderColor: '#999'
-                                    },
-                                    '& .dz-default.dz-message': {
-                                        display: 'none'
                                     }
                                 }}
                             >
-                                <Box sx={{ textAlign: 'center', p: 3 }}>
-                                    <Typography variant="h6" color="textSecondary" gutterBottom>
-                                        📁 Drag & Drop EDIFACT File
-                                    </Typography>
-                                    <Typography variant="body2" color="textSecondary">
-                                        Supported formats: .edi, .edifact, .txt
-                                    </Typography>
-                                    {uploadedFile && (
-                                        <Typography variant="body2" color="primary" sx={{ mt: 2 }}>
-                                            ✓ {uploadedFile.name}
+                                    <Box sx={{ textAlign: 'center', p: 3 }}>
+                                        <Typography variant="h6" color="textSecondary" gutterBottom>
+                                            📁 Drag & Drop EDIFACT File
                                         </Typography>
-                                    )}
+                                        <Typography variant="body2" color="textSecondary">
+                                            Supported formats: .edi, .edifact, .txt
+                                        </Typography>
+                                        {uploadedFile && (
+                                            <Typography variant="body2" color="primary" sx={{ mt: 2 }}>
+                                                ✓ {uploadedFile.name}
+                                            </Typography>
+                                        )}
+                                    </Box>
                                 </Box>
                             </Box>
                         ) : (
                             <Box sx={{
                                 width: '100%',
+                                p:1,
                                 '& .dz-default.dz-message': {
                                     display: 'none'
                                 }
@@ -317,28 +351,22 @@ function StartContainer(props) {
                                 <TextField
                                     fullWidth
                                     multiline
-                                    rows={15}
+                                    rows={14}
                                     defaultValue={customContentRef.current}
                                     onChange={handleCustomChange}
                                     placeholder="Paste your EDIFACT content (max. ~500 KB) here..."
                                     helperText={`${customCount}/${MAX_CUSTOM_CHARS} characters`}
                                     variant="outlined"
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            fontFamily: 'monospace',
-                                            fontSize: '0.875rem'
-                                        }
-                                    }}
                                 />
                             </Box>
                         )}
 
-                        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                        <Box sx={{ display: 'flex', gap: 1, mt: 2, p: 1 }}>
                             <Button
                                 variant="contained"
                                 color="primary"
                                 size="large"
-                                onClick={handleVisualize}
+                                onClick={handleAnalyze}
                                 disabled={!currentContent.trim() || isLoading || !isConnected}
                             >
                                 {isLoading ? (
@@ -347,7 +375,7 @@ function StartContainer(props) {
                                         {progress.percent > 0 ? `${progress.percent}%` : 'Parsing...'}
                                     </Box>
                                 ) : (
-                                    'Visualize'
+                                    'Analyze'
                                 )}
                             </Button>
                             {isLoading && progress.message && (
@@ -359,100 +387,8 @@ function StartContainer(props) {
                                 />
                             )}
                         </Box>
-                    </AccordionDetails>
-                </Accordion>
-
-                {/* Results Accordion */}
-                {showVisualization && (
-                    <Accordion
-                        expanded={expandedAccordion === 'results'}
-                        onChange={handleAccordionChange('results')}
-                    >
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography variant="h6">📊 Visualization Results</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <Box sx={{ width: '100%' }}>
-                                {visualizationData && (
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body2" color="textSecondary">
-                                            File: <strong>{visualizationData.file?.name}</strong> • {visualizationData.file?.size} bytes
-                                        </Typography>
-                                        <Typography variant="body2" color="textSecondary">
-                                            Message Type: <strong>{visualizationData.detected?.messageType || 'Unknown'}</strong>
-                                        </Typography>
-                                        {visualizationData.subset && (
-                                            <Typography variant="body2" color="textSecondary">
-                                                Subset: <strong>{visualizationData.subset?.label}</strong>
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                )}
-                                <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 2 }}>
-                                    <Tab label="Segments" />
-                                    <Tab label="Business" />
-                                    <Tab label="JSON/XML" />
-                                    <Tab label="Rules" />
-                                </Tabs>
-
-                                <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1, minHeight: '400px' }}>
-                                    {activeTab === 0 && (
-                                        <Box>
-                                            <Typography variant="h6">Segment Tree View</Typography>
-                                            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                                Hierarchical view of EDIFACT segments (coming soon)
-                                            </Typography>
-                                        </Box>
-                                    )}
-
-                                    {activeTab === 1 && (
-                                        <Box>
-                                            <Typography variant="h6">Business View</Typography>
-                                            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                                User-friendly view for stakeholders (coming soon)
-                                            </Typography>
-                                        </Box>
-                                    )}
-
-                                    {activeTab === 2 && (
-                                        <Box>
-                                            <Typography variant="h6">JSON/XML View</Typography>
-                                            {visualizationData ? (
-                                                <TextField
-                                                    fullWidth
-                                                    multiline
-                                                    rows={16}
-                                                    value={visualizationData.preview || ''}
-                                                    InputProps={{ readOnly: true }}
-                                                    sx={{
-                                                        mt: 1,
-                                                        '& .MuiOutlinedInput-root': {
-                                                            fontFamily: 'monospace',
-                                                            fontSize: '0.85rem'
-                                                        }
-                                                    }}
-                                                />
-                                            ) : (
-                                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                                    Machine-readable format for developers (coming soon)
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    )}
-
-                                    {activeTab === 3 && (
-                                        <Box>
-                                            <Typography variant="h6">Rule Editor</Typography>
-                                            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                                Define custom validation and transformation rules (coming soon)
-                                            </Typography>
-                                        </Box>
-                                    )}
-                                </Box>
-                            </Box>
-                        </AccordionDetails>
-                    </Accordion>
-                )}
+                    </CardContent>
+                </Card>
             </Box>
         </Container>
     );

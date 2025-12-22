@@ -1,6 +1,5 @@
 'use client';
 
-import { Visibility, VisibilityOff } from '@mui/icons-material';
 import {
     Alert,
     Box,
@@ -11,16 +10,17 @@ import {
     Container,
     IconButton,
     InputAdornment,
-    TextField,
     Link as MuiLink,
+    TextField,
     Typography
 } from '@mui/material';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import Link from 'next/link';
 
 //app imports
+import Iconify from '@/app/_components/Iconify';
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 import { useUser } from '@/app/_contexts/UserContext';
 import { useAlreadyAuthenticatedRoute } from '@/app/_hooks/useAlreadyAuthenticatedRoute';
@@ -125,7 +125,7 @@ function LoginContainer() {
                                                 edge="end"
                                                 disabled={isLoading}
                                             >
-                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                {showPassword ? <Iconify icon="mdi:eye-off" /> : <Iconify icon="mdi:eye" />}
                                             </IconButton>
                                         </InputAdornment>
                                     )

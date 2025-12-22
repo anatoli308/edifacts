@@ -1,49 +1,34 @@
 "use client";
 
-import MenuIcon from '@mui/icons-material/Menu';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import { styled, useTheme } from '@mui/material/styles';
-import { Button, Link as MuiLink, ListSubheader, useMediaQuery } from "@mui/material";
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
-import MuiDrawer from '@mui/material/Drawer';
-import IconButton from '@mui/material/IconButton';
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
-import Stack from '@mui/material/Stack';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Link from 'next/link';
-import * as React from 'react';
-import Avatar from '@mui/material/Avatar';
-import Popover from '@mui/material/Popover';
-import Paper from '@mui/material/Paper';
-import ListItem from '@mui/material/ListItem';
-import Tooltip from '@mui/material/Tooltip';
+import {
+    AppBar, Avatar, Box,
+    Button, Chip, Dialog,
+    Divider,
+    IconButton, List, ListItem, ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    ListSubheader,
+    Drawer as MuiDrawer,
+    Link as MuiLink,
+    Paper,
+    Popover, Stack, Toolbar, Tooltip, Typography,
+    useMediaQuery
+} from "@mui/material";
+import { styled } from '@mui/material/styles';
 import Image from 'next/image';
-import { Chip, ListItemIcon, Dialog, DialogContent, CloseIcon } from '@mui/material';
-import AddchartIcon from '@mui/icons-material/Addchart';
-import SearchIcon from '@mui/icons-material/Search';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import SettingsIcon from '@mui/icons-material/Settings';
-import PaletteIcon from '@mui/icons-material/Palette';
-import LogoutIcon from '@mui/icons-material/Logout';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import * as React from 'react';
 
 //app imports
-import { useUser } from '@/app/_contexts/UserContext';
-import { useSocket } from '@/app/_contexts/SocketContext';
-import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import SettingsDialog from '@/app/_components/SettingsDialog';
+import { useSocket } from '@/app/_contexts/SocketContext';
+import { useUser } from '@/app/_contexts/UserContext';
+import Iconify from '@/app/_components/Iconify';
 
 const drawerWidth = 260;
-const navItems = [{ name: 'New Analysis', link: '/', icon: <AddchartIcon /> },
-{ name: 'Search Session', icon: <SearchIcon />, clickHandler: () => handleSearchSessionClick() },];
+const navItems = [{ name: 'New Analysis', link: '/', icon: <Iconify icon="mdi:chart-line" /> },
+{ name: 'Search Session', icon: <Iconify icon="mdi:magnify" />, clickHandler: () => handleSearchSessionClick() },];
 
 const handleSearchSessionClick = () => {
     // Implement your search session logic here
@@ -120,8 +105,8 @@ function DefaultAppBar({ children }) {
         }
     }, [searchParams]);
 
-    const settings = [{ name: 'Pin Analysis', icon: <PushPinOutlinedIcon />, color: "inherit" },
-    { name: 'Delete', icon: <DeleteOutlineOutlinedIcon />, color: "error" },];
+    const settings = [{ name: 'Pin Session', icon: <Iconify icon="mdi:push-pin-outline" />, color: "inherit" },
+    { name: 'Delete', icon: <Iconify icon="mdi:delete-outline" />, color: "error" },];
 
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);
@@ -206,7 +191,7 @@ function DefaultAppBar({ children }) {
                         )}
                     </MuiLink>
                     <IconButton onClick={handleDesktopDrawerToggle} sx={{ ml: 'auto' }}>
-                        {desktopOpen ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+                        {desktopOpen ? <Iconify icon="mdi:chevron-right" /> : <Iconify icon="mdi:chevron-left" />}
                     </IconButton>
                 </DrawerHeader>
                 <Divider />
@@ -255,7 +240,7 @@ function DefaultAppBar({ children }) {
                         <Typography variant="caption" color='text.disabled'>
                             My Sessions
                         </Typography>
-                        <KeyboardArrowDownIcon
+                        <Iconify
                             className="session-chevron"
                             sx={{
                                 fontSize: 16,
@@ -264,6 +249,7 @@ function DefaultAppBar({ children }) {
                                 transition: 'transform 0.3s, opacity 0.3s',
                                 transform: sessionsExpanded ? 'rotate(0deg)' : 'rotate(-90deg)'
                             }}
+                            icon="mdi:chevron-down"
                         />
                     </ListItem>
                     {sessionsExpanded && [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5,].map((text, index) => (
@@ -288,7 +274,7 @@ function DefaultAppBar({ children }) {
                                         transition: 'opacity 0.2s ease'
                                     }}
                                 >
-                                    <MoreHorizIcon />
+                                    <Iconify icon="mdi:dots-horizontal" />
                                 </IconButton>
                             }>
                             <MuiLink color="inherit" as={Link}
@@ -308,22 +294,22 @@ function DefaultAppBar({ children }) {
                 <List sx={{ p: 0 }}>
                     <ListItem sx={{ p: 0 }}>
                         <Tooltip title={!desktopOpen ? user?.name || 'User' : ''} placement="right">
-                        <ListItemButton
-                            as={Button}
-                            color='inherit'
-                            onClick={(e) => setAnchorElAccount(e.currentTarget)}
-                            sx={{ px: 1, display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-                            <Avatar sx={{ width: 32, height: 32 }}>{user?.name?.[0] || 'U'}</Avatar>
-                            <Box sx={{ minWidth: 0, flex: 1 }}>
-                                <Typography textTransform={"none"} variant="body2" noWrap>{user?.name || 'User'}</Typography>
-                                <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                    sx={{ textTransform: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {user?.email || 'account'}
-                                </Typography>
-                            </Box>
-                        </ListItemButton>
+                            <ListItemButton
+                                as={Button}
+                                color='inherit'
+                                onClick={(e) => setAnchorElAccount(e.currentTarget)}
+                                sx={{ px: 1, display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                                <Avatar sx={{ width: 32, height: 32 }}>{user?.name?.[0] || 'U'}</Avatar>
+                                <Box sx={{ minWidth: 0, flex: 1 }}>
+                                    <Typography textTransform={"none"} variant="body2" noWrap>{user?.name || 'User'}</Typography>
+                                    <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                        sx={{ textTransform: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {user?.email || 'account'}
+                                    </Typography>
+                                </Box>
+                            </ListItemButton>
                         </Tooltip>
                     </ListItem>
                 </List>
@@ -348,7 +334,7 @@ function DefaultAppBar({ children }) {
                         onClick={handleDrawerToggle}
                         sx={{ mr: 2, display: isAbove768 ? 'none' : 'block' }}
                     >
-                        <MenuIcon />
+                        <Iconify icon="mdi:menu" />
                     </IconButton>
 
                     <Stack direction="row" spacing={1} sx={{ flexGrow: 1, alignItems: 'center' }}>
@@ -398,7 +384,7 @@ function DefaultAppBar({ children }) {
                     {user !== null ? <Box sx={{ flexGrow: 0 }}>
                         <Button onClick={handleOpenUserMenu} color="inherit" size='small'>
                             <Typography variant="caption" color="textPrimary" sx={{ display: "flex" }}>
-                                <MoreHorizIcon />
+                                <Iconify icon="mdi:dots-horizontal" />
                             </Typography>
                         </Button>
                         <Popover
@@ -507,7 +493,7 @@ function DefaultAppBar({ children }) {
                                     router.push('?tab=settings', { scroll: false });
                                 }}>
                                 <ListItemIcon sx={{ minWidth: 40 }}>
-                                    <SettingsIcon />
+                                    <Iconify icon="mdi:settings" />
                                 </ListItemIcon>
                                 <ListItemText primary="Settings" />
                             </ListItemButton>
@@ -519,7 +505,7 @@ function DefaultAppBar({ children }) {
                                     router.push('?tab=personalization', { scroll: false });
                                 }}>
                                 <ListItemIcon sx={{ minWidth: 40 }}>
-                                    <PaletteIcon />
+                                    <Iconify icon="mdi:palette" />
                                 </ListItemIcon>
                                 <ListItemText primary="Personalize" />
                             </ListItemButton>
@@ -539,7 +525,7 @@ function DefaultAppBar({ children }) {
                                 sx={{ color: 'error.main' }}
                             >
                                 <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
-                                    <LogoutIcon />
+                                    <Iconify icon="mdi:logout" />
                                 </ListItemIcon>
                                 <ListItemText primary="Logout" />
                             </ListItemButton>

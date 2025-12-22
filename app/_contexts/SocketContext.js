@@ -35,19 +35,12 @@ export function SocketProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(() => readTokenFromCookie());
 
   // derive endpoint
   const endpoint = useMemo(() => {
     const isProd = process.env.NODE_ENV === 'production';
     return isProd ? 'wss://edifacts.com' : 'ws://localhost:3010';
-  }, []);
-
-  useEffect(() => {
-    // read token initially and when it changes (basic cookie poll)
-    const t = readTokenFromCookie();
-    setToken(t);
-    console.log('SocketProvider: read token from cookie', t);
   }, []);
 
   useEffect(() => {

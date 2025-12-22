@@ -1,14 +1,24 @@
 "use client";
 
 import {
-    Dialog, Box, Typography, List, ListItem, ListItemText, ListItemButton,
-    Divider, IconButton, Paper, useMediaQuery, useTheme, Tabs, Tab, ToggleButton, ToggleButtonGroup
+    Box,
+    Dialog,
+    IconButton,
+    List,
+    ListItemButton,
+    ListItemText,
+    Paper,
+    Tab,
+    Tabs,
+    ToggleButton, ToggleButtonGroup,
+    Typography,
+    useMediaQuery, useTheme
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 //app imports
+import Iconify from '@/app/_components/Iconify';
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 
 function SettingsDialog({ open, onClose }) {
@@ -145,7 +155,7 @@ function SettingsDialog({ open, onClose }) {
                             onClick={handleClose}
                             size="small"
                         >
-                            <CloseIcon />
+                            <Iconify icon="mdi:close" />
                         </IconButton>
                     </Paper>
                 ) : (
@@ -160,7 +170,7 @@ function SettingsDialog({ open, onClose }) {
                                 zIndex: 1
                             }}
                         >
-                            <CloseIcon />
+                            <Iconify icon="mdi:close" />
                         </IconButton>
                         <Paper
                             elevation={0}

@@ -1,29 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
+import { Link as MuiLink } from '@mui/material';
 import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import Container from '@mui/material/Container';
-import CircularProgress from '@mui/material/CircularProgress';
-import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
 import Checkbox from '@mui/material/Checkbox';
+import CircularProgress from '@mui/material/CircularProgress';
+import Container from '@mui/material/Container';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import Image from 'next/image';
-import { Link as MuiLink } from '@mui/material';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 //app imports
-import { useUser } from '@/app/_contexts/UserContext';
+import Iconify from '@/app/_components/Iconify';
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
+import { useUser } from '@/app/_contexts/UserContext';
 import { useAlreadyAuthenticatedRoute } from '@/app/_hooks/useAlreadyAuthenticatedRoute';
 
 function RegisterContainer() {
@@ -206,7 +205,7 @@ function RegisterContainer() {
                                                 edge="end"
                                                 disabled={isLoading}
                                             >
-                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                {showPassword ? <Iconify icon="mdi:eye-off" /> : <Iconify icon="mdi:eye" />}
                                             </IconButton>
                                         </InputAdornment>
                                     )
@@ -232,7 +231,7 @@ function RegisterContainer() {
                                                 edge="end"
                                                 disabled={isLoading}
                                             >
-                                                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                                                {showConfirmPassword ? <Iconify icon="mdi:eye-off" /> : <Iconify icon="mdi:eye" />}
                                             </IconButton>
                                         </InputAdornment>
                                     )

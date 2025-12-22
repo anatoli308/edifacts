@@ -19,7 +19,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 //app imports
-import { useSocket } from '@/app/_contexts/SocketContext';
 import { useUser } from '@/app/_contexts/UserContext';
 
 const STANDARD_SUBSETS = [

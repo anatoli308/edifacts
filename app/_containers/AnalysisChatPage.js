@@ -1,22 +1,21 @@
 "use client";
 
-import SendIcon from '@mui/icons-material/Send';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
 import {
     Box,
     Container,
     IconButton, InputAdornment,
+    Link as MuiLink,
     Paper,
     TextField,
-    Typography,
-    Link as MuiLink
+    Typography
 } from '@mui/material';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 
 //app imports
 import ChatMessage from '@/app/_components/ChatMessage';
+import Iconify from '@/app/_components/Iconify';
 
 function AnalysisChatPage(props) {
 
@@ -132,7 +131,7 @@ function AnalysisChatPage(props) {
                                             flexShrink: 0
                                         }}
                                     >
-                                        <SmartToyIcon sx={{ color: 'white', fontSize: 20 }} />
+                                        <Iconify icon="mdi:smart-toy" sx={{ color: 'white', fontSize: 20 }} />
                                     </Box>
                                     <Paper sx={{ p: 2, backgroundColor: 'background.default' }}>
                                         <Typography variant="body2" color="textSecondary">
@@ -164,7 +163,7 @@ function AnalysisChatPage(props) {
                                                 onClick={handleSendMessage}
                                                 disabled={!userMessage.trim() || isAssistantTyping}
                                             >
-                                                <SendIcon />
+                                                <Iconify icon="mdi:send" />
                                             </IconButton>
                                         </InputAdornment>
                                     )

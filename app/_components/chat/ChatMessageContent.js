@@ -7,7 +7,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 
 //app imports
-import Iconify from '@/app/_components/Iconify';
+import Iconify from '@/app/_components/utils/Iconify';
 
 function ChatMessageContent({ content, status }) {
     return (

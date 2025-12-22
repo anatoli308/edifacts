@@ -10,7 +10,7 @@ import {
 import { useState } from 'react';
 
 //app imports
-import Iconify from '@/app/_components/Iconify';
+import Iconify from '@/app/_components/utils/Iconify';
 
 function ChatMessageToolCalls({ toolCalls }) {
     const [expanded, setExpanded] = useState(false);

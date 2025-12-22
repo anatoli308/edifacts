@@ -35,7 +35,7 @@ export function SocketProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
-  const [token, setToken] = useState(() => readTokenFromCookie());
+  const [token] = useState(() => readTokenFromCookie());
 
   // derive endpoint
   const endpoint = useMemo(() => {

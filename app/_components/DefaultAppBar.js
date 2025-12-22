@@ -21,13 +21,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
 
 //app imports
-import SettingsDialog from '@/app/_components/SettingsDialog';
+import SettingsDialog from '@/app/_components/dialog/SettingsDialog';
 import { useSocket } from '@/app/_contexts/SocketContext';
 import { useUser } from '@/app/_contexts/UserContext';
-import Iconify from '@/app/_components/Iconify';
+import Iconify from '@/app/_components/utils/Iconify';
 
 const drawerWidth = 260;
-const navItems = [{ name: 'New Analysis', link: '/', icon: <Iconify icon="mdi:chart-line" /> },
+const navItems = [{ name: 'New Analysis', link: '/', icon: <Iconify icon="carbon:text-link-analysis" /> },
 { name: 'Search Session', icon: <Iconify icon="mdi:magnify" />, clickHandler: () => handleSearchSessionClick() },];
 
 const handleSearchSessionClick = () => {
@@ -105,7 +105,7 @@ function DefaultAppBar({ children }) {
         }
     }, [searchParams]);
 
-    const settings = [{ name: 'Pin Session', icon: <Iconify icon="mdi:push-pin-outline" />, color: "inherit" },
+    const settings = [{ name: 'Pin Session', icon: <Iconify icon="iconoir:pin" />, color: "inherit" },
     { name: 'Delete', icon: <Iconify icon="mdi:delete-outline" />, color: "error" },];
 
     const handleDrawerToggle = () => {

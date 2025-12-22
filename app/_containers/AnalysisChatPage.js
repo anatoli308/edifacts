@@ -14,8 +14,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 //app imports
-import ChatMessage from '@/app/_components/ChatMessage';
-import Iconify from '@/app/_components/Iconify';
+import ChatMessage from '@/app/_components/chat/ChatMessage';
+import Iconify from '@/app/_components/utils/Iconify';
 
 function AnalysisChatPage(props) {
 

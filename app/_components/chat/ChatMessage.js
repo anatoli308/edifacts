@@ -3,11 +3,11 @@ import {
 } from '@mui/material';
 
 //app imports
-import ChatMessageContent from '@/app/_components/ChatMessageContent';
-import ChatMessageFromUser from '@/app/_components/ChatMessageFromUser';
-import ChatMessageReasoning from '@/app/_components/ChatMessageReasoning';
-import ChatMessageSteps from '@/app/_components/ChatMessageSteps';
-import ChatMessageToolCalls from '@/app/_components/ChatMessageToolCalls';
+import ChatMessageContent from '@/app/_components/chat/ChatMessageContent';
+import ChatMessageFromUser from '@/app/_components/chat/ChatMessageFromUser';
+import ChatMessageReasoning from '@/app/_components/chat/ChatMessageReasoning';
+import ChatMessageSteps from '@/app/_components/chat/ChatMessageSteps';
+import ChatMessageToolCalls from '@/app/_components/chat/ChatMessageToolCalls';
 
 function ChatMessage({ message }) {
 

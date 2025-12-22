@@ -20,7 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 //app imports
-import Iconify from '@/app/_components/Iconify';
+import Iconify from '@/app/_components/utils/Iconify';
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 import { useUser } from '@/app/_contexts/UserContext';
 import { useAlreadyAuthenticatedRoute } from '@/app/_hooks/useAlreadyAuthenticatedRoute';

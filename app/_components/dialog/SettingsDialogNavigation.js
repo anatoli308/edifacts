@@ -9,11 +9,10 @@ import {
     Tab,
     Tabs,
     Typography,
-    useMediaQuery,
-    useTheme
 } from '@mui/material';
 
 //app imports
+import { useLayoutConstants } from '@/app/_components/utils/Constants';
 import Iconify from '@/app/_components/utils/Iconify';
 
 function SettingsDialogNavigation({ activeSection, handleSectionChange, handleClose }) {
@@ -22,8 +21,7 @@ function SettingsDialogNavigation({ activeSection, handleSectionChange, handleCl
         { id: 'personalization', label: 'Personalize', icon: '🎨' }
     ];
 
-    const theme = useTheme();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+    const { isSmallScreen } = useLayoutConstants();
 
     if (isSmallScreen) {
         return (

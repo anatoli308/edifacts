@@ -1,17 +1,17 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
-import useMediaQuery from '@mui/material/useMediaQuery';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 // app imports
-import { COLOR_CODES, getColorScheme } from '@/app/theme/colors';
-import { getBackgroundMode } from '@/app/theme/backgroundModes';
+import { useLayoutConstants } from '@/app/_components/utils/Constants';
 import { useUser } from '@/app/_contexts/UserContext';
+import { getBackgroundMode } from '@/app/theme/backgroundModes';
+import { COLOR_CODES, getColorScheme } from '@/app/theme/colors';
 
 const ThemeContext = createContext(undefined);
 
 export function ThemeConfigProvider({ children }) {
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const { prefersDarkMode } = useLayoutConstants();
   const { user } = useUser();
 
   const [themeBackground, setThemeBackground] = useState('white');

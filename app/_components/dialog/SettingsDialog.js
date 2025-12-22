@@ -3,8 +3,6 @@
 import {
     Box,
     Dialog,
-    useMediaQuery,
-    useTheme
 } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -13,13 +11,13 @@ import { useEffect, useState } from 'react';
 import SettingsDialogNavigation from '@/app/_components/dialog/SettingsDialogNavigation';
 import SettingsDialogPersonalization from '@/app/_components/dialog/SettingsDialogPersonalization';
 import SettingsDialogStart from '@/app/_components/dialog/SettingsDialogStart';
+import { useLayoutConstants } from '@/app/_components/utils/Constants';
 
 function SettingsDialog({ open, onClose }) {
     const [activeSection, setActiveSection] = useState('settings');
-    const theme = useTheme();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+    const { isSmallScreen } = useLayoutConstants();
 
     // Handle URL search params changes
     useEffect(() => {

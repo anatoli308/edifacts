@@ -1,5 +1,3 @@
-"use client";
-
 import {
     Box,
     Dialog,
@@ -8,9 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 //app imports
-import SettingsDialogNavigation from '@/app/_components/dialog/SettingsDialogNavigation';
-import SettingsDialogPersonalization from '@/app/_components/dialog/SettingsDialogPersonalization';
-import SettingsDialogStart from '@/app/_components/dialog/SettingsDialogStart';
+import SettingsDialogNavigation from '@/app/_components/dialogs/SettingsDialogNavigation';
+import SettingsDialogPersonalization from '@/app/_components/dialogs/SettingsDialogPersonalization';
+import SettingsDialogStart from '@/app/_components/dialogs/SettingsDialogStart';
 import { useLayoutConstants } from '@/app/_components/utils/Constants';
 
 function SettingsDialog({ open, onClose }) {

@@ -1,5 +1,3 @@
-"use client";
-
 import {
     Box,
     Divider,
@@ -17,7 +15,7 @@ import Link from 'next/link';
 import { useLayoutConstants } from '@/app/_components/utils/Constants';
 import Iconify from '@/app/_components/utils/Iconify';
 
-function EdifactsMobileDrawer({ onToggle, open }) {
+function AppMobileDrawer({ onToggle, open }) {
     const { drawerWidth, isAbove768 } = useLayoutConstants();
     const navItems = [
         { name: 'New Analysis', link: '/', icon: <Iconify icon="carbon:text-link-analysis" /> },
@@ -81,4 +79,4 @@ function EdifactsMobileDrawer({ onToggle, open }) {
     );
 }
 
-export default EdifactsMobileDrawer;
+export default AppMobileDrawer;

@@ -1,77 +1,62 @@
-"use client";
+import * as React from 'react';
 
 import {
-    Avatar, Box,
-    Button, Dialog,
+    Avatar,
+    Box,
     Divider,
-    List, ListItem, ListItemButton,
+    List,
+    ListItem,
+    ListItemButton,
     ListItemIcon,
     ListItemText,
     Paper,
-    Popover, Typography
-} from "@mui/material";
-
-import { useRouter, useSearchParams } from 'next/navigation';
-import * as React from 'react';
+    Popover,
+    Typography,
+    Dialog,
+    Button
+} from '@mui/material';
+import { useRouter } from 'next/navigation';
 
 //app imports
-import SettingsDialog from '@/app/_components/dialog/SettingsDialog';
-import EdifactsDesktopDrawer from '@/app/_components/layout/EdifactsDesktopDrawer';
-import EdifactsMobileDrawer from '@/app/_components/layout/EdifactsMobileDrawer';
-import EdifactsAppBar from '@/app/_components/layout/EdifactsAppBar';
 import Iconify from '@/app/_components/utils/Iconify';
 import { useUser } from '@/app/_contexts/UserContext';
 
-function DefaultAppBar({ children }) {
-    const [mobileOpen, setMobileOpen] = React.useState(false);
-    const [desktopOpen, setDesktopOpen] = React.useState(true);
-    const [anchorElAccount, setAnchorElAccount] = React.useState(null);
-    const [openLogoutDialog, setOpenLogoutDialog] = React.useState(false);
-    const [openSettingsDialog, setOpenSettingsDialog] = React.useState(false);
-    
-    const router = useRouter();
-    const searchParams = useSearchParams();
+function AppOptionsPopover({
+    anchorElAccount,
+    updateAnchorEl
+}) {
+
     const { user, logout } = useUser();
+    const router = useRouter();
+    const [openLogoutDialog, setOpenLogoutDialog] = React.useState(false);
 
-    // Handle settings dialog from URL
-    React.useEffect(() => {
-        const tab = searchParams.get('tab');
-        if (tab) {
-            setOpenSettingsDialog(true);
-        }
-    }, [searchParams]);
+    const open = Boolean(anchorElAccount);
 
-    const handleDrawerToggle = () => {
-        setMobileOpen((prevState) => !prevState);
+    const handleClickSettings = () => {
+        handleClickClose();
+        router.push('?tab=settings', { scroll: false });
     };
 
-    const handleDesktopDrawerToggle = () => {
-        setDesktopOpen((prev) => !prev);
+    const handleClickPersonalize = () => {
+        handleClickClose();
+        router.push('?tab=personalization', { scroll: false });
     };
+
+    const handleClickLogout = () => {
+        handleClickClose();
+        setOpenLogoutDialog(true);
+    };
+
+    const handleClickClose = () => {
+        updateAnchorEl(null);
+    }
 
     return (
-        <Box sx={{ display: 'flex', height: "100%" }}>
-            {/* Top App Bar */}
-            <EdifactsAppBar
-                open={desktopOpen}
-                onToggle={handleDrawerToggle}
-            />
-
-            {/* Desktop mini variant drawer */}
-            {user !== null ? <EdifactsDesktopDrawer
-                open={desktopOpen}
-                onToggle={handleDesktopDrawerToggle}
-                onAccountClick={(e) => setAnchorElAccount(e.currentTarget)}
-            /> : null}
-
-            {/* Mobile temporary drawer */}
-            <EdifactsMobileDrawer onToggle={handleDrawerToggle} open={mobileOpen} />
-
-            {/* Account Popover Menu */}
+        <Box>
             <Popover
                 anchorEl={anchorElAccount}
-                open={Boolean(anchorElAccount)}
-                onClose={() => setAnchorElAccount(null)}
+                open={open}
+                onClose={handleClickClose}
                 anchorOrigin={{
                     vertical: 'bottom',
                     horizontal: 'right',
@@ -82,7 +67,6 @@ function DefaultAppBar({ children }) {
                 }}
             >
                 <Paper sx={{ width: 320 }}>
-                    {/* Account Card */}
                     <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar sx={{ width: 48, height: 48 }}>{user?.name?.[0] || 'U'}</Avatar>
                         <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -98,14 +82,9 @@ function DefaultAppBar({ children }) {
 
                     <Divider />
 
-                    {/* Options */}
                     <List sx={{ py: 0 }}>
                         <ListItem disablePadding>
-                            <ListItemButton
-                                onClick={() => {
-                                    setAnchorElAccount(null);
-                                    router.push('?tab=settings', { scroll: false });
-                                }}>
+                            <ListItemButton onClick={handleClickSettings}>
                                 <ListItemIcon sx={{ minWidth: 40 }}>
                                     <Iconify icon="mdi:settings" />
                                 </ListItemIcon>
@@ -113,11 +92,7 @@ function DefaultAppBar({ children }) {
                             </ListItemButton>
                         </ListItem>
                         <ListItem disablePadding>
-                            <ListItemButton
-                                onClick={() => {
-                                    setAnchorElAccount(null);
-                                    router.push('?tab=personalization', { scroll: false });
-                                }}>
+                            <ListItemButton onClick={handleClickPersonalize}>
                                 <ListItemIcon sx={{ minWidth: 40 }}>
                                     <Iconify icon="mdi:palette" />
                                 </ListItemIcon>
@@ -128,16 +103,9 @@ function DefaultAppBar({ children }) {
 
                     <Divider />
 
-                    {/* Logout */}
                     <List sx={{ py: 0 }}>
                         <ListItem disablePadding>
-                            <ListItemButton
-                                onClick={() => {
-                                    setAnchorElAccount(null);
-                                    setOpenLogoutDialog(true);
-                                }}
-                                sx={{ color: 'error.main' }}
-                            >
+                            <ListItemButton onClick={handleClickLogout} sx={{ color: 'error.main' }}>
                                 <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
                                     <Iconify icon="mdi:logout" />
                                 </ListItemIcon>
@@ -147,7 +115,7 @@ function DefaultAppBar({ children }) {
                     </List>
                 </Paper>
             </Popover>
-
+            
             {/* Logout Confirmation Dialog */}
             <Dialog
                 open={openLogoutDialog}
@@ -166,7 +134,7 @@ function DefaultAppBar({ children }) {
                             color="error"
                             onClick={() => {
                                 setOpenLogoutDialog(false);
-                                setAnchorElAccount(null);
+                                handleClickClose();
                                 logout?.();
                             }}
                         >
@@ -181,22 +149,8 @@ function DefaultAppBar({ children }) {
                     </Box>
                 </Box>
             </Dialog>
-
-            <Box component="main" sx={(theme) => ({
-                width: '100%',
-            })}>
-                {children}
-            </Box>
-
-            {/* Settings Dialog */}
-            <SettingsDialog
-                open={openSettingsDialog}
-                onClose={() => {
-                    setOpenSettingsDialog(false);
-                    router.push('?', { scroll: false });
-                }}
-            />
         </Box>
     );
 }
-export default DefaultAppBar;
+
+export default AppOptionsPopover;

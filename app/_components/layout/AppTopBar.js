@@ -1,5 +1,3 @@
-"use client";
-
 import {
     AppBar,
     Box,
@@ -30,8 +28,11 @@ import { useLayoutConstants } from '@/app/_components/utils/Constants';
 import Iconify from '@/app/_components/utils/Iconify';
 import { useSocket } from '@/app/_contexts/SocketContext';
 import { useUser } from '@/app/_contexts/UserContext';
+import AppMobileDrawer from '@/app/_components/layout/AppMobileDrawer';
 
-function EdifactsAppBar({ open, onToggle }) {
+function AppTopBar({ open }) {
+
+    const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorElUser, setAnchorElUser] = useState(null);
     const router = useRouter();
     const { user } = useUser();
@@ -51,6 +52,10 @@ function EdifactsAppBar({ open, onToggle }) {
         setAnchorElUser(null);
     };
 
+    const handleDrawerToggle = () => {
+        setMobileOpen((prevState) => !prevState);
+    };
+
     return (
         <AppBar component="nav" sx={{ background: 'transparent', boxShadow: 'none' }}>
             <Toolbar>
@@ -63,7 +68,7 @@ function EdifactsAppBar({ open, onToggle }) {
                     color="inherit"
                     aria-label="open drawer"
                     edge="start"
-                    onClick={onToggle}
+                    onClick={handleDrawerToggle}
                     sx={{ mr: 2, display: isAbove768 ? 'none' : 'block' }}
                 >
                     <Iconify icon="mdi:menu" />
@@ -157,8 +162,12 @@ function EdifactsAppBar({ open, onToggle }) {
                     <MuiLink href="/auth/register" as={Link} color="text.primary" underline='none'>Register</MuiLink>
                 </Box>}
             </Toolbar>
+
+            {/* Mobile drawer */}
+            <AppMobileDrawer onToggle={handleDrawerToggle} open={mobileOpen} />
+            
         </AppBar>
     );
 }
 
-export default EdifactsAppBar;
+export default AppTopBar;

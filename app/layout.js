@@ -4,7 +4,7 @@ import Script from 'next/script';
 //app imports
 import Providers from '@/app/_contexts/providers';
 import SplashScreen from '@/app/_components/SplashScreen';
-import EdifactsAppLayout from '@/app/_components/layout/EdifactsAppLayout';
+import AppLayout from '@/app/_components/AppLayout';
 
 const roboto = Roboto({
     weight: ["300", "400", "500", "700"],
@@ -31,9 +31,9 @@ export default function RootLayout({ children }) {
             <body>
                 <Providers>
                     <SplashScreen>
-                        <EdifactsAppLayout>
+                        <AppLayout>
                             {children}
-                        </EdifactsAppLayout>
+                        </AppLayout>
                     </SplashScreen>
                 </Providers>
             </body>

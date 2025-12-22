@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import Dropzone from 'dropzone';

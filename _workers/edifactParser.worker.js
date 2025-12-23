@@ -1,16 +1,15 @@
 import { parentPort } from 'worker_threads';
-import { createReadStream, statSync } from 'fs';
+import { createReadStream, statSync, existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 import readline from 'readline';
 
 parentPort.on('message', async ({ jobId, filePath, subset, fileName }) => {
   try {
     console.log(`[Worker ${jobId}] Starting EDIFACT parsing from: ${filePath}`);
-    
+
     // Get file size for progress calculation
     const fileSize = statSync(filePath).size;
     let bytesRead = 0;
-
     // Create readline interface for streaming
     const rl = readline.createInterface({
       input: createReadStream(filePath),
@@ -21,7 +20,6 @@ parentPort.on('message', async ({ jobId, filePath, subset, fileName }) => {
     const segments = [];
     let lineNumber = 0;
     let lastProgressPercent = 0;
-
     // Stream line by line
     for await (const line of rl) {
       lineNumber++;
@@ -69,17 +67,14 @@ parentPort.on('message', async ({ jobId, filePath, subset, fileName }) => {
     const result = {
       file: { name: fileName || 'parsed.edi', size: fileSize },
       detected: { messageType: messageType || 'Unknown' },
-      stats: { 
-        bytes: fileSize, 
+      stats: {
+        bytes: fileSize,
         lines: lineNumber,
         totalSegments: segments.length,
       },
       subset: subset ? { value: subset, label: subset.toUpperCase() } : null,
       views: {
         segments: { ready: true, count: segments.length },
-        business: { ready: false, note: 'Business view TBD' },
-        jsonXml: { ready: false, note: 'JSON/XML view TBD' },
-        rules: { ready: false, note: 'Rule Editor view TBD' },
       },
       preview: preview.slice(0, 4000),
       segments: segments.slice(0, 5000), // Limit to first 5000 for UI performance
@@ -89,12 +84,12 @@ parentPort.on('message', async ({ jobId, filePath, subset, fileName }) => {
     console.log(`[Worker ${jobId}] Parsing complete: ${segments.length} segments from ${lineNumber} lines`);
 
     // Cleanup: Delete temp file
-    try {
+    /*try {
       await unlink(filePath);
       console.log(`[Worker ${jobId}] Cleaned up temp file: ${filePath}`);
     } catch (cleanupError) {
       console.warn(`[Worker ${jobId}] Failed to cleanup temp file:`, cleanupError.message);
-    }
+    }*/
 
     parentPort.postMessage({
       type: 'complete',

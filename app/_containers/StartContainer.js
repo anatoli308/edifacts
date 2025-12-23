@@ -54,7 +54,7 @@ function StartContainer(props) {
             setError(null);
 
             const formData = new FormData();
-            if (!inputFile) throw new Error('Please provide EDIFACT input first.');
+            if (!inputFile) throw new Error('Please provide a EDIFACT input first.');
             formData.append('file', inputFile);
             if (selectedSubset?.value) {
                 formData.append('subset', selectedSubset.value);
@@ -62,6 +62,7 @@ function StartContainer(props) {
 
             const res = await fetch('/api/generate/session', {
                 method: 'POST',
+                credentials: 'include',
                 body: formData,
             });
             const data = await res.json();
@@ -135,7 +136,7 @@ function StartContainer(props) {
 
                 <Card sx={{ mt: 2 }}>
                     <CardHeader title={
-                        <Typography variant="h6">📤 Select your EDIFACT File</Typography>
+                        <Typography variant="h6">📤 Select your EDIFACT Input</Typography>
                     } />
                     <CardContent>
                         <Tabs value={inputTab} onChange={handleInputTabChange}

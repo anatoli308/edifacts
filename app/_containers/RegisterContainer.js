@@ -28,7 +28,7 @@ import { useAlreadyAuthenticatedRoute } from '@/app/_hooks/useAlreadyAuthenticat
 function RegisterContainer() {
     useAlreadyAuthenticatedRoute('/'); // Redirect to home if already logged in
     const router = useRouter();
-    const { user, login } = useUser();
+    const { login } = useUser();
     const { handlers } = useThemeConfig();
 
     const [formData, setFormData] = useState({

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const analysisMessageSchema = new mongoose.Schema({
+export const analysisMessageSchema = new mongoose.Schema({
     role: {
         type: String,
         enum: ['user', 'assistant', 'system', 'tool'],
@@ -23,5 +23,4 @@ const analysisMessageSchema = new mongoose.Schema({
     timestamps: true // Automatisch createdAt und updatedAt
 });
 
-
-export default mongoose.models.AnalysisMessage || mongoose.model('AnalysisMessage', analysisMessageSchema)
+export default mongoose.models.AnalysisMessage || mongoose.model('AnalysisMessage', analysisMessageSchema);

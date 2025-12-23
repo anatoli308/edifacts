@@ -16,6 +16,10 @@ const userSchema = mongoose.Schema({
         trim: true,
         default: ""
     },
+    isOnline: {
+        type: Boolean,
+        default: false
+    },
     theme: {
         fontColor: {
             type: String,
@@ -37,7 +41,7 @@ const userSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        default: "USER"
+        default: "GUEST"
     },
     email: {
         type: String,

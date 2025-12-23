@@ -1,36 +1,39 @@
 import mongoose from 'mongoose';
-import analysisMessageSchema from '@/app/models/AnalysisMessage.js';
+import { analysisMessageSchema } from '@/app/models/AnalysisMessage.js';
 
 const analysisChatSchema = mongoose.Schema({
     name: {
         type: String,
-        required: true,
         trim: true
     },
 
     creatorId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+        ref: 'User'
     },
 
-    messages: [analysisMessageSchema],
+    isGuestChat: {
+        type: Boolean,
+        default: false
+    },
+
+    messages: {
+        type: [analysisMessageSchema],
+        default: []
+    },
 
     provider: {
         type: String,
         enum: ['openai', 'anthropic', 'vllm'],
-        required: true
     },
 
     model: {
         type: String, // gpt-4.1, llama3, mistral
-        required: true
     },
 
     apiKeyRef: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ApiKey',
-        required: true
     },
 
     personalizedPrompt: {
@@ -48,7 +51,6 @@ const analysisChatSchema = mongoose.Schema({
         edifact: {
             subset: {
                 type: String, // z.B. ODETTE, INVOIC, ORDERS
-                index: true
             },
 
             fileId: {

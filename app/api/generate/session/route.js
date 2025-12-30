@@ -1,5 +1,5 @@
-import { randomUUID } from 'crypto';
 import Busboy from 'busboy';
+import { randomUUID } from 'crypto';
 import { createWriteStream, existsSync } from 'fs';
 import { mkdir } from 'fs/promises';
 import { NextResponse } from 'next/server';
@@ -38,22 +38,9 @@ export async function POST(req) {
       // User-ID kommt von Middleware (bereits verifiziert)
       const authenticatedUser = await getAuthenticatedUser(req);
       console.log('[API] authenticated user:', authenticatedUser);
-
       let token = null;
       if (!authenticatedUser) {
-        // User erstellen
-        const guestName = `${randomUUID()}`;
-        const newUser = new User({
-          name: guestName,
-          email: guestName + '@edifacts.com',
-          password: randomUUID(),
-          tosAccepted: true
-        });
-
-        await newUser.save();
-
-        // Token generieren
-        token = await newUser.generateAuthToken('web');
+        token = await createGuestUser();
       }
 
       if (!contentType.includes('multipart/form-data')) {
@@ -108,10 +95,9 @@ export async function POST(req) {
 
           jobId = chat._id.toString();
           filePath = path.join(UPLOAD_DIR, `${jobId}.edi`);
+          
           const ws = createWriteStream(filePath);
-
           file.on('data', chunk => { size += chunk.length; });
-
           file.pipe(ws);
 
           ws.on('close', () => {
@@ -198,9 +184,9 @@ export async function POST(req) {
 
       busboy.on('finish', () => {
         // handled by ws close event
+        console.log('[API] Busboy finished processing.');
       });
 
-      // <- **RICHTIG HIER: Konvertierung**
       if (!req.body) {
         resolve(NextResponse.json({ ok: false, error: "No body" }, { status: 400 }));
         return;
@@ -211,4 +197,21 @@ export async function POST(req) {
       reject(NextResponse.json({ ok: false, error: 'Unexpected error' }, { status: 500 }));
     }
   });
+}
+
+async function createGuestUser() {
+  const nowAsNumber = Date.now();
+  // User erstellen
+  const guestName = `g_${nowAsNumber}`;
+  const newUser = new User({
+    name: guestName,
+    email: guestName + '@edifacts.com',
+    password: randomUUID(),
+    tosAccepted: true
+  });
+
+  await newUser.save();
+  // Token generieren
+  const token = await newUser.generateAuthToken('web');
+  return token;
 }

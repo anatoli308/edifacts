@@ -29,7 +29,7 @@ function LoginContainer() {
     useAlreadyAuthenticatedRoute('/'); // Redirect to home if already logged in
     const router = useRouter();
     const { login } = useUser();
-    const { handlers } = useThemeConfig();
+    const { restartSplashscreen } = useThemeConfig();
 
     const [formData, setFormData] = useState({
         email: '',
@@ -55,7 +55,7 @@ function LoginContainer() {
 
         try {
             await login(formData.email, formData.password);
-            handlers.restartSplashscreen();
+            restartSplashscreen();
             router.push('/'); // Redirect to home after successful login
         } catch (err) {
             setError(err.message || 'Login failed. Please try again.');

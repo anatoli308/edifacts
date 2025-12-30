@@ -8,11 +8,14 @@ import { useUser } from '@/app/_contexts/UserContext';
 import { getBackgroundMode } from '@/app/theme/backgroundModes';
 import { COLOR_CODES, getColorScheme } from '@/app/theme/colors';
 
+import { useSocket } from '@/app/_contexts/SocketContext';
+
 const ThemeContext = createContext(undefined);
 
 export function ThemeConfigProvider({ children }) {
   const { prefersDarkMode } = useLayoutConstants();
   const { user } = useUser();
+  const { reconnect, disconnect } = useSocket();
 
   const [themeBackground, setThemeBackground] = useState('white');
   const [fontColor, setFontColor] = useState(COLOR_CODES.blue);
@@ -89,6 +92,13 @@ export function ThemeConfigProvider({ children }) {
     }
   };
 
+  const restartSplashscreen = () => {
+    disconnect();
+    reconnect();
+    setSplashTrigger((value) => value + 1);
+    setIsLoaded(true);
+  }
+
   const backgroundMode = getBackgroundMode(themeBackground);
   const colorScheme = getColorScheme(fontColor);
 
@@ -102,15 +112,10 @@ export function ThemeConfigProvider({ children }) {
         colorScheme,
         isLoaded,
         splashTrigger,
-        handlers: {
-          updateFontColor: setFontColor,
-          updateBackground,
-          updateFontSize: setThemeFontSize,
-          restartSplashscreen: () => {
-            setSplashTrigger((value) => value + 1);
-            setIsLoaded(true);
-          },
-        },
+        updateFontColor: setFontColor,
+        updateBackground,
+        updateFontSize: setThemeFontSize,
+        restartSplashscreen
       }}
     >
       {children}

@@ -14,9 +14,10 @@ import Link from 'next/link';
 //app imports
 import { useLayoutConstants } from '@/app/_components/utils/Constants';
 import Iconify from '@/app/_components/utils/Iconify';
+import { DRAWER_WIDTH } from '@/app/_components/utils/Constants';
 
 function AppMobileDrawer({ onToggle, open }) {
-    const { drawerWidth, isAbove768 } = useLayoutConstants();
+    const { isAbove768 } = useLayoutConstants();
     const navItems = [
         { name: 'New Analysis', link: '/', icon: <Iconify icon="carbon:text-link-analysis" /> },
         {
@@ -36,7 +37,7 @@ function AppMobileDrawer({ onToggle, open }) {
             }}
             sx={{
                 display: isAbove768 ? 'none' : 'block',
-                '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH },
             }}
         >
             <Box sx={{ textAlign: 'center' }}>

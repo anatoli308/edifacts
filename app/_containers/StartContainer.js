@@ -21,6 +21,8 @@ import { useState } from 'react';
 import StartSessionFromCustom from '@/app/_components/start/StartSessionFromCustom';
 import StartSessionFromUpload from '@/app/_components/start/StartSessionFromUpload';
 import { useUser } from '@/app/_contexts/UserContext';
+import { useSocket } from '@/app/_contexts/SocketContext';
+import { useThemeConfig } from "@/app/_contexts/ThemeContext";
 
 const STANDARD_SUBSETS = [
     { label: 'ANSI ASC X12', value: 'ansi-asc-x12' },
@@ -38,7 +40,9 @@ const STANDARD_SUBSETS = [
 ];
 
 function StartContainer(props) {
-    const { user } = useUser();
+    const { user, updateGuestCookie, loadUser } = useUser();
+    const { disconnect, reconnect } = useSocket();
+    const { themeBackground } = useThemeConfig();
     const router = useRouter();
     const [selectedSubset, setSelectedSubset] = useState(null);
     const [inputTab, setInputTab] = useState(0); // 0 = Upload, 1 = Custom
@@ -73,6 +77,10 @@ function StartContainer(props) {
             // Got jobId, subscribe to updates
             const jobId = data.jobId;
             console.log('[Job started]', jobId);
+            updateGuestCookie(data.token);
+            disconnect();
+            reconnect();
+            await loadUser();
             router.push(`/a/${jobId}`);
 
         } catch (e) {

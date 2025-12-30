@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 //app imports
 import Iconify from '@/app/_components/utils/Iconify';
 import { useUser } from '@/app/_contexts/UserContext';
+import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 
 function AppOptionsPopover({
     anchorElAccount,
@@ -28,6 +29,7 @@ function AppOptionsPopover({
 
     const { user, logout } = useUser();
     const router = useRouter();
+    const { restartSplashscreen } = useThemeConfig();
     const [openLogoutDialog, setOpenLogoutDialog] = React.useState(false);
 
     const open = Boolean(anchorElAccount);
@@ -136,6 +138,7 @@ function AppOptionsPopover({
                                 setOpenLogoutDialog(false);
                                 handleClickClose();
                                 logout?.();
+                                restartSplashscreen();
                             }}
                         >
                             Logout

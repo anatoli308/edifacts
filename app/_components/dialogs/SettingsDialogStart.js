@@ -1,15 +1,15 @@
 import {
     Box,
-    Typography,
     ToggleButton,
     ToggleButtonGroup,
+    Typography,
 } from '@mui/material';
 
 //app imports
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 
 function SettingsDialogStart() {
-    const { themeBackground, handlers } = useThemeConfig();
+    const { themeBackground, updateBackground } = useThemeConfig();
 
     return (
         <Box sx={{ p: 3 }}>
@@ -24,7 +24,7 @@ function SettingsDialogStart() {
                 color="primary"
                 value={themeBackground}
                 exclusive
-                onChange={(_, value) => value && handlers.updateBackground(value)}>
+                onChange={(_, value) => value && updateBackground(value)}>
                 <ToggleButton value="white">Light</ToggleButton>
                 <ToggleButton value="#1a2a3b">Dim</ToggleButton>
                 <ToggleButton value="black">Dark</ToggleButton>

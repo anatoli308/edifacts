@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+
+import { AUTH_COOKIE_EXPIRY_SECONDS, AUTH_COOKIE_NAME } from '@/app/_components/utils/Constants';
 
 const UserContext = createContext(undefined);
 
@@ -30,7 +32,7 @@ export function UserProvider({ children }) {
             console.log('Error loading user:', err);
             setError(err.message);
             // Clear cookie on error
-            document.cookie = 'authToken=; path=/; max-age=0';
+            document.cookie = `${AUTH_COOKIE_NAME}=; path=/; max-age=0; SameSite=Strict`;
         } finally {
             setIsLoading(false);
         }
@@ -51,15 +53,19 @@ export function UserProvider({ children }) {
         const { user, token } = await response.json();
 
         // Set token in cookie (7 days expiry)
-        document.cookie = `authToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`;
+        document.cookie = `${AUTH_COOKIE_NAME}=${token}; path=/; max-age=${AUTH_COOKIE_EXPIRY_SECONDS}; SameSite=Strict`;
 
         setUser(user);
         return user;
     };
 
+    const updateGuestCookie = (token) => {
+        document.cookie = `${AUTH_COOKIE_NAME}=${token}; path=/; max-age=${AUTH_COOKIE_EXPIRY_SECONDS}; SameSite=Strict`;
+    };
+
     const logout = () => {
         // Clear authentication cookie
-        document.cookie = 'authToken=; path=/; max-age=0';
+        document.cookie = `${AUTH_COOKIE_NAME}=; path=/; max-age=0; SameSite=Strict`;
         setUser(null);
     };
 
@@ -70,7 +76,8 @@ export function UserProvider({ children }) {
             error,
             login,
             logout,
-            refreshUser: loadUser
+            loadUser,
+            updateGuestCookie
         }}>
             {children}
         </UserContext.Provider>

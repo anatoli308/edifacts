@@ -59,12 +59,8 @@ export async function POST(request) {
 
         await user.save();
 
-        // Token generieren
-        const token = await user.generateAuthToken('web');
-
         return NextResponse.json({
-            user: user.toJSON(),
-            token
+            ok: true
         }, { status: 201 });
 
     } catch (error) {

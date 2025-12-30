@@ -16,8 +16,6 @@ export async function proxy(request) {
 
   //if (protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
   if (!token) {
-    console.log('No token');
-
     // API Routes → JSON Response
     if (isApiRoute && !allowedRoutes.includes(request.nextUrl.pathname)) {
       return NextResponse.json(

@@ -24,7 +24,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 //app imports
-import { useLayoutConstants } from '@/app/_components/utils/Constants';
+import { DRAWER_WIDTH, useLayoutConstants } from '@/app/_components/utils/Constants';
 import Iconify from '@/app/_components/utils/Iconify';
 import { useSocket } from '@/app/_contexts/SocketContext';
 import { useUser } from '@/app/_contexts/UserContext';
@@ -37,7 +37,7 @@ function AppTopBar({ open }) {
     const router = useRouter();
     const { user } = useUser();
     const { isConnected, isLoading } = useSocket();
-    const { drawerWidth, isAbove768 } = useLayoutConstants();
+    const { isAbove768 } = useLayoutConstants();
 
     const settings = [
         { name: 'Pin Session', icon: <Iconify icon="iconoir:pin" />, color: "inherit" },
@@ -60,7 +60,7 @@ function AppTopBar({ open }) {
         <AppBar component="nav" sx={{ background: 'transparent', boxShadow: 'none' }}>
             <Toolbar>
                 <MuiLink href="/" as={Link}
-                    sx={{ display: isAbove768 ? 'flex' : 'none', mr: 1, width: user !== null && open ? (drawerWidth - 20) : 45 }} >
+                    sx={{ display: isAbove768 ? 'flex' : 'none', mr: 1, width: user !== null && open ? (DRAWER_WIDTH - 20) : 45 }} >
                     <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={100} height={55} />
                 </MuiLink>
 
@@ -165,7 +165,7 @@ function AppTopBar({ open }) {
 
             {/* Mobile drawer */}
             <AppMobileDrawer onToggle={handleDrawerToggle} open={mobileOpen} />
-            
+
         </AppBar>
     );
 }

@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
+import { readTokenFromCookie, WEB_SOCKET_URL } from '@/app/_components/utils/Constants';
+
 const defaultValue = {
   socket: null,
   isLoading: true,
@@ -8,47 +10,26 @@ const defaultValue = {
   error: null,
   subscribe: () => { },
   unsubscribe: () => { },
-  endpoint: null,
+  disconnect: () => { },
+  reconnect: () => { },
 };
 
 const SocketContext = createContext(defaultValue);
-
-function readTokenFromCookie() {
-  try {
-    if (typeof document === 'undefined') return null;
-    const cookies = document.cookie.split(';').map(s => s.trim());
-    for (const c of cookies) {
-      if (c.startsWith('authToken=')) {
-        return decodeURIComponent(c.substring('authToken='.length));
-      }
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
 
 export function SocketProvider({ children }) {
   const socketRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
-  const [token] = useState(() => readTokenFromCookie());
-
-  // derive endpoint
-  const endpoint = useMemo(() => {
-    const isProd = process.env.NODE_ENV === 'production';
-    return isProd ? 'wss://edifacts.com' : 'ws://localhost:3010';
-  }, []);
 
   useEffect(() => {
     setIsLoading(true);
     setError(null);
 
-    console.log('SocketProvider: connecting to socket at', endpoint, 'with token', token);
-    const socket = io(endpoint, {
+    console.log('SocketProvider: connecting to socket at', WEB_SOCKET_URL, 'with token', readTokenFromCookie());
+    const socket = io(WEB_SOCKET_URL, {
       transports: ['websocket'],
-      auth: token ? { token } : {},
+      auth: readTokenFromCookie() ? { token: readTokenFromCookie() } : {},
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -79,13 +60,24 @@ export function SocketProvider({ children }) {
       try { socket.close(); } catch { }
       socketRef.current = null;
     };
-  }, [endpoint, token]);
+  }, []);
 
   const subscribe = (jobId) => {
     try { socketRef.current?.emit('subscribe', { jobId }); } catch { }
   };
   const unsubscribe = (jobId) => {
     try { socketRef.current?.emit('unsubscribe', { jobId }); } catch { }
+  };
+
+  const disconnect = () => {
+    try { socketRef.current?.disconnect(); } catch { }
+  };
+
+  const reconnect = () => {
+    try {
+      socketRef.current.auth = { token: readTokenFromCookie() };
+      socketRef.current?.connect();
+    } catch { }
   };
 
   const value = useMemo(() => ({
@@ -95,8 +87,9 @@ export function SocketProvider({ children }) {
     error,
     subscribe,
     unsubscribe,
-    endpoint,
-  }), [isLoading, isConnected, error, endpoint]);
+    disconnect,
+    reconnect,
+  }), [isLoading, isConnected, error]);
 
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>

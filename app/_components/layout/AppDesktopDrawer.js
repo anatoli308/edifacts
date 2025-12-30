@@ -23,6 +23,7 @@ import AppOptionsPopover from '@/app/_components/layout/AppOptionsPopover';
 import { useLayoutConstants } from '@/app/_components/utils/Constants';
 import Iconify from '@/app/_components/utils/Iconify';
 import { useUser } from '@/app/_contexts/UserContext';
+import { DRAWER_WIDTH } from '@/app/_components/utils/Constants';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -77,7 +78,7 @@ function AppDesktopDrawer() {
 
     const [anchorElAccount, setAnchorElAccount] = useState(null);
     const [sessionsExpanded, setSessionsExpanded] = useState(true);
-    const { isAbove768, drawerWidth } = useLayoutConstants();
+    const { isAbove768 } = useLayoutConstants();
     const { user } = useUser();
 
     const navItems = [
@@ -94,7 +95,7 @@ function AppDesktopDrawer() {
             <MiniDrawer
                 variant="permanent"
                 open={isDesktopDrawerOpen}
-                drawerwidth={drawerWidth}
+                drawerwidth={DRAWER_WIDTH}
                 sx={{ display: isAbove768 ? 'block' : 'none' }}
             >
                 <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>

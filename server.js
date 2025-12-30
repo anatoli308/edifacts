@@ -27,7 +27,9 @@ app.prepare().then(() => {
 
     // Socket connection handler
     io.on('connection', async socket => {
-        console.log(`Socket connected: ${socket.id}`);
+        const authenticatedUser = socket.authenticatedUser;
+        const anonId = socket.anonId;
+        console.log(`Socket connected: ${socket.id}  => (${authenticatedUser?.name || anonId})`);
 
         // Subscribe to job updates
         socket.on('subscribe', ({ jobId }) => {

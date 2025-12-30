@@ -19,7 +19,6 @@ function ThemeProviderContent({ children }) {
   const {
     backgroundMode,
     colorScheme,
-    handlers,
     isLoaded,
   } = useThemeConfig();
 

@@ -29,16 +29,6 @@ EDIFACTS is a Next.js/React web app for analyzing, explaining, and managing EDIF
   - Core parser, subset detection, and rule engine are always open source.
   - Commercial/enterprise features (audit logs, SAP mapping, advanced roles) are not open source.
 
-## Developer Workflows
-- **Install:** `npm install`
-- **Dev Server:** `npm run dev` (Next.js + custom server on port 3010)
-- **Environment:** Copy `.env.example` to `.env` and fill in secrets.
-- **MongoDB:** Requires running MongoDB instance (local or cloud).
-- **Docker:** `docker-compose.yml` for local dev setup.
-- **Linting:** `npx eslint .`
-- **Hot Reload:** HMR enabled.
-- **Known Issue:** On Windows, run VS Code as admin to avoid Turbopack issues.
-
 ## Project-Specific Conventions
 - **Path Aliases:** Use `@/app/*` (see `jsconfig.json`).
 - **Component Structure:**

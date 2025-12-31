@@ -11,7 +11,40 @@ an AI chat assistant.
 ## Technology Stack
 - Next / React 
 - Material-UI (MUI) 
-- MongoDB / Mongoose 
+- MongoDB / Mongoose
+- Node.js / Express.js
+- WebSocket / Socket.IO
+
+## Installation
+1. Clone the repository:
+   ```bash
+      git clone https://github.com/anatoli308/edifacts
+      cd edifacts
+      npm install
+   ```
+
+4. Set up environment variables:
+   Create a `.env` file in the root directory (look at `.env.example` for reference)
+
+5. Run the development server:
+   ```bash
+     npm run dev
+   ```
+
+6. Build and run for production:
+  - Make sure `NODE_ENV=production` is set in your `.env` file.
+   ```bash
+     npm run build
+     npm start
+   ```
+
+7. Open your browser and navigate to `http://localhost:3010` to access the application.
+
+8. Use inside pm2: (easy optional way for production deployments)
+   ```bash
+      npm install -g pm2
+      pm2 start npm --name edifacts -- run start
+   ```
 
 ## Project Structure
 ```
@@ -141,29 +174,11 @@ socketproxy.js             # Socket.IO middleware for authentication
   - Clean component structure with containers and components
   - Modular and reusable code organization
 
-## Installation
-1. Clone the repository:
-   ```bash
-      git clone https://github.com/anatoli308/edifacts
-      cd edifacts
-      npm install
-   ```
-
-4. Set up environment variables:
-   Create a `.env` file in the root directory (look at `.env.example` for reference)
-
-5. Run the development server:
-   ```bash
-     npm run dev
-   ```
-
-6. Open your browser and navigate to `http://localhost:3010` to access the application.
-
 ## Usage
 WIP
 
 ## Known Issues
-- Start vscode with admin rights to avoid issues with turbopack on Windows.
+- [Windows]: Start vscode with admin rights to avoid issues with turbopack on Windows.
 
 ### Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.

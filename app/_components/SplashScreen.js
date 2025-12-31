@@ -53,7 +53,7 @@ export default function SplashScreen({ children }) {
                             EDIFACTS
                         </Typography>
                         <Typography variant="body1">
-                            {user ? `Welcome back, ${user.name}!` : 'Preparing your personalized experience.'}
+                            {user && user.role === "USER" ? `Welcome back, ${user.name}!` : 'Preparing your personalized experience.'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
                             {socketLoading ? 'Connecting to realtime service…' : 'Realtime service ready'}

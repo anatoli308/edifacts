@@ -4,7 +4,7 @@ import {
 } from '@mui/material';
 
 export const IS_PROD = process.env.NODE_ENV === 'production';
-export const WEB_SOCKET_URL = IS_PROD ? 'wss://edifacts.com' : 'ws://localhost:3010';
+export const WEB_SOCKET_URL = IS_PROD ? 'wss://edifacts.com' : 'ws://localhost:' + (process.env.PORT || '3010');
 
 export const DRAWER_WIDTH = 260;
 

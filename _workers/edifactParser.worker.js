@@ -1,7 +1,6 @@
-import { parentPort } from 'worker_threads';
-import { createReadStream, statSync, existsSync } from 'fs';
-import { unlink } from 'fs/promises';
+import { createReadStream, statSync } from 'fs';
 import readline from 'readline';
+import { parentPort } from 'worker_threads';
 
 parentPort.on('message', async ({ jobId, filePath, subset, fileName }) => {
   try {

@@ -60,7 +60,10 @@ function AppTopBar({ open }) {
         <AppBar component="nav" sx={{ background: 'transparent', boxShadow: 'none' }}>
             <Toolbar>
                 <MuiLink href="/" as={Link}
-                    sx={{ display: isAbove768 ? 'flex' : 'none', mr: 1, width: user !== null && open ? (DRAWER_WIDTH - 20) : 45 }} >
+                    sx={{
+                        display: isAbove768 ? 'flex' : 'none', mr: 1,
+                        width: (user !== null && user.role === "USER") && open ? (DRAWER_WIDTH - 20) : 45
+                    }} >
                     <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={100} height={55} />
                 </MuiLink>
 
@@ -118,7 +121,7 @@ function AppTopBar({ open }) {
 
                 </Stack>
 
-                {user !== null ? <Box sx={{ flexGrow: 0 }}>
+                {user !== null && user.role === "USER" ? <Box sx={{ flexGrow: 0 }}>
                     <Button onClick={handleOpenUserMenu} color="inherit" size='small'>
                         <Typography variant="caption" color="textPrimary" sx={{ display: "flex" }}>
                             <Iconify icon="mdi:dots-horizontal" />

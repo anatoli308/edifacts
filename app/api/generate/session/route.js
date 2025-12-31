@@ -38,10 +38,6 @@ export async function POST(req) {
       // User-ID kommt von Middleware (bereits verifiziert)
       const authenticatedUser = await getAuthenticatedUser(req);
       console.log('[API] authenticated user:', authenticatedUser);
-      let token = null;
-      if (!authenticatedUser) {
-        token = await createGuestUser();
-      }
 
       if (!contentType.includes('multipart/form-data')) {
         resolve(NextResponse.json({ ok: false, error: 'Content-Type must be multipart/form-data' }, { status: 400 }));
@@ -56,12 +52,19 @@ export async function POST(req) {
       let name = null;
       let size = 0;
       let subset = null;
+      let backgroundMode = null;
 
       busboy.on('field', (field, val) => {
         if (field === 'subset') subset = val;
+        if (field === 'backgroundMode') backgroundMode = val;
       });
 
       busboy.on('file', async (fieldname, file, info) => {
+        let token = null;
+        if (!authenticatedUser) {
+          token = await createGuestUser(backgroundMode);
+        }
+        console.log('[API] Starting file upload:', backgroundMode);
         name = info.filename || 'upload.edi';
         const allowedExt = ['.edi', '.edifact', '.txt'];
         const hasAllowedExt = allowedExt.some(ext => name.toLowerCase().endsWith(ext));
@@ -95,7 +98,7 @@ export async function POST(req) {
 
           jobId = chat._id.toString();
           filePath = path.join(UPLOAD_DIR, `${jobId}.edi`);
-          
+
           const ws = createWriteStream(filePath);
           file.on('data', chunk => { size += chunk.length; });
           file.pipe(ws);
@@ -199,7 +202,7 @@ export async function POST(req) {
   });
 }
 
-async function createGuestUser() {
+async function createGuestUser(backgroundMode) {
   const nowAsNumber = Date.now();
   // User erstellen
   const guestName = `g_${nowAsNumber}`;
@@ -207,7 +210,8 @@ async function createGuestUser() {
     name: guestName,
     email: guestName + '@edifacts.com',
     password: randomUUID(),
-    tosAccepted: true
+    tosAccepted: true,
+    theme: { backgroundMode: backgroundMode || 'white' },
   });
 
   await newUser.save();

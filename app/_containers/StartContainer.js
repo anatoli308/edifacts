@@ -64,6 +64,7 @@ function StartContainer(props) {
                 formData.append('subset', selectedSubset.value);
             }
 
+            formData.append('backgroundMode', themeBackground);
             const res = await fetch('/api/generate/session', {
                 method: 'POST',
                 credentials: 'include',
@@ -77,10 +78,12 @@ function StartContainer(props) {
             // Got jobId, subscribe to updates
             const jobId = data.jobId;
             console.log('[Job started]', jobId);
-            updateGuestCookie(data.token);
-            disconnect();
-            reconnect();
-            await loadUser();
+            if (data.token !== null) {
+                updateGuestCookie(data.token);
+                disconnect();
+                reconnect();
+                await loadUser();
+            }
             router.push(`/a/${jobId}`);
 
         } catch (e) {
@@ -107,7 +110,7 @@ function StartContainer(props) {
                 flexDirection: 'column',
             }}>
                 <Typography variant="h4" gutterBottom>
-                    Welcome, {user ? user.name : 'Guest'}!
+                    Welcome, {user && user.role === "USER" ? user.name : 'Guest'}!
                 </Typography>
 
                 <Typography variant="body2">

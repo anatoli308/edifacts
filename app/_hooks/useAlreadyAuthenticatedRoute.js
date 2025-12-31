@@ -17,7 +17,7 @@ export function useAlreadyAuthenticatedRoute(redirectTo = '/') {
 
     useEffect(() => {
         if (redirectedRef.current) return;
-        if (!isLoading && user) {
+        if (!isLoading && user !== null && user.role === "USER") {
             redirectedRef.current = true;
             router.replace(redirectTo);
         }

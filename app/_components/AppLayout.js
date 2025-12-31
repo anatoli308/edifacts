@@ -35,8 +35,7 @@ function AppLayout({ children }) {
             />
 
             {/* Desktop left navigation drawer (with mini variant) */}
-            {user !== null ? <AppDesktopDrawer
-            /> : null}
+            {user !== null && user.role === "USER" && <AppDesktopDrawer />}
 
             <Box component="main" sx={{ width: "100%" }}>
                 {children}

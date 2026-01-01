@@ -1,19 +1,19 @@
 import {
-    Box, Typography, Paper
+    Box,
+    Paper,
+    Typography
 } from '@mui/material';
 
 function ChatMessageFromUser({ content }) {
     return (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Paper
                 sx={{
-                    p: 2,
-                    maxWidth: '70%',
+                    p: 1,
                     backgroundColor: 'primary.main',
-                    color: 'white'
                 }}
             >
-                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                <Typography variant="body1" color='common.white'>
                     {content}
                 </Typography>
             </Paper>

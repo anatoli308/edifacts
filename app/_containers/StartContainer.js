@@ -1,7 +1,6 @@
 "use client";
 
 import {
-    Alert,
     Autocomplete,
     Box,
     Button,
@@ -23,6 +22,7 @@ import StartSessionFromUpload from '@/app/_components/start/StartSessionFromUplo
 import { useUser } from '@/app/_contexts/UserContext';
 import { useSocket } from '@/app/_contexts/SocketContext';
 import { useThemeConfig } from "@/app/_contexts/ThemeContext";
+import { useSnackbar } from '@/app/_contexts/SnackbarContext';
 
 const STANDARD_SUBSETS = [
     { label: 'ANSI ASC X12', value: 'ansi-asc-x12' },
@@ -39,7 +39,7 @@ const STANDARD_SUBSETS = [
     { label: 'VICS', value: 'vics' },
 ];
 
-function StartContainer(props) {
+function StartContainer() {
     const { user, updateGuestCookie, loadUser } = useUser();
     const { disconnect, reconnect } = useSocket();
     const { themeBackground } = useThemeConfig();
@@ -48,14 +48,14 @@ function StartContainer(props) {
     const [inputTab, setInputTab] = useState(0); // 0 = Upload, 1 = Custom
     const [inputFile, setInputFile] = useState(null); // File or Blob provided by child component
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
+    
+    const {pushSnackbarMessage} = useSnackbar();
 
     const handleStartSession = async () => {
         console.log('[Analyze clicked] session starting file size:', inputFile?.size);
 
         try {
             setIsLoading(true);
-            setError(null);
 
             const formData = new FormData();
             if (!inputFile) throw new Error('Please provide a EDIFACT input first.');
@@ -80,14 +80,14 @@ function StartContainer(props) {
             console.log('[Job started]', jobId);
             if (data.token !== null) {
                 updateGuestCookie(data.token);
+                await loadUser();
                 disconnect();
                 reconnect();
-                await loadUser();
             }
             router.push(`/a/${jobId}`);
 
         } catch (e) {
-            setError(e.message);
+            pushSnackbarMessage(e.message || 'Failed to start analysis session.', 'error');
             setIsLoading(false);
         }
     };
@@ -123,11 +123,7 @@ function StartContainer(props) {
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                             Select a subset for better results
                         </Typography>
-                        {error && (
-                            <Alert severity="error" sx={{ mb: 2 }}>
-                                {error}
-                            </Alert>
-                        )}
+
                         <Autocomplete
                             options={STANDARD_SUBSETS}
                             getOptionLabel={(option) => option.label}

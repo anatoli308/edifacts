@@ -1,7 +1,6 @@
 'use client';
 
 import {
-    Alert,
     Box,
     Button,
     Card,
@@ -21,6 +20,7 @@ import { useState } from 'react';
 
 //app imports
 import Iconify from '@/app/_components/utils/Iconify';
+import { useSnackbar } from '@/app/_contexts/SnackbarContext';
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 import { useUser } from '@/app/_contexts/UserContext';
 import { useAlreadyAuthenticatedRoute } from '@/app/_hooks/useAlreadyAuthenticatedRoute';
@@ -30,13 +30,13 @@ function LoginContainer() {
     const router = useRouter();
     const { login } = useUser();
     const { restartSplashscreen } = useThemeConfig();
+    const { pushSnackbarMessage } = useSnackbar();
 
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
     const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const handleChange = (e) => {
@@ -44,13 +44,10 @@ function LoginContainer() {
             ...formData,
             [e.target.name]: e.target.value
         });
-        // Clear error on input change
-        if (error) setError('');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setIsLoading(true);
 
         try {
@@ -58,7 +55,7 @@ function LoginContainer() {
             restartSplashscreen();
             router.push('/'); // Redirect to home after successful login
         } catch (err) {
-            setError(err.message || 'Login failed. Please try again.');
+            pushSnackbarMessage(err.message || 'Login failed. Please try again.', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -84,12 +81,6 @@ function LoginContainer() {
                         <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 4 }}>
                             Sign in to your account to continue
                         </Typography>
-
-                        {error && (
-                            <Alert severity="error" sx={{ mb: 3 }}>
-                                {error}
-                            </Alert>
-                        )}
 
                         <Box component="form" onSubmit={handleSubmit} noValidate>
                             <TextField

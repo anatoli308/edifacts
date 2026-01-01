@@ -9,6 +9,8 @@ import ChatMessageReasoning from '@/app/_components/chat/ChatMessageReasoning';
 import ChatMessageSteps from '@/app/_components/chat/ChatMessageSteps';
 import ChatMessageToolCalls from '@/app/_components/chat/ChatMessageToolCalls';
 
+const display = false;
+
 function ChatMessage({ message }) {
 
     const renderAssistantMessage = () => {
@@ -19,21 +21,21 @@ function ChatMessage({ message }) {
         return (
             <Box sx={{ mb: 2 }}>
                 {/* Reasoning Section */}
-                {content.reasoning && (
+                {display && content.reasoning && (
                     <ChatMessageReasoning
                         reasoning={content.reasoning}
                     />
                 )}
 
                 {/* Steps Section */}
-                {content.steps && content.steps.length > 0 && (
+                {display && content.steps && content.steps.length > 0 && (
                     <ChatMessageSteps
                         steps={content.steps}
                     />
                 )}
 
                 {/* Tool Calls Section */}
-                {content.toolCalls && content.toolCalls.length > 0 && (
+                {display && content.toolCalls && content.toolCalls.length > 0 && (
                     <ChatMessageToolCalls
                         toolCalls={content.toolCalls}
                     />
@@ -42,7 +44,6 @@ function ChatMessage({ message }) {
                 {/* Main Response */}
                 <ChatMessageContent
                     content={content}
-                    status={content.status}
                 />
             </Box>
         );

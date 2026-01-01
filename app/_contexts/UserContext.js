@@ -50,13 +50,10 @@ export function UserProvider({ children }) {
             throw new Error('Login failed');
         }
 
-        const { user, token } = await response.json();
+        const { token } = await response.json();
 
         // Set token in cookie (7 days expiry)
         document.cookie = `${AUTH_COOKIE_NAME}=${token}; path=/; max-age=${AUTH_COOKIE_EXPIRY_SECONDS}; SameSite=Strict`;
-
-        setUser(user);
-        return user;
     };
 
     const updateGuestCookie = (token) => {

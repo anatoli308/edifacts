@@ -22,11 +22,6 @@ const analysisChatSchema = mongoose.Schema({
         default: []
     },
 
-    provider: {
-        type: String,
-        enum: ['openai', 'anthropic', 'vllm'],
-    },
-
     model: {
         type: String, // gpt-4.1, llama3, mistral
     },

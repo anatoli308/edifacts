@@ -19,12 +19,6 @@ const fileSchema = new mongoose.Schema({
         required: true
     },
 
-    filename: {
-        type: String, // intern (uuid)
-        required: true,
-        unique: true
-    },
-
     mimeType: {
         type: String,
         required: true
@@ -47,10 +41,6 @@ const fileSchema = new mongoose.Schema({
         // local: /uploads/2025/01/uuid.pdf
         // cloud: bucket/key
         required: true
-    },
-
-    checksum: {
-        type: String, // sha256
     },
 
     status: {

@@ -11,6 +11,8 @@ import { Worker } from 'worker_threads';
 import { getAuthenticatedUser } from '@/app/lib/auth';
 import AnalysisChat from '@/app/models/AnalysisChat';
 import User from '@/app/models/User';
+import dbConnect from '@/app/lib/dbConnect';
+import File from '@/app/models/File';
 
 const jobs = new Map();
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
@@ -35,10 +37,6 @@ export async function POST(req) {
     try {
       const contentType = req.headers.get('content-type') || '';
 
-      // User-ID kommt von Middleware (bereits verifiziert)
-      const authenticatedUser = await getAuthenticatedUser(req);
-      console.log('[API] authenticated user:', authenticatedUser);
-
       if (!contentType.includes('multipart/form-data')) {
         resolve(NextResponse.json({ ok: false, error: 'Content-Type must be multipart/form-data' }, { status: 400 }));
         return;
@@ -47,9 +45,6 @@ export async function POST(req) {
       if (!existsSync(UPLOAD_DIR)) await mkdir(UPLOAD_DIR, { recursive: true });
 
       const busboy = Busboy({ headers: Object.fromEntries(req.headers) });
-      let jobId = null;
-      let filePath = null;
-      let name = null;
       let size = 0;
       let subset = null;
       let backgroundMode = null;
@@ -59,45 +54,57 @@ export async function POST(req) {
         if (field === 'backgroundMode') backgroundMode = val;
       });
 
-      busboy.on('file', async (fieldname, file, info) => {
-        let token = null;
-        if (!authenticatedUser) {
-          token = await createGuestUser(backgroundMode);
-        }
-        console.log('[API] Starting file upload:', backgroundMode);
-        name = info.filename || 'upload.edi';
-        const allowedExt = ['.edi', '.edifact', '.txt'];
-        const hasAllowedExt = allowedExt.some(ext => name.toLowerCase().endsWith(ext));
-        if (!hasAllowedExt) {
-          file.on('end', () => {
-            console.error('[API] Unsupported file type:', name);
-            resolve(NextResponse.json({ ok: false, error: 'Unsupported file type.' }, { status: 400 }));
-          });
-          file.resume();
-          return;
-        }
-
+      busboy.on('file', async (fieldname, file, fileInfo) => {
         try {
+          // User-ID kommt von Middleware (bereits verifiziert)
+          let authenticatedUser = await getAuthenticatedUser(req);
+          console.log('[API] authenticated user:', authenticatedUser);
+          if (!authenticatedUser) {
+            authenticatedUser = await createGuestUser(backgroundMode);
+          }
+
+          const name = fileInfo.filename || 'upload.edi';
+          const allowedExt = ['.edi', '.edifact', '.txt'];
+          const hasAllowedExt = allowedExt.some(ext => name.toLowerCase().endsWith(ext));
+          if (!hasAllowedExt) {
+            file.on('end', () => {
+              console.error('[API] Unsupported file type:', name);
+              resolve(NextResponse.json({ ok: false, error: 'Unsupported file type.' }, { status: 400 }));
+            });
+            file.resume();
+            return;
+          }
+
+          const newFile = new File({
+            ownerId: authenticatedUser._id,
+            chatId: null,
+            originalName: name,
+            mimeType: fileInfo.mimeType || 'application/octet-stream',
+            size: 0, // wird später aktualisiert
+            path: '', // wird später aktualisiert
+            storage: 'local',
+            status: 'ready',
+          });
+
           const chat = new AnalysisChat({
             name: 'My EDIFACT Analysis',
-            creatorId: null,
-            provider: 'openai',
+            creatorId: authenticatedUser._id,
             model: 'gpt-4.1',
             apiKeyRef: null,
             personalizedPrompt: 'Bitte kurze, technische Zusammenfassungen',
-            promptPreset: 'analyst',
-            domainContext: {
+            promptPreset: 'default',
+            domainContext: { //TODO WIP
               edifact: {
                 subset: 'INVOIC',
-                fileId: null,
+                fileId: newFile._id,
                 version: 'D96A',
                 options: {}
               }
             }
           });
 
-          jobId = chat._id.toString();
-          filePath = path.join(UPLOAD_DIR, `${jobId}.edi`);
+          const jobId = chat._id.toString();
+          const filePath = path.join(UPLOAD_DIR, `${jobId}.edi`);
 
           const ws = createWriteStream(filePath);
           file.on('data', chunk => { size += chunk.length; });
@@ -152,14 +159,13 @@ export async function POST(req) {
               if (global.io) global.io.to(`job:${jobId}`).emit('error', { jobId, error: error.message });
             });
 
-            worker.postMessage({ jobId, filePath, subset, fileName: name });
-
+            worker.postMessage({ chat: chat.toObject(), file: newFile.toObject(), user: authenticatedUser.toObject() });
             resolve(NextResponse.json({
               ok: true,
               jobId,
               file: { name, size },
               message: 'Processing started. Subscribe to job updates via WebSocket.',
-              token,
+              token: authenticatedUser.tokens[authenticatedUser.tokens.length - 1].token,
             }, { status: 202 }));
           });
 
@@ -213,9 +219,9 @@ async function createGuestUser(backgroundMode) {
     tosAccepted: true,
     theme: { backgroundMode: backgroundMode || 'white' },
   });
-
+  await dbConnect();
   await newUser.save();
   // Token generieren
-  const token = await newUser.generateAuthToken('web');
-  return token;
+  await newUser.generateAuthToken('web');
+  return newUser;
 }

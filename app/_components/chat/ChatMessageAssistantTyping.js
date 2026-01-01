@@ -24,7 +24,7 @@ function ChatMessageAssistantTyping() {
             </Box>
             <Paper sx={{ p: 2, backgroundColor: 'background.default' }}>
                 <Typography variant="body2" color="textSecondary">
-                    Typing...
+                    Thinking...
                 </Typography>
             </Paper>
         </Box>

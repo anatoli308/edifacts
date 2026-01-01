@@ -72,10 +72,7 @@ const MiniDrawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'op
     }),
 }));
 
-function AppDesktopDrawer() {
-
-    const [isDesktopDrawerOpen, setDesktopDrawerOpen] = useState(true);
-
+function AppDesktopDrawer({ open, setOpen }) {
     const [anchorElAccount, setAnchorElAccount] = useState(null);
     const [sessionsExpanded, setSessionsExpanded] = useState(true);
     const { isAbove768 } = useLayoutConstants();
@@ -94,7 +91,7 @@ function AppDesktopDrawer() {
         <Box>
             <MiniDrawer
                 variant="permanent"
-                open={isDesktopDrawerOpen}
+                open={open}
                 drawerwidth={DRAWER_WIDTH}
                 sx={{ display: isAbove768 ? 'block' : 'none' }}
             >
@@ -122,21 +119,21 @@ function AppDesktopDrawer() {
                                     </Typography>
                                 )}
                             </MuiLink>
-                            <IconButton onClick={() => setDesktopDrawerOpen(!isDesktopDrawerOpen)} sx={{ ml: 'auto' }}>
-                                {isDesktopDrawerOpen ? <Iconify icon="mdi:chevron-right" /> : <Iconify icon="mdi:chevron-left" />}
+                            <IconButton onClick={() => setOpen(!open)} sx={{ ml: 'auto' }}>
+                                {open ? <Iconify icon="mdi:chevron-right" /> : <Iconify icon="mdi:chevron-left" />}
                             </IconButton>
                         </DrawerHeader>
                         <Divider />
                         <List sx={{ p: 1 }}>
                             {navItems.map((item, index) => (
-                                <Tooltip key={index} title={!isDesktopDrawerOpen ? item.name : ''} placement="right">
+                                <Tooltip key={index} title={!open ? item.name : ''} placement="right">
                                     <MuiLink color="inherit" as={item.link ? Link : Box}
                                         onClick={item.clickHandler ? item.clickHandler : undefined}
                                         href={item.link ? item.link : undefined} underline="none">
                                         <ListItemButton as={Button} color='inherit'>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
                                                 {item.icon}
-                                                {isDesktopDrawerOpen && <ListItemText primary={item.name} />}
+                                                {open && <ListItemText primary={item.name} />}
                                             </Box>
                                         </ListItemButton>
                                     </MuiLink>
@@ -147,7 +144,7 @@ function AppDesktopDrawer() {
 
                     {/* Sessions List */}
                     <Box sx={{ flex: 1, overflowY: 'auto' }}>
-                        {isDesktopDrawerOpen && <List sx={{ p: 1, pt: 0 }}>
+                        {open && <List sx={{ p: 1, pt: 0 }}>
                             <ListItem
                                 onClick={() => setSessionsExpanded(!sessionsExpanded)}
                                 sx={{
@@ -217,7 +214,7 @@ function AppDesktopDrawer() {
                     <Box sx={{ position: 'sticky', bottom: 0, p: 1 }}>
                         <List sx={{ p: 0 }}>
                             <ListItem sx={{ p: 0 }}>
-                                <Tooltip title={!isDesktopDrawerOpen ? user?.name || 'User' : ''} placement="right">
+                                <Tooltip title={!open ? user?.name || 'User' : ''} placement="right">
                                     <ListItemButton
                                         as={Button}
                                         color='inherit'

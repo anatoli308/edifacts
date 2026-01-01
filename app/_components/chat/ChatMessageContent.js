@@ -1,61 +1,73 @@
 import {
     Box,
-    Paper,
+    Button,
     Typography,
-    alpha
+    Tooltip
 } from '@mui/material';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
 //app imports
 import Iconify from '@/app/_components/utils/Iconify';
 
-function ChatMessageContent({ content, status }) {
+const ICON_SIZE = 16;
+const ICON_MIN_WIDTH = 20;
+const ICON_WIDTH = 32;
+
+function ChatMessageContent({ content }) {
+    const [copied, setCopied] = React.useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(content.text || content);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 5000);
+    };
+
     return (
         <>
             {/* Main Response */}
-            <Paper
-                sx={{
-                    p: 2,
-                    backgroundColor: 'background.default',
-                    borderRadius: 1
-                }}
-            >
-                <Box sx={{
-                    '& p': { mt: 0, mb: 1 },
-                    '& p:last-child': { mb: 0 },
-                    '& pre': {
-                        backgroundColor: alpha('#000', 0.05),
-                        p: 1.5,
-                        borderRadius: 1,
-                        overflow: 'auto',
-                        position: 'relative'
-                    },
-                    '& code': {
-                        fontFamily: 'monospace',
-                        fontSize: '0.875rem'
-                    },
-                    '& ul, & ol': { pl: 2, my: 1 },
-                    '& li': { mb: 0.5 },
-                    '& h1, & h2, & h3, & h4, & h5, & h6': {
-                        mt: 2,
-                        mb: 1,
-                        fontWeight: 600
-                    },
-                    '& blockquote': {
-                        borderLeft: '4px solid',
-                        borderColor: 'primary.main',
-                        pl: 2,
-                        ml: 0,
-                        fontStyle: 'italic',
-                        color: 'text.secondary'
-                    }
-                }}>
-                    <ReactMarkdown>{content.text || content}</ReactMarkdown>
-                </Box>
-            </Paper>
+            <ReactMarkdown>{content.text || content}</ReactMarkdown>
+
+            {/* Action Bar */}
+            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                <Tooltip title={copied ? "Copied!" : "Copy"}>
+                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small" onClick={handleCopy}>
+                        {copied ? (
+                            <Iconify icon="ci:check" sx={{ fontSize: ICON_SIZE, color: 'success.main' }} />
+                        ) : (
+                            <Iconify icon="ci:copy" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                        )}
+                    </Button>
+                </Tooltip>
+                <Tooltip title="Good Response">
+                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
+                        <Iconify icon="bi:hand-thumbs-up" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                    </Button>
+                </Tooltip>
+                <Tooltip title="Bad Response">
+                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
+                        <Iconify icon="bi:hand-thumbs-down" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                    </Button>
+                </Tooltip>
+                <Tooltip title="Share Session">
+                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
+                        <Iconify icon="mdi:share-variant" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                    </Button>
+                </Tooltip>
+                <Tooltip title="Try again...">
+                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
+                        <Iconify icon="pajamas:retry" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                    </Button>
+                </Tooltip>
+                <Tooltip title="More actions">
+                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
+                        <Iconify icon="weui:more-filled" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                    </Button>
+                </Tooltip>
+            </Box>
 
             {/* Status Indicator */}
-            {status === 'completed' && (
+            {content.status === 'completed' && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
                     <Iconify icon="mdi:check-circle" sx={{ fontSize: 14, color: 'success.main' }} />
                     <Typography variant="caption" sx={{ color: 'success.main' }}>

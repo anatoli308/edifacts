@@ -1,19 +1,12 @@
 'use client';
 
-import { Link as MuiLink } from '@mui/material';
-import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Checkbox from '@mui/material/Checkbox';
-import CircularProgress from '@mui/material/CircularProgress';
-import Container from '@mui/material/Container';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
+import {
+    Link as MuiLink, Box,
+    Button, Card, CardContent,
+    Checkbox, CircularProgress, Container,
+    FormControlLabel, IconButton, InputAdornment,
+    TextField, Typography
+} from '@mui/material';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -24,12 +17,14 @@ import Iconify from '@/app/_components/utils/Iconify';
 import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 import { useUser } from '@/app/_contexts/UserContext';
 import { useAlreadyAuthenticatedRoute } from '@/app/_hooks/useAlreadyAuthenticatedRoute';
+import { useSnackbar } from '@/app/_contexts/SnackbarContext';
 
 function RegisterContainer() {
     useAlreadyAuthenticatedRoute('/'); // Redirect to home if already logged in
     const router = useRouter();
     const { login } = useUser();
     const { restartSplashscreen } = useThemeConfig();
+    const { pushSnackbarMessage } = useSnackbar();
 
     const [formData, setFormData] = useState({
         name: '',
@@ -40,7 +35,6 @@ function RegisterContainer() {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const handleChange = (e) => {
@@ -49,41 +43,39 @@ function RegisterContainer() {
             ...formData,
             [name]: type === 'checkbox' ? checked : value
         });
-        // Clear error on input change
-        if (error) setError('');
     };
 
     const validateForm = () => {
         if (!formData.name.trim()) {
-            setError('Username is required');
+            pushSnackbarMessage('Username is required', 'error');
             return false;
         }
         if (formData.name.length < 2) {
-            setError('Username must be at least 2 characters');
+            pushSnackbarMessage('Username must be at least 2 characters', 'error');
             return false;
         }
         if (!formData.email.trim()) {
-            setError('Email is required');
+            pushSnackbarMessage('Email is required', 'error');
             return false;
         }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            setError('Please enter a valid email address');
+            pushSnackbarMessage('Please enter a valid email address', 'error');
             return false;
         }
         if (!formData.password) {
-            setError('Password is required');
+            pushSnackbarMessage('Password is required', 'error');
             return false;
         }
         if (formData.password.length < 8) {
-            setError('Password must be at least 8 characters');
+            pushSnackbarMessage('Password must be at least 8 characters', 'error');
             return false;
         }
         if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+            pushSnackbarMessage('Passwords do not match', 'error');
             return false;
         }
         if (!formData.tosAccepted) {
-            setError('You must accept the terms of service');
+            pushSnackbarMessage('You must accept the terms of service', 'error');
             return false;
         }
         return true;
@@ -91,7 +83,6 @@ function RegisterContainer() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
 
         if (!validateForm()) {
             return;
@@ -123,7 +114,7 @@ function RegisterContainer() {
             restartSplashscreen();
             router.push('/'); // Redirect to home
         } catch (err) {
-            setError(err.message || 'Registration failed. Please try again.');
+            pushSnackbarMessage(err.message || 'Registration failed. Please try again.', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -150,12 +141,6 @@ function RegisterContainer() {
                         <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 4 }}>
                             Sign up to start managing your EDIFACT data
                         </Typography>
-
-                        {error && (
-                            <Alert severity="error" sx={{ mb: 3 }}>
-                                {error}
-                            </Alert>
-                        )}
 
                         <Box component="form" onSubmit={handleSubmit} noValidate>
                             <TextField

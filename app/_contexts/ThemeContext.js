@@ -14,7 +14,7 @@ const ThemeContext = createContext(undefined);
 
 export function ThemeConfigProvider({ children }) {
   const { prefersDarkMode } = useLayoutConstants();
-  const { user } = useUser();
+  const { user, loadUser } = useUser();
   const { reconnect, disconnect } = useSocket();
 
   const [themeBackground, setThemeBackground] = useState('white');
@@ -92,7 +92,8 @@ export function ThemeConfigProvider({ children }) {
     }
   };
 
-  const restartSplashscreen = () => {
+  const restartSplashscreen = async () => {
+    await loadUser();
     disconnect();
     reconnect();
     setSplashTrigger((value) => value + 1);

@@ -15,6 +15,7 @@ import { useUser } from '@/app/_contexts/UserContext';
 
 function AppLayout({ children }) {
     const [openSettingsDialog, setOpenSettingsDialog] = React.useState(false);
+    const [isDesktopDrawerOpen, setDesktopDrawerOpen] = React.useState(true);
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -31,11 +32,11 @@ function AppLayout({ children }) {
     return (
         <Box sx={{ display: 'flex', height: "100%" }}>
             <AppTopBar
-                open={true}
+                open={isDesktopDrawerOpen}
             />
 
             {/* Desktop left navigation drawer (with mini variant) */}
-            {user !== null && user.role === "USER" && <AppDesktopDrawer />}
+            {user !== null && user.role === "USER" && <AppDesktopDrawer open={isDesktopDrawerOpen} setOpen={setDesktopDrawerOpen} />}
 
             <Box component="main" sx={{ width: "100%" }}>
                 {children}

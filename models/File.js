@@ -11,7 +11,8 @@ const fileSchema = new mongoose.Schema({
     chatId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'AnalysisChat',
-        index: true
+        index: true,
+        required: true
     },
 
     originalName: {
@@ -26,7 +27,8 @@ const fileSchema = new mongoose.Schema({
 
     size: {
         type: Number, // bytes
-        required: true
+        required: true,
+        default: 0
     },
 
     storage: {

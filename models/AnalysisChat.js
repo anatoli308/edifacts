@@ -4,17 +4,15 @@ import { analysisMessageSchema } from '@/app/models/AnalysisMessage.js';
 const analysisChatSchema = mongoose.Schema({
     name: {
         type: String,
-        trim: true
+        trim: true,
+        required: true
     },
 
     creatorId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    },
-
-    isGuestChat: {
-        type: Boolean,
-        default: false
+        ref: 'User',
+        required: true,
+        index: true
     },
 
     messages: {
@@ -22,13 +20,15 @@ const analysisChatSchema = mongoose.Schema({
         default: []
     },
 
-    model: {
+    selectedModel: {
         type: String, // gpt-4.1, llama3, mistral
+        required: true
     },
 
     apiKeyRef: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ApiKey',
+        required: true
     },
 
     personalizedPrompt: {
@@ -38,7 +38,7 @@ const analysisChatSchema = mongoose.Schema({
 
     promptPreset: {
         type: String,
-        enum: ['default', 'manager', 'business', 'tech', 'analyst', 'creative'],
+        enum: ['default', 'manager', 'business', 'tech', 'analyst'],
         default: 'default'
     },
 

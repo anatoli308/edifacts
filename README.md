@@ -1,5 +1,7 @@
 # EDIFACTS
 
+WIP
+
 EDIFACTS is a web application designed to help users read and manage their EDIFACT data easily online with the help of 
 an AI chat assistant. 
 

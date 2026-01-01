@@ -77,25 +77,17 @@ export async function POST(req) {
 
           const newFile = new File({
             ownerId: authenticatedUser._id,
-            chatId: null,
             originalName: name,
             mimeType: fileInfo.mimeType || 'application/octet-stream',
-            size: 0, // wird später aktualisiert
-            path: '', // wird später aktualisiert
-            storage: 'local',
-            status: 'ready',
           });
 
           const chat = new AnalysisChat({
             name: 'My EDIFACT Analysis',
             creatorId: authenticatedUser._id,
-            model: 'gpt-4.1',
-            apiKeyRef: null,
-            personalizedPrompt: 'Bitte kurze, technische Zusammenfassungen',
-            promptPreset: 'default',
+            selectedModel: 'gpt-4.1',
             domainContext: { //TODO WIP
               edifact: {
-                subset: 'INVOIC',
+                subset: subset,
                 fileId: newFile._id,
                 version: 'D96A',
                 options: {}
@@ -105,14 +97,15 @@ export async function POST(req) {
 
           const jobId = chat._id.toString();
           const filePath = path.join(UPLOAD_DIR, `${jobId}.edi`);
+          newFile.path = filePath;
+          newFile.chatId = chat._id;
 
           const ws = createWriteStream(filePath);
-          file.on('data', chunk => { size += chunk.length; });
+          file.on('data', chunk => { newFile.size += chunk.length; });
           file.pipe(ws);
 
           ws.on('close', () => {
-            console.log(`[API] File saved to: ${filePath} (${size} bytes)`);
-
+            console.log(`[API] File saved to: ${filePath} (${newFile.size} bytes)`);
             const workerPath = path.resolve(process.cwd(), '_workers/edifactParser.worker.js');
             const worker = new Worker(workerPath);
 
@@ -159,11 +152,10 @@ export async function POST(req) {
               if (global.io) global.io.to(`job:${jobId}`).emit('error', { jobId, error: error.message });
             });
 
-            worker.postMessage({ chat: chat.toObject(), file: newFile.toObject(), user: authenticatedUser.toObject() });
+            //worker.postMessage({ chat: chat.toObject(), file: newFile.toObject(), user: authenticatedUser.toObject() });
             resolve(NextResponse.json({
               ok: true,
               jobId,
-              file: { name, size },
               message: 'Processing started. Subscribe to job updates via WebSocket.',
               token: authenticatedUser.tokens[authenticatedUser.tokens.length - 1].token,
             }, { status: 202 }));

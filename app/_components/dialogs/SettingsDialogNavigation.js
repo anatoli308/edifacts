@@ -15,8 +15,8 @@ import Iconify from '@/app/_components/utils/Iconify';
 
 function SettingsDialogNavigation({ activeSection, handleSectionChange, handleClose }) {
     const navigationItems = [
-        { id: 'settings', label: 'Settings', icon: '⚙️' },
-        { id: 'personalization', label: 'Personalize', icon: '🎨' }
+        { id: 'settings', label: 'Settings', icon: <Iconify icon="mdi:cog-outline" sx={{ fontSize: 18, display: "flex", alignItems: "center" }} /> },
+        { id: 'personalization', label: 'Personalize', icon: <Iconify icon="gg:edit-mask" sx={{ fontSize: 18, display: "flex", alignItems: "center" }} /> },
     ];
 
     const { isSmallScreen } = useLayoutConstants();
@@ -43,7 +43,7 @@ function SettingsDialogNavigation({ activeSection, handleSectionChange, handleCl
                             label={
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                     <span>{item.icon}</span>
-                                    <span>{item.label}</span>
+                                    {item.label}
                                 </Box>
                             }
                         />

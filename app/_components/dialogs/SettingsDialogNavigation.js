@@ -12,12 +12,24 @@ import {
 //app imports
 import { useLayoutConstants } from '@/app/_components/utils/Constants';
 import Iconify from '@/app/_components/utils/Iconify';
-
+const navigationItems = [
+    {
+        id: 'settings',
+        label: 'Settings',
+        icon: <Iconify icon="mdi:cog-outline" sx={{ fontSize: 18, display: "flex", alignItems: "center" }} />
+    },
+    {
+        id: 'personalization',
+        label: 'Personalize',
+        icon: <Iconify icon="gg:edit-mask" sx={{ fontSize: 18, display: "flex", alignItems: "center" }} />
+    },
+    {
+        id: 'datacontrol',
+        label: 'Data Control',
+        icon: <Iconify icon="mdi:database-outline" sx={{ fontSize: 18, display: "flex", alignItems: "center" }} />
+    }
+];
 function SettingsDialogNavigation({ activeSection, handleSectionChange, handleClose }) {
-    const navigationItems = [
-        { id: 'settings', label: 'Settings', icon: <Iconify icon="mdi:cog-outline" sx={{ fontSize: 18, display: "flex", alignItems: "center" }} /> },
-        { id: 'personalization', label: 'Personalize', icon: <Iconify icon="gg:edit-mask" sx={{ fontSize: 18, display: "flex", alignItems: "center" }} /> },
-    ];
 
     const { isSmallScreen } = useLayoutConstants();
 

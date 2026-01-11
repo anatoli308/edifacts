@@ -2,16 +2,15 @@ import { createReadStream, statSync } from 'fs';
 import readline from 'readline';
 import { parentPort } from 'worker_threads';
 
-parentPort.on('message', async ({ jobId, filePath, subset, fileName }) => {
+parentPort.on('message', async ({ chat, file, user }) => {
   try {
-    console.log(`[Worker ${jobId}] Starting EDIFACT parsing from: ${filePath}`);
-
+    console.log(`[Worker ${chat._id}] Starting EDIFACT parsing from: '${file.path}' for user: ${user._id}`);
     // Get file size for progress calculation
-    const fileSize = statSync(filePath).size;
+    const fileSize = statSync(file.path).size;
     let bytesRead = 0;
     // Create readline interface for streaming
     const rl = readline.createInterface({
-      input: createReadStream(filePath),
+      input: createReadStream(file.path),
       crlfDelay: Infinity,
     });
 
@@ -51,7 +50,7 @@ parentPort.on('message', async ({ jobId, filePath, subset, fileName }) => {
           lastProgressPercent = percent;
           parentPort.postMessage({
             type: 'progress',
-            jobId,
+            chatId: chat._id,
             percent,
             message: `Parsed ${lineNumber.toLocaleString()} lines, ${segments.length.toLocaleString()} segments`,
           });
@@ -64,14 +63,14 @@ parentPort.on('message', async ({ jobId, filePath, subset, fileName }) => {
 
     // Build result - only return first 5000 segments to UI (prevents memory issues)
     const result = {
-      file: { name: fileName || 'parsed.edi', size: fileSize },
+      file: { name: file.originalName || 'upload.edi', size: fileSize },
       detected: { messageType: messageType || 'Unknown' },
       stats: {
         bytes: fileSize,
         lines: lineNumber,
         totalSegments: segments.length,
       },
-      subset: subset ? { value: subset, label: subset.toUpperCase() } : null,
+      subset: chat.domainContext.edifact.subset,
       views: {
         segments: { ready: true, count: segments.length },
       },
@@ -80,26 +79,26 @@ parentPort.on('message', async ({ jobId, filePath, subset, fileName }) => {
       segmentsTruncated: segments.length > 5000,
     };
 
-    console.log(`[Worker ${jobId}] Parsing complete: ${segments.length} segments from ${lineNumber} lines`);
+    console.log(`[Worker ${chat._id}] Parsing complete: ${segments.length} segments from ${lineNumber} lines`);
 
-    // Cleanup: Delete temp file
+    // Cleanup: Delete file
     /*try {
       await unlink(filePath);
-      console.log(`[Worker ${jobId}] Cleaned up temp file: ${filePath}`);
+      console.log(`[Worker ${chat._id}] Cleaned up temp file: ${filePath}`);
     } catch (cleanupError) {
-      console.warn(`[Worker ${jobId}] Failed to cleanup temp file:`, cleanupError.message);
+      console.warn(`[Worker ${chat._id}] Failed to cleanup temp file:`, cleanupError.message);
     }*/
 
     parentPort.postMessage({
       type: 'complete',
-      jobId,
+      chatId: chat._id,
       result,
     });
   } catch (error) {
-    console.error(`[Worker ${jobId}] Error:`, error);
+    console.error(`[Worker ${chat._id}] Error:`, error);
     parentPort.postMessage({
       type: 'error',
-      jobId,
+      chatId: chat._id,
       error: error.message,
     });
   }

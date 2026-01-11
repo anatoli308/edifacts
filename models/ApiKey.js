@@ -28,7 +28,10 @@ const apiKeySchema = new mongoose.Schema({
 
   models: [String], // z.B. ['gpt-4.1', 'llama3']
 
-  isDefault: Boolean,
+  isDefault: {
+    type: Boolean,
+    default: false
+  },
 
 }, { timestamps: true });
 

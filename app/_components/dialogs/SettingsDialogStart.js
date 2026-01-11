@@ -3,12 +3,8 @@ import {
     Box,
     Divider,
     FormControlLabel,
-    MenuItem,
-    Pagination,
     Radio,
     RadioGroup,
-    Select,
-    TextField,
     ToggleButton,
     ToggleButtonGroup,
     Typography
@@ -16,8 +12,8 @@ import {
 import { useState } from 'react';
 
 //app imports
-import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 import Iconify from '@/app/_components/utils/Iconify';
+import { useThemeConfig } from '@/app/_contexts/ThemeContext';
 
 function BpRadio(props) {
     return (
@@ -33,8 +29,8 @@ function BpRadio(props) {
                 <Avatar
                     alt="color"
                     sx={{ bgcolor: props.value, width: 32, height: 32 }}
-                    src="/logo/broken.png"
-                />
+                    
+                >O</Avatar>
             }
             {...props}
         />

@@ -35,7 +35,7 @@ const socketAuth = async (socket, next) => {
     // analog zu req.userId / req.token → jetzt direkt am Socket speichern
     socket.userId = data.payload._id;
     socket.token = token;
-    console.log("Socket authenticated for user:", socket.userId);
+    console.log("Socket authenticated for user-ID:", socket.userId);
     
     next();
   } catch (error) {

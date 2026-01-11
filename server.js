@@ -6,9 +6,20 @@ import { Server } from "socket.io";
 
 import socketAuth from "./socketproxy.js";
 
+import dbConnect from "./lib/dbConnect.js";
+import User from "./models/User.js";
+
 const app = next({ dev: process.env.NODE_ENV !== "production" });
 const handler = app.getRequestHandler(app);
 const PORT = process.env.PORT || 3010;
+
+async function getAuthenticatedUser(userId, token) {
+    if (!userId) return null;
+    await dbConnect();
+    const user = await User.findOne({ _id: userId, "tokens.token": token });
+    if (!user || user.banned) return null;
+    return user;
+}
 
 app.prepare().then(() => {
     const expressApp = express();
@@ -27,9 +38,12 @@ app.prepare().then(() => {
 
     // Socket connection handler
     io.on('connection', async socket => {
-        const authenticatedUserId = socket.authenticatedUser;
-        const anonId = socket.anonId;
-        console.log(`Socket connected: ${socket.id}  => (${authenticatedUserId || anonId})`);
+        const authenticatedUser = await getAuthenticatedUser(socket.userId, socket.token);
+        if (authenticatedUser) {
+            authenticatedUser.isOnline = true;
+            await authenticatedUser.save();
+        }
+        console.log(`Socket connected: ${socket.id}  => (${authenticatedUser?._id || "unknown"})`);
 
         // Subscribe to job updates
         socket.on('subscribe', ({ jobId }) => {
@@ -70,16 +84,11 @@ app.prepare().then(() => {
     server.listen(PORT);
 });
 
-function handleDisconnect(socket) {
-    const authenticatedUser = socket.authenticatedUser;
-    const anonId = socket.anonId;
-
-    console.log(`Socket disconnected: ${socket.id} => (${authenticatedUser?.name || anonId})`);
-
-    /*if (authenticatedUser !== undefined && authenticatedUser !== null) {
-      authenticatedUser.isUserOnline = false;
-      authenticatedUser.save();
+async function handleDisconnect(socket) {
+    const authenticatedUser = await getAuthenticatedUser(socket.userId, socket.token);
+    if (authenticatedUser) {
+        authenticatedUser.isOnline = false;
+        await authenticatedUser.save();
     }
-
-    this.matchmakingQueue.delete(socket.id);*/
+    console.log(`Socket disconnected: ${socket.id} => (${authenticatedUser?._id || "unknown"})`);
 }

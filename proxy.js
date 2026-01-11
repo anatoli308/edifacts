@@ -12,7 +12,7 @@ export async function proxy(request) {
   const isApiRoute = request.nextUrl.pathname.startsWith('/api');
 
   console.log('Middleware check for path:', request.nextUrl.pathname);
-  console.log('Auth token:', token ? 'Present' : 'Absent');
+  console.log('REST Auth token:', token ? 'Present' : 'Absent');
 
   //if (protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
   if (!token) {

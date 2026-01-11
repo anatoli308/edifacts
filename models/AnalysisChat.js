@@ -97,5 +97,15 @@ const analysisChatSchema = mongoose.Schema({
 }, {
     timestamps: true // Automatisch createdAt und updatedAt
 });
-
+analysisChatSchema.set('toJSON', {
+    transform: (doc, ret) => {
+        ret._id = ret._id.toString();
+        if (ret.creatorId) ret.creatorId = ret.creatorId.toString();
+        if (ret.apiKeyRef) ret.apiKeyRef = ret.apiKeyRef.toString();
+        if (ret.domainContext?.edifact?.fileId) {
+            ret.domainContext.edifact.fileId = ret.domainContext.edifact.fileId.toString();
+        }
+        return ret;
+    }
+});
 export default mongoose.models.AnalysisChat || mongoose.model('AnalysisChat', analysisChatSchema)

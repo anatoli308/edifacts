@@ -159,12 +159,18 @@ const userSchema = mongoose.Schema({
 })
 
 // Password nicht in JSON responses zurückgeben
-userSchema.methods.toJSON = function () {
-    const user = this.toObject();
-    delete user.password;
-    delete user.tokens;
-    return user;
-};
+userSchema.set('toJSON', {
+    transform: (doc, ret) => {
+        // ObjectIds zu Strings
+        ret._id = ret._id.toString();
+        
+        // Sensitive Felder entfernen
+        delete ret.password;
+        delete ret.tokens;
+        
+        return ret;
+    }
+});
 
 userSchema.pre('save', async function () {
     // Hash the password before saving the user model

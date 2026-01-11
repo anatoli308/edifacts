@@ -48,8 +48,8 @@ function StartContainer() {
     const [inputTab, setInputTab] = useState(0); // 0 = Upload, 1 = Custom
     const [inputFile, setInputFile] = useState(null); // File or Blob provided by child component
     const [isLoading, setIsLoading] = useState(false);
-    
-    const {pushSnackbarMessage} = useSnackbar();
+
+    const { pushSnackbarMessage } = useSnackbar();
 
     const handleStartSession = async () => {
         console.log('[Analyze clicked] session starting file size:', inputFile?.size);
@@ -70,15 +70,24 @@ function StartContainer() {
                 credentials: 'include',
                 body: formData,
             });
-            const data = await res.json();
-            if (!res.ok || !data.ok) {
-                throw new Error(data?.error || 'Failed to analyze EDIFACT data.');
+
+            if (!res.ok) {
+                let errorData = {};
+                try {
+                    errorData = await res.json();
+                } catch (jsonError) {
+                    // Falls JSON Parsing fehlschlägt, nutze Status und Text
+                    console.log('[Parse Error]', jsonError);
+                    errorData = { error: `Server error: ${res.status} ${res.statusText}` };
+                }
+                throw new Error(errorData?.error || 'Failed to start analysis session.');
             }
+            const data = await res.json();
 
             // Got jobId, subscribe to updates
             const jobId = data.jobId;
             console.log('[Job started]', jobId);
-            if (data.token !== null) {
+            if (data.token !== null && user == null) {
                 updateGuestCookie(data.token);
                 await loadUser();
                 disconnect();

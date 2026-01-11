@@ -45,7 +45,6 @@ export async function POST(req) {
       if (!existsSync(UPLOAD_DIR)) await mkdir(UPLOAD_DIR, { recursive: true });
 
       const busboy = Busboy({ headers: Object.fromEntries(req.headers) });
-      let size = 0;
       let subset = null;
       let backgroundMode = null;
 
@@ -58,7 +57,7 @@ export async function POST(req) {
         try {
           // User-ID kommt von Middleware (bereits verifiziert)
           let authenticatedUser = await getAuthenticatedUser(req);
-          console.log('[API] authenticated user:', authenticatedUser);
+          console.log('[API] authenticated user:', authenticatedUser ? authenticatedUser._id.toString() : 'unknown');
           if (!authenticatedUser) {
             authenticatedUser = await createGuestUser(backgroundMode);
           }
@@ -79,11 +78,12 @@ export async function POST(req) {
             ownerId: authenticatedUser._id,
             originalName: name,
             mimeType: fileInfo.mimeType || 'application/octet-stream',
+            metadata: {}
           });
 
           const chat = new AnalysisChat({
             name: 'My EDIFACT Analysis',
-            creatorId: authenticatedUser._id,
+            creatorId: authenticatedUser._id.toString(),
             selectedModel: 'gpt-4.1',
             domainContext: { //TODO WIP
               edifact: {
@@ -104,61 +104,82 @@ export async function POST(req) {
           file.on('data', chunk => { newFile.size += chunk.length; });
           file.pipe(ws);
 
-          ws.on('close', () => {
-            console.log(`[API] File saved to: ${filePath} (${newFile.size} bytes)`);
-            const workerPath = path.resolve(process.cwd(), '_workers/edifactParser.worker.js');
-            const worker = new Worker(workerPath);
+          ws.on('close', async () => {
+            try {
+              console.log(`[API] File saved to: ${filePath} (${newFile.size} bytes)`);
+              const workerPath = path.resolve(process.cwd(), '_workers/edifactParser.worker.js');
+              const worker = new Worker(workerPath);
 
-            jobs.set(jobId, {
-              jobId,
-              status: 'processing',
-              worker,
-              filePath,
-              startedAt: new Date(),
-            });
+              jobs.set(jobId, {
+                jobId,
+                status: 'processing',
+                worker,
+                filePath,
+                startedAt: new Date(),
+              });
 
-            worker.on('message', (msg) => {
-              console.log(`[API] Message from worker for job ${jobId}:`, msg);
-              if (msg.type === 'progress' && global.io) {
-                global.io.to(`job:${jobId}`).emit('progress', { jobId, percent: msg.percent, message: msg.message });
-              }
-              if (msg.type === 'complete') {
-                const job = jobs.get(jobId);
-                if (job) {
-                  job.status = 'complete';
-                  job.result = msg.result;
-                  job.completedAt = new Date();
+              worker.on('message', async (msg) => {
+                console.log(`[API] Message from worker for job ${jobId}:`, msg);
+                if (msg.type === 'progress' && global.io) {
+                  global.io.to(`job:${jobId}`).emit('progress', { jobId, percent: msg.percent, message: msg.message });
                 }
-                if (global.io) global.io.to(`job:${jobId}`).emit('complete', { jobId, result: msg.result });
-                worker.terminate();
-              }
-              if (msg.type === 'error') {
+                else if (msg.type === 'complete') {
+                  const job = jobs.get(jobId);
+                  if (job) {
+                    job.status = 'complete';
+                    job.result = msg.result;
+                    newFile.status = 'complete';
+                    await newFile.save();
+                    job.completedAt = new Date();
+                  }
+                  if (global.io) global.io.to(`job:${jobId}`).emit('complete', { jobId, result: msg.result });
+                  worker.terminate();
+                }
+                else if (msg.type === 'error') {
+                  const job = jobs.get(jobId);
+                  if (job) {
+                    job.status = 'error';
+                    job.error = msg.error;
+                    newFile.status = 'error';
+                    newFile.metadata.error = msg.error;
+                    await newFile.save();
+                  }
+                  if (global.io) global.io.to(`job:${jobId}`).emit('error', { jobId, error: msg.error });
+                  worker.terminate();
+                } else {
+                  console.warn(`[API] Unknown message type from worker for job ${jobId}:`, msg);
+                }
+              });
+
+              worker.on('error', async (error) => {
                 const job = jobs.get(jobId);
                 if (job) {
                   job.status = 'error';
-                  job.error = msg.error;
+                  job.error = error.message;
+                  newFile.status = 'error';
+                  newFile.metadata.error = error.message;
+                  await newFile.save();
                 }
-                if (global.io) global.io.to(`job:${jobId}`).emit('error', { jobId, error: msg.error });
-                worker.terminate();
-              }
-            });
+                if (global.io) global.io.to(`job:${jobId}`).emit('error', { jobId, error: error.message });
+              });
 
-            worker.on('error', (error) => {
-              const job = jobs.get(jobId);
-              if (job) {
-                job.status = 'error';
-                job.error = error.message;
-              }
-              if (global.io) global.io.to(`job:${jobId}`).emit('error', { jobId, error: error.message });
-            });
-
-            //worker.postMessage({ chat: chat.toObject(), file: newFile.toObject(), user: authenticatedUser.toObject() });
-            resolve(NextResponse.json({
-              ok: true,
-              jobId,
-              message: 'Processing started. Subscribe to job updates via WebSocket.',
-              token: authenticatedUser.tokens[authenticatedUser.tokens.length - 1].token,
-            }, { status: 202 }));
+              newFile.status = 'processing';
+              await newFile.save();
+              await chat.save();
+              worker.postMessage({ chat: chat.toJSON(), file: newFile.toJSON(), user: authenticatedUser.toJSON() });
+              resolve(NextResponse.json({
+                ok: true,
+                jobId,
+                message: 'Processing started. Subscribe to job updates via WebSocket.',
+                token: authenticatedUser.tokens[authenticatedUser.tokens.length - 1].token,
+              }, { status: 202 }));
+            } catch (err) {
+              console.error('[API] Error during file close:', err.message);
+              newFile.status = 'error';
+              newFile.metadata.error = err.message;
+              await newFile.save();
+              reject(NextResponse.json({ ok: false, error: err.message }, { status: 500 }));
+            }
           });
 
           ws.on('error', (err) => {
@@ -211,7 +232,6 @@ async function createGuestUser(backgroundMode) {
     tosAccepted: true,
     theme: { backgroundMode: backgroundMode || 'white' },
   });
-  await dbConnect();
   await newUser.save();
   // Token generieren
   await newUser.generateAuthToken('web');

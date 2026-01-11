@@ -47,13 +47,13 @@ const fileSchema = new mongoose.Schema({
 
     status: {
         type: String,
-        enum: ['uploaded', 'processing', 'ready', 'error'],
+        enum: ['uploaded', 'processing', 'complete', 'error'],
         default: 'uploaded'
     },
 
     metadata: {
-        type: Object,
-        default: {}
+        error: String,
+        // weitere Felder je nach Bedarf
     }
 }, {
     timestamps: true // Automatisch createdAt und updatedAt

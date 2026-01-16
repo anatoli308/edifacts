@@ -26,12 +26,7 @@ const apiKeySchema = new mongoose.Schema({
 
   baseUrl: String, // für vLLM / OpenAI compatible APIs
 
-  models: [String], // z.B. ['gpt-4.1', 'llama3']
-
-  isDefault: {
-    type: Boolean,
-    default: false
-  },
+  _models: [String], // z.B. ['gpt-4.1', 'llama3']
 
 }, { timestamps: true });
 

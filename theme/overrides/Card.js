@@ -29,10 +29,10 @@ export default function Card(theme) {
     MuiCardContent: {
       styleOverrides: {
         root: {
-          padding: theme.spacing(0),
-          "&&:last-child": {
+          //padding: theme.spacing(0),
+          /*"&&:last-child": {
             paddingBottom: 0
-          }
+          }*/
         },
       },
     },

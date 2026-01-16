@@ -18,7 +18,22 @@ export const analysisMessageSchema = new mongoose.Schema({
     metadata: {
         type: Object,
         default: {}
-    }
+    },
+    agentPlan: {
+        type: Object,
+        default: null
+    },
+    toolCalls: [{
+        tool: String,
+        arguments: Object,
+        timestamp: Date
+    }],
+    toolResults: [{
+        tool: String,
+        result: Object,
+        success: Boolean,
+        duration_ms: Number
+    }]
 }, {
     timestamps: true // Automatisch createdAt und updatedAt
 });

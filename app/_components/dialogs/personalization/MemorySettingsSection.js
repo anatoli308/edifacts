@@ -9,6 +9,7 @@ const MemorySettingsSection = () => {
 
     return (
         <Box sx={{ mt: 4 }}>
+
             <SectionRow sx={{ alignItems: 'center', gap: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography variant="subtitle1">Memory Settings</Typography>
@@ -18,7 +19,9 @@ const MemorySettingsSection = () => {
                 </Box>
                 <Button size="small" variant="outlined">Edit</Button>
             </SectionRow>
+
             <Divider sx={{ my: 1 }} />
+            
             <SectionRow sx={{ mb: 1 }}>
                 <Box>
                     <Typography variant="body2">Consider chat history</Typography>
@@ -32,6 +35,7 @@ const MemorySettingsSection = () => {
                     sx={{ m: 0 }}
                 />
             </SectionRow>
+            
             <SectionRow sx={{ mb: 2 }}>
                 <Box>
                     <Typography variant="body2">Consider saved memories</Typography>

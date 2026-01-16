@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 //app imports
 import dbConnect from '@/app/lib/dbConnect';
-import User from '@/app/models/User';
+import User from '@/app/models/shared/User';
 
 export async function POST(request) {
     try {

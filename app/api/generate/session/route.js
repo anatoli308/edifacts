@@ -9,10 +9,10 @@ import { Worker } from 'worker_threads';
 
 //app imports
 import { getAuthenticatedUser } from '@/app/lib/auth';
-import AnalysisChat from '@/app/models/AnalysisChat';
-import User from '@/app/models/User';
+import AnalysisChat from '@/app/models/edifact/AnalysisChat';
+import User from '@/app/models/shared/User';
 import dbConnect from '@/app/lib/dbConnect';
-import File from '@/app/models/File';
+import File from '@/app/models/shared/File';
 
 const jobs = new Map();
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');

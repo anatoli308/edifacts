@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { analysisMessageSchema } from '@/app/models/AnalysisMessage.js';
+import { analysisMessageSchema } from '@/app/models/edifact/AnalysisMessage.js';
 
 const analysisChatSchema = mongoose.Schema({
     name: {

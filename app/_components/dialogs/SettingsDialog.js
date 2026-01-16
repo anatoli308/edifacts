@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import SettingsDialogNavigation from '@/app/_components/dialogs/SettingsDialogNavigation';
 import SettingsDialogPersonalization from '@/app/_components/dialogs/SettingsDialogPersonalization';
 import SettingsDialogStart from '@/app/_components/dialogs/SettingsDialogStart';
+import SettingsDialogDataControl from '@/app/_components/dialogs/SettingsDialogDataControl';
 import { useLayoutConstants } from '@/app/_components/utils/Constants';
 
 function SettingsDialog({ open, onClose }) {
@@ -22,7 +23,7 @@ function SettingsDialog({ open, onClose }) {
         if (open) {
             const section = searchParams.get('tab');
             if (section) {
-                console.log("SettingsDialog - tab param:", section);
+                //console.log("SettingsDialog - tab param:", section);
                 setActiveSection(section);
             } else {
                 handleClose();
@@ -44,6 +45,8 @@ function SettingsDialog({ open, onClose }) {
         switch (activeSection) {
             case 'personalization':
                 return <SettingsDialogPersonalization />;
+            case 'datacontrol':
+                return <SettingsDialogDataControl />;
             case 'settings':
             default:
                 return <SettingsDialogStart />;

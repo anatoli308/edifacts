@@ -39,12 +39,22 @@ const STANDARD_SUBSETS = [
     { label: 'VICS', value: 'vics' },
 ];
 
+const MESSAGETYPE_FOCUS_OPTIONS = [
+    { label: 'Orders', value: 'ORDERS' },
+    { label: 'Invoices', value: 'INVOIC' },
+    { label: 'Despatch Advice', value: 'DESADV' },
+    { label: 'Purchase Orders', value: 'ORDERS' },
+    { label: 'Shipping Notices', value: 'DESADV' },
+    { label: 'Customs Declarations', value: 'CUSDEC' },
+];
+
 function StartContainer() {
     const { user, updateGuestCookie, loadUser } = useUser();
     const { disconnect, reconnect } = useSocket();
     const { themeBackground } = useThemeConfig();
     const router = useRouter();
     const [selectedSubset, setSelectedSubset] = useState(null);
+    const [selectedMessageTypeFocus, setSelectedMessageTypeFocus] = useState(null);
     const [inputTab, setInputTab] = useState(0); // 0 = Upload, 1 = Custom
     const [inputFile, setInputFile] = useState(null); // File or Blob provided by child component
     const [isLoading, setIsLoading] = useState(false);
@@ -127,10 +137,10 @@ function StartContainer() {
                     you'll get an interactive AI Assistant to help you explore and understand your EDIFACT data.
                 </Typography>
 
-                <Box sx={{ my: 1, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                <Box sx={{ my: 1, display: 'flex', gap: 2, alignItems: 'flex-start', justifyContent: 'space-between' }}>
                     <Box>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                            Select a subset for better results
+                            Standard Subset (optional)
                         </Typography>
 
                         <Autocomplete
@@ -142,8 +152,26 @@ function StartContainer() {
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
-                                    label="Standard Subset (optional)"
                                     placeholder="Search subsets..."
+                                />
+                            )}
+                        />
+                    </Box>
+                    <Box>
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                            Message Type Focus (optional)
+                        </Typography>
+
+                        <Autocomplete
+                            options={MESSAGETYPE_FOCUS_OPTIONS}
+                            getOptionLabel={(option) => option.label}
+                            value={selectedMessageTypeFocus}
+                            onChange={(event, newValue) => setSelectedMessageTypeFocus(newValue)}
+                            sx={{ minWidth: 300 }}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder="Search message types..."
                                 />
                             )}
                         />

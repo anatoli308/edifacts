@@ -5,7 +5,7 @@ const PersonalizedBehaviorInput = () => {
     const [value, setValue] = useState('');
 
     return (
-        <Box sx={{ mb: 2 }}>
+        <Box>
             <Typography variant="body2" sx={{ mb: 1 }}>Personalized Behavior</Typography>
             <TextField
                 fullWidth

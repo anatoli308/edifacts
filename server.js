@@ -7,7 +7,35 @@ import { Server } from "socket.io";
 import socketAuth from "./socketproxy.js";
 
 import dbConnect from "./lib/dbConnect.js";
-import User from "./models/User.js";
+import User from "./models/shared/User.js";
+
+/*2. Socket Events für Agent Updates ⚠️Fehlt: Socket event handlers für Agents
+// server.js - Aktuell nur:
+socket.on('subscribe', ({ jobId }) => { ... });
+
+// FEHLT: Agent-spezifische Events
+socket.on('agent:invoke', async (agentRequest) => {
+  // 1. Start
+  socket.emit('agent:started', { agentName, timestamp });
+  
+  // 2. während Execution
+  socket.emit('agent:step', { stepName, result });
+  socket.emit('agent:tool_call', { tool, args });
+  socket.emit('agent:tool_result', { tool, result });
+  
+WAS DU FÜR STREAMING BRAUCHST:
+  Option B: WebSocket (komplexer, aber besser)
+  // 3. Final
+  socket.emit('agent:completed', { finalResult });
+  socket.emit('agent:invoke', agentRequest);
+socket.on('agent:step', (step) => { ... });
+socket.on('agent:chunk', (chunk) => { ... });
+
+// Backend (server.js)
+socket.on('agent:invoke', async (request) => {
+  socket.emit('agent:started', { ... });
+  // ...
+});*/
 
 const app = next({ dev: process.env.NODE_ENV !== "production" });
 const handler = app.getRequestHandler(app);

@@ -62,7 +62,11 @@ function AppTopBar({ open }) {
                 <MuiLink href="/" as={Link}
                     sx={{
                         display: isAbove768 ? 'flex' : 'none', mr: 1,
-                        width: (user !== null && user.role === "USER") && open ? (DRAWER_WIDTH - 20) : 45
+                        width: (user !== null && user.role === "USER") && open ? (DRAWER_WIDTH - 20) : 45,
+                        '& img': {
+                            width: '100%',
+                            height: 'auto'
+                        }
                     }} >
                     <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={100} height={55} />
                 </MuiLink>

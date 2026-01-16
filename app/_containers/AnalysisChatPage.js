@@ -1,5 +1,36 @@
 "use client";
+/*3. Frontend Streaming Handler ⚠️
+// app/_containers/AnalysisChatPage.js - Aktuell:
+// Placeholder responses nur
 
+// FEHLT: Real Streaming Handler
+const handleSendMessage = async (userMessage) => {
+  // SSE/EventSource für HTTP Streaming
+  const eventSource = new EventSource('/api/agents?...');
+  
+  eventSource.onmessage = (event) => {
+    const chunk = JSON.parse(event.data);
+    
+    if (chunk.type === 'agent:start') {
+      // Agent started
+    } else if (chunk.type === 'agent:step') {
+      // Show planning step
+    } else if (chunk.type === 'tool_call') {
+      // Show tool being called
+    } else if (chunk.type === 'tool_result') {
+      // Show tool result
+    } else if (chunk.type === 'response_chunk') {
+      // Add to message text progressively
+      setMessages(prev => {
+        const lastMsg = prev[prev.length - 1];
+        return [...prev.slice(0, -1), {
+          ...lastMsg,
+          content: lastMsg.content + chunk.data
+        }];
+      });
+    }
+  };
+};*/
 import {
     Box,
     Container

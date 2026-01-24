@@ -352,6 +352,19 @@ EDIFACTS is designed to scale from EDIFACT to any domain (Twitter, ERP, DevOps, 
 - **Socket.IO:** via `server.js` and `socketproxy.js`.
 - **EDIFACT Parsing:** via backend workers in `_workers/`.
 
+## Socket.IO Events & Streaming
+- **Agent inbound:** `agent:invoke`, `agent:status`, `agent:cancel` (requires authenticated socket where available).
+- **Agent outbound:** `agent:started`, `agent:plan`, `agent:step`, `agent:tool_call`, `agent:tool_result`, `agent:observation`, `response:chunk`, `agent:completed`, `agent:failed`, `agent:status_response`, `agent:status_error`, `agent:cancelled`, `agent:cancel_error`.
+- **Jobs inbound:** `subscribe`, `unsubscribe` (joins/leaves `job:{jobId}`).
+- **Jobs outbound:** `subscribed`, `unsubscribed`.
+- **Disconnect/Errors:** UI should re-attach subscriptions after reconnect, surface `agent:failed`/`agent:status_error`/`agent:cancel_error` in notifications, and gate duplicate invokes while an execution is in-flight; backpressure is socket-level only (no queuing), so debounce rapid `agent:invoke` from the client.
+
+## Client Hooks for Streaming
+- **useSocket:** Always access the Socket.IO client via `useSocket` from the context; no Direktzugriff auf `io()` in UI-Komponenten.
+- **useAgentStreaming:** Nutze diesen Hook pro Session/Chat für Agent-Streams: er registriert alle Agent-Events (started/plan/step/tool_call/tool_result/response:chunk/completed/failed) und liefert `{ sendAgentMessage, getCurrentMessage, currentAgentState, isStreaming }`.
+- **Aufrufmuster:** UI triggert `sendAgentMessage(userMessage, agentType='Router', context)` und liest `currentAgentState`/`getCurrentMessage()` für Live-Updates; Status-/Fehler-UI stützt sich auf die Events aus dem Hook statt eigenen Listenern.
+- **Reconnect/Resubscribe:** Bei Disconnect setzt der Socket-Context `isConnected` zurück; UI sollte Streams schließen/disable senden, bis `isConnected` wieder true ist, und Jobs/Subscriptions erneut anmelden (über `subscribe`/`unsubscribe` im Context, nicht direkt auf `socket`).
+
 ## Workflow: AnalysisChat (End-to-End)
 This workflow powers the core chat and analysis experience:
 Requirements: User is authenticated; EDIFACT file is uploaded/selected. An API key is provided (BYO-Key) or managed vLLM is enabled.

@@ -81,14 +81,6 @@ parentPort.on('message', async ({ chat, file, user }) => {
 
     console.log(`[Worker ${chat._id}] Parsing complete: ${segments.length} segments from ${lineNumber} lines`);
 
-    // Cleanup: Delete file
-    /*try {
-      await unlink(filePath);
-      console.log(`[Worker ${chat._id}] Cleaned up temp file: ${filePath}`);
-    } catch (cleanupError) {
-      console.warn(`[Worker ${chat._id}] Failed to cleanup temp file:`, cleanupError.message);
-    }*/
-
     parentPort.postMessage({
       type: 'complete',
       chatId: chat._id,

@@ -9,33 +9,9 @@ import socketAuth from "./socketproxy.js";
 import dbConnect from "./lib/dbConnect.js";
 import User from "./models/shared/User.js";
 
-/*2. Socket Events für Agent Updates ⚠️Fehlt: Socket event handlers für Agents
-// server.js - Aktuell nur:
-socket.on('subscribe', ({ jobId }) => { ... });
-
-// FEHLT: Agent-spezifische Events
-socket.on('agent:invoke', async (agentRequest) => {
-  // 1. Start
-  socket.emit('agent:started', { agentName, timestamp });
-  
-  // 2. während Execution
-  socket.emit('agent:step', { stepName, result });
-  socket.emit('agent:tool_call', { tool, args });
-  socket.emit('agent:tool_result', { tool, result });
-  
-WAS DU FÜR STREAMING BRAUCHST:
-  Option B: WebSocket (komplexer, aber besser)
-  // 3. Final
-  socket.emit('agent:completed', { finalResult });
-  socket.emit('agent:invoke', agentRequest);
-socket.on('agent:step', (step) => { ... });
-socket.on('agent:chunk', (chunk) => { ... });
-
-// Backend (server.js)
-socket.on('agent:invoke', async (request) => {
-  socket.emit('agent:started', { ... });
-  // ...
-});*/
+// Socket.IO event handlers
+import { registerAgentHandlers } from "./lib/socket/handlers/agentHandlers.js";
+import { registerJobHandlers } from "./lib/socket/handlers/jobHandlers.js";
 
 const app = next({ dev: process.env.NODE_ENV !== "production" });
 const handler = app.getRequestHandler(app);
@@ -73,30 +49,12 @@ app.prepare().then(() => {
         }
         console.log(`Socket connected: ${socket.id}  => (${authenticatedUser?._id || "unknown"})`);
 
-        // Subscribe to job updates
-        socket.on('subscribe', ({ jobId }) => {
-            if (!jobId) {
-                console.warn(`[Socket ${socket.id}] Subscribe failed: missing jobId`);
-                return;
-            }
-            console.log(`[Socket ${socket.id}] Subscribing to job: ${jobId}`);
-            socket.join(`job:${jobId}`);
-            socket.emit('subscribed', { jobId });
-        });
-
-        // Unsubscribe from job updates
-        socket.on('unsubscribe', ({ jobId }) => {
-            if (!jobId) {
-                console.warn(`[Socket ${socket.id}] Unsubscribe failed: missing jobId`);
-                return;
-            }
-            console.log(`[Socket ${socket.id}] Unsubscribing from job: ${jobId}`);
-            socket.leave(`job:${jobId}`);
-            socket.emit('unsubscribed', { jobId });
-        });
+        // Register event handlers
+        registerJobHandlers(socket, authenticatedUser);
+        registerAgentHandlers(socket, authenticatedUser);
 
         // Socket event listeners
-        socket.on('disconnect', () => handleDisconnect(socket));
+        socket.on('disconnect', () => handleDisconnect(socket, authenticatedUser));
     });
 
     // Express configuration
@@ -112,8 +70,7 @@ app.prepare().then(() => {
     server.listen(PORT);
 });
 
-async function handleDisconnect(socket) {
-    const authenticatedUser = await getAuthenticatedUser(socket.userId, socket.token);
+async function handleDisconnect(socket, authenticatedUser) {
     if (authenticatedUser) {
         authenticatedUser.isOnline = false;
         await authenticatedUser.save();

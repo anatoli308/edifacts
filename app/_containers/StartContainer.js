@@ -73,6 +73,9 @@ function StartContainer() {
             if (selectedSubset?.value) {
                 formData.append('subset', selectedSubset.value);
             }
+            if (selectedMessageTypeFocus?.value) {
+                formData.append('subsetVersion', selectedMessageTypeFocus.value);
+            }
 
             formData.append('backgroundMode', themeBackground);
             const res = await fetch('/api/generate/session', {
@@ -86,7 +89,7 @@ function StartContainer() {
                 try {
                     errorData = await res.json();
                 } catch (jsonError) {
-                    // Falls JSON Parsing fehlschlägt, nutze Status und Text
+                    // Falls JSON Parsing fehlschlägt, nutze Status und Text (e.g Status 500 Internal Server Error)
                     console.log('[Parse Error]', jsonError);
                     errorData = { error: `Server error: ${res.status} ${res.statusText}` };
                 }
@@ -135,6 +138,7 @@ function StartContainer() {
                 <Typography variant="body2">
                     Select an EDIFACT file to get started. After clicking <strong>Analyze</strong>,
                     you'll get an interactive AI Assistant to help you explore and understand your EDIFACT data.
+                    Upload a file or enter custom EDIFACT data below.
                 </Typography>
 
                 <Box sx={{ my: 1, display: 'flex', gap: 2, alignItems: 'flex-start', justifyContent: 'space-between' }}>

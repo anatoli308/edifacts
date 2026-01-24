@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Box, MenuItem, Select, Typography } from '@mui/material';
 import SectionRow from './SectionRow';
-
+//TODO - NOT USED MAYBE NEED LATER siehe InlinePreferenceSelect
 const LanguageSection = () => {
     const [language, setLanguage] = useState('automatic');
     const options = [

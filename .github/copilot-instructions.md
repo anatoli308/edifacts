@@ -45,7 +45,8 @@ Synthesizer → Final Answer
   - `app/` (Next.js App Router): Feature-based pages, API routes, UI components.
   - `models/`, `lib/`, `theme/`, `public/`, `uploads/`, `server.js`: See README for details.
 - **State Management:**
-  - React Contexts in `_contexts/` for user, theme, socket. Custom hooks in `_hooks/` for auth/session.
+  - React Contexts in `_contexts/` for user, theme, socket. 
+  - React hooks in `_hooks/` for auth/session and other utilities.
 - **Authentication:**
   - JWT in HTTP-only cookies (SameSite=Strict). Middleware (`proxy.js`, `socketproxy.js`) for HTTP and WebSocket auth. Max 2 device tokens per user.
 - **Theming:**
@@ -392,9 +393,9 @@ Requirements: User is authenticated; EDIFACT file is uploaded/selected. An API k
 Introduce agentic architecture **incrementally** to minimize risk and maintain stability:
 
 ### Phase 1 (MVP – Planner Only)
-- [ ] Implement Provider Adapter abstraction in `lib/ai/providers/` (universal tool contract).
-- [ ] Build Router Agent: intent classification (simple heuristics or few-shot prompting).
-- [ ] Build Planner Agent: decompose user goal into task tree (HTN-inspired, JSON output).
+- [X] Implement Provider Adapter abstraction in `lib/ai/providers/` (universal tool contract).
+- [X] Build Router Agent: intent classification (simple heuristics or few-shot prompting).
+- [X] Build Planner Agent: decompose user goal into task tree (HTN-inspired, JSON output).
 - [ ] Persist agent plan in `AnalysisChat` model as `agentPlan` field.
 - [ ] **Fast path for simple queries:** Skip agent pipeline; use direct Explanation Engine.
 - [ ] Test: Unit tests for planner outputs; E2E tests for multi-turn conversations.

@@ -3,9 +3,7 @@ import mongoose from 'mongoose';
 const apiKeySchema = new mongoose.Schema({
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    index: true
+    ref: 'User'
   },
 
   provider: {
@@ -26,7 +24,7 @@ const apiKeySchema = new mongoose.Schema({
 
   baseUrl: String, // für vLLM / OpenAI compatible APIs
 
-  _models: [String], // z.B. ['gpt-4.1', 'llama3']
+  models: [String], // z.B. ['gpt-4.1', 'llama3']
 
 }, { timestamps: true });
 

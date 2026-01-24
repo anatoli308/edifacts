@@ -14,6 +14,7 @@
     "test:run": "vitest run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@iconify/react": "^6.0.2",
@@ -27,6 +28,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.2",
     "next": "^16.1.0",
+    "openai": "^6.16.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-markdown": "^10.1.0",

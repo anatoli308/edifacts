@@ -21,7 +21,7 @@ const analysisChatSchema = mongoose.Schema({
     },
 
     selectedModel: {
-        type: String, // gpt-4.1, llama3, mistral
+        type: String, // gpt-4.1, llama3, mistral, ...
         required: true
     },
 

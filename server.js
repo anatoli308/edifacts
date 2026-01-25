@@ -9,6 +9,9 @@ import socketAuth from "./socketproxy.js";
 import dbConnect from "./lib/dbConnect.js";
 import User from "./models/shared/User.js";
 
+// Tool Registry initialization
+import { initializeToolRegistry } from "./lib/ai/tools/init.js";
+
 // Socket.IO event handlers
 import { registerAgentHandlers } from "./lib/socket/handlers/agentHandlers.js";
 import { registerJobHandlers } from "./lib/socket/handlers/jobHandlers.js";
@@ -25,7 +28,15 @@ async function getAuthenticatedUser(userId, token) {
     return user;
 }
 
-app.prepare().then(() => {
+app.prepare().then(async () => {
+    // Initialize Tool Registry before starting server
+    const toolRegistryStatus = await initializeToolRegistry();
+    if (!toolRegistryStatus.success) {
+        console.warn('⚠ Tool Registry initialization had issues:', toolRegistryStatus);
+    } else {
+        console.log('✓ Tool Registry initialized:', toolRegistryStatus);
+    }
+
     const expressApp = express();
     const server = http.createServer(expressApp);
 

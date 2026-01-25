@@ -9,19 +9,18 @@
  * - Tool factory (if needed)
  *
  * Usage:
- * import { segmentAnalyze, validateRules, generateReport } from '_modules/edifact/tools';
+ * import { segmentAnalyze, validateRules } from '_modules/edifact/tools';
  * 
  * // Or import all tools as object
  * import * as edifactTools from '_modules/edifact/tools';
  * 
  * // Register with Tool Registry
- * registry.registerTools(edifactTools.all());
+ * registry.register(edifactTools.tools, 'edifact');
  *
  * Tool Categories:
- * 1. Analysis tools: segmentAnalyze, messageAnalyze, extractEntities
- * 2. Validation tools: validateRules, checkCompliance, detectAnomalies
- * 3. Generation tools: generateReport, suggestFixes, synthesizeExplanation
- * 4. Utility tools: convertFormat, compareVersions, mergeMessages
+ * 1. Analysis tools: segmentAnalyze, parseSegmentField, compareSegments, groupSegmentsByType
+ * 2. Validation tools: validateRules, checkCompliance, detectAnomalies, validateDataTypes, suggestFixes
+ * 3. Utility tools: (future)
  *
  * Implementation Notes:
  * - Each tool exported with full metadata (name, description, inputSchema)
@@ -30,4 +29,29 @@
  * - Tool arguments validated before execution
  */
 
-// TODO: Export all tools
+export * from './segmentTools.js';
+export * from './validationTools.js';
+
+// Import all tools for convenient bundling
+import * as segmentTools from './segmentTools.js';
+import * as validationTools from './validationTools.js';
+
+/**
+ * All EDIFACT tools as object (for registry registration)
+ */
+export const tools = {
+  // Analysis tools
+  segmentAnalyze: segmentTools.segmentAnalyze,
+  parseSegmentField: segmentTools.parseSegmentField,
+  compareSegments: segmentTools.compareSegments,
+  groupSegmentsByType: segmentTools.groupSegmentsByType,
+
+  // Validation tools
+  validateRules: validationTools.validateRules,
+  checkCompliance: validationTools.checkCompliance,
+  detectAnomalies: validationTools.detectAnomalies,
+  validateDataTypes: validationTools.validateDataTypes,
+  suggestFixes: validationTools.suggestFixes,
+};
+
+export default tools;

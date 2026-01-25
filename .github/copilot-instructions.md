@@ -414,8 +414,8 @@ Introduce agentic architecture **incrementally** to minimize risk and maintain s
 - [ ] Test: Unit tests for planner outputs; E2E tests for multi-turn conversations.
 
 ### Phase 2 (Executor & Tools)
-- [ ] Define Tool Registry in `lib/ai/tools/registry.js` with EDIFACT-specific tools (segment analysis, rule validation, etc).
-- [ ] Build Executor Agent: ReAct loop (Thought → Tool Call → Observation).
+- [X] Define Tool Registry in `lib/ai/tools/registry.js` with EDIFACT-specific tools (segment analysis, rule validation, etc).
+- [X] Build Executor Agent: ReAct loop (Thought → Tool Call → Observation).
 - [ ] Implement tool sandboxing: tools execute in isolated context, no direct DB access.
 - [ ] Persist `toolCalls[]` and `toolResults[]` in `AnalysisMessage.js`.
 - [ ] Stream tool calls and results via Socket.IO.

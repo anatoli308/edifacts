@@ -74,23 +74,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
-// TODO: Import agents
-// import { Router, Planner, Executor, Critic } from 'lib/ai/agents';
+// Import agents
+import { Router } from 'lib/ai/agents/router.js';
+import { Executor } from 'lib/ai/agents/executor.js';
+import { Critic } from 'lib/ai/agents/critic.js';
+import { Recovery } from 'lib/ai/agents/recovery.js';
+import { Memory } from 'lib/ai/agents/memory.js';
 
-// TODO: Import orchestration
-// import { Coordinator } from 'lib/ai/orchestration';
+// Import orchestration
+import { Scheduler } from 'lib/ai/orchestration/scheduler.js';
 
-// TODO: Import providers
-// import { createProvider } from 'lib/ai/providers';
+// Import providers
+import { OpenAIAdapter } from 'lib/ai/providers/openai.js';
 
-// TODO: Import models
-// import AnalysisChat from 'models/AnalysisChat';
-// import AnalysisMessage from 'models/AnalysisMessage';
+// Import config
+import { ROUTER_CONFIG, EXECUTOR_CONFIG, CRITIC_CONFIG } from 'lib/ai/config/agents.config.js';
 
-// TODO: Import utilities
-// import { getAgentConfig } from 'lib/ai/config';
-// import { validateRequest } from './validateRequest';
-// import { logAgentInvocation } from './logging';
+// Import tool registry
+import { initializeToolRegistry, isToolRegistryReady } from 'lib/ai/tools/init.js';
+
+// Import models
+import User from 'models/shared/User.js';
+import AnalysisChat from 'models/edifact/AnalysisChat.js';
+import AnalysisMessage from 'models/edifact/AnalysisMessage.js';
+import dbConnect from 'lib/dbConnect.js';
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
 
@@ -99,8 +106,10 @@ const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-k
  * Main agent invocation endpoint
  */
 export async function POST(request) {
+  const startTime = Date.now();
+
   try {
-    // 1. Authenticate user
+    // 1. AUTHENTICATION: Validate JWT token
     const token = request.cookies.get('authToken')?.value;
     if (!token) {
       return NextResponse.json(
@@ -120,82 +129,187 @@ export async function POST(request) {
       );
     }
 
-    // 2. Parse and validate request
+    // 2. PARSE REQUEST
     const body = await request.json();
-    const { agent, context, messages, parameters } = body;
+    const { agent, context = {}, messages = [], parameters = {} } = body;
 
-    if (!agent || !messages) {
+    // Validate required fields
+    if (!agent || !messages || !Array.isArray(messages)) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Missing required fields: agent, messages',
+          error: 'Missing required fields: agent (string), messages (array)',
           code: 'INVALID_REQUEST',
         },
         { status: 400 }
       );
     }
 
-    // TODO: Validate agent name
-    // TODO: Validate context
-    // TODO: Load user config (provider, model, API key)
+    // Validate agent name
+    const validAgents = ['router', 'executor', 'critic', 'memory'];
+    if (!validAgents.includes(agent)) {
+      return NextResponse.json(
+        { success: false, error: `Unknown agent: ${agent}`, code: 'UNKNOWN_AGENT' },
+        { status: 400 }
+      );
+    }
 
-    // 3. Load provider
-    // const userConfig = await loadUserConfig(userId);
-    // const provider = createProvider(userConfig);
+    // 3. DATABASE CONNECTION
+    await dbConnect();
 
-    // 4. Invoke agent
-    // const agents = {
-    //   router: new Router(provider),
-    //   planner: new Planner(provider),
-    //   executor: new Executor(provider),
-    //   critic: new Critic(provider),
-    // };
+    // 4. LOAD USER CONFIG
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User not found', code: 'USER_NOT_FOUND' },
+        { status: 404 }
+      );
+    }
 
-    // const selectedAgent = agents[agent];
-    // if (!selectedAgent) {
-    //   return NextResponse.json(
-    //     { success: false, error: `Unknown agent: ${agent}`, code: 'UNKNOWN_AGENT' },
-    //     { status: 400 }
-    //   );
-    // }
+    // 5. INITIALIZE PROVIDERS
+    let provider;
+    try {
+      // Get user's LLM provider config
+      const apiKey = user.openaiKey || process.env.OPENAI_API_KEY;
+      const model = parameters.model || 'gpt-4-turbo';
 
-    // const startTime = Date.now();
-    // const result = await selectedAgent.invoke({
-    //   messages,
-    //   context,
-    //   parameters: {
-    //     ...getAgentConfig(agent),
-    //     ...parameters,
-    //   },
-    // });
-    // const duration_ms = Date.now() - startTime;
+      provider = new OpenAIAdapter({
+        apiKey,
+        model,
+        temperature: parameters.temperature || 0.7,
+        maxTokens: parameters.maxTokens || 4000
+      });
+    } catch (error) {
+      console.error('[API] Provider initialization failed:', error);
+      return NextResponse.json(
+        { success: false, error: 'Provider initialization failed', code: 'PROVIDER_ERROR' },
+        { status: 500 }
+      );
+    }
 
-    // TODO: Persist to database if needed
-    // if (context.analysisId) {
-    //   const chat = await AnalysisChat.findById(context.analysisId);
-    //   const message = new AnalysisMessage({
-    //     chat: context.analysisId,
-    //     role: 'assistant',
-    //     content: result.content,
-    //     agentPlan: result.agentPlan,
-    //     toolCalls: result.toolCalls,
-    //     toolResults: result.toolResults,
-    //   });
-    //   await message.save();
-    // }
+    // 6. INITIALIZE AGENTS
+    const agents = {
+      router: new Router({ ...ROUTER_CONFIG }),
+      executor: new Executor({ ...EXECUTOR_CONFIG }),
+      critic: new Critic({ ...CRITIC_CONFIG }),
+      recovery: new Recovery(),
+      memory: new Memory(),
+      scheduler: new Scheduler()
+    };
 
-    // TODO: Log invocation
-    // await logAgentInvocation(userId, agent, context, result, duration_ms);
+    // 7. INVOKE AGENT
+    let result;
+    const agentConfig = {
+      router: ROUTER_CONFIG,
+      executor: EXECUTOR_CONFIG,
+      critic: CRITIC_CONFIG
+    };
 
-    // 5. Return response
+    console.log(`[API] Invoking ${agent} agent for user ${userId}`);
+
+    switch (agent) {
+      case 'router': {
+        // Route intent classification
+        result = await agents.router.invoke({
+          messages,
+          context,
+          provider
+        });
+        break;
+      }
+
+      case 'executor': {
+        // Execute tools (ReAct loop)
+        result = await agents.executor.invoke({
+          messages,
+          context,
+          provider,
+          toolNames: parameters.tools
+        });
+        break;
+      }
+
+      case 'critic': {
+        // Validate output
+        const output = parameters.output || messages[messages.length - 1]?.content;
+        result = await agents.critic.invoke({
+          output,
+          context,
+          validators: {}
+        });
+        break;
+      }
+
+      case 'memory': {
+        // Retrieve or store context
+        if (parameters.action === 'store') {
+          result = await agents.memory.store({
+            message: messages[messages.length - 1],
+            sessionId: context.sessionId,
+            metadata: parameters.metadata
+          });
+        } else {
+          result = await agents.memory.retrieve({
+            sessionId: context.sessionId,
+            limit: parameters.limit || 10,
+            query: parameters.query
+          });
+        }
+        break;
+      }
+
+      default:
+        throw new Error(`Unsupported agent: ${agent}`);
+    }
+
+    // 8. PERSIST TO DATABASE (if analysis ID provided)
+    if (context.sessionId && (agent === 'router' || agent === 'executor')) {
+      try {
+        const chat = await AnalysisChat.findById(context.sessionId);
+        if (chat) {
+          const message = new AnalysisMessage({
+            chat: context.sessionId,
+            role: 'assistant',
+            content: result.reasoning || JSON.stringify(result),
+            agent,
+            agentPlan: result.agentPlan,
+            toolCalls: result.toolCalls,
+            toolResults: result.toolResults,
+            metadata: {
+              intent: result.intent,
+              pipeline: result.pipeline,
+              confidence: result.confidence
+            }
+          });
+          await message.save();
+          console.log(`[API] Persisted message to chat ${context.sessionId}`);
+        }
+      } catch (dbError) {
+        console.warn('[API] Failed to persist message:', dbError);
+        // Don't fail the request, just warn
+      }
+    }
+
+    // 9. LOG INVOCATION (audit trail)
+    try {
+      console.log(`[API:AUDIT] Agent=${agent} User=${userId} Session=${context.sessionId} Duration=${Date.now() - startTime}ms`);
+    } catch (logError) {
+      console.warn('[API] Failed to log invocation:', logError);
+    }
+
+    // 10. RETURN RESPONSE
+    const duration_ms = Date.now() - startTime;
+
     return NextResponse.json({
       success: true,
       agentName: agent,
-      result: {}, // TODO: result
-      duration_ms: 0, // TODO: actual duration
+      result,
+      duration_ms,
+      timestamp: new Date().toISOString()
     });
+
   } catch (error) {
-    console.error('Agent invocation error:', error);
+    console.error('[API] Agent invocation error:', error);
     return NextResponse.json(
       {
         success: false,

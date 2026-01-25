@@ -26,9 +26,16 @@ function ChatMessageContent({ content }) {
     return (
         <>
             {/* Main Response */}
-            <ReactMarkdown>{content.text || content}</ReactMarkdown>
+            <ReactMarkdown>
+                {(() => {
+                    if (typeof content === 'string') return content;
+                    if (content?.text && typeof content.text === 'string') return content.text;
+                    return '';
+                })()}
+            </ReactMarkdown>
 
             {/* Action Bar */}
+            {content.status === 'completed' && (
             <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                 <Tooltip title={copied ? "Copied!" : "Copy"}>
                     <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small" onClick={handleCopy}>
@@ -65,6 +72,7 @@ function ChatMessageContent({ content }) {
                     </Button>
                 </Tooltip>
             </Box>
+            )}
 
             {/* Status Indicator */}
             {content.status === 'completed' && (

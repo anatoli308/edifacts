@@ -9,7 +9,7 @@ import ChatMessageReasoning from '@/app/_components/chat/ChatMessageReasoning';
 import ChatMessageSteps from '@/app/_components/chat/ChatMessageSteps';
 import ChatMessageToolCalls from '@/app/_components/chat/ChatMessageToolCalls';
 
-const display = false;
+const display = false; //TODO: for now we not use/display reasoning, steps, tool calls in the UI
 
 function ChatMessage({ message }) {
 

@@ -35,10 +35,10 @@ function AnalysisChatPage(props) {
             // Update message in real-time
             const interval = setInterval(() => {
                 const currentMsg = getCurrentMessage();
-                if (currentMsg && currentMsg.content.text) {
+                if (currentMsg) {
                     setMessages(prev => {
                         const lastMsg = prev[prev.length - 1];
-                        if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content.status === 'streaming') {
+                        if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content?.status === 'streaming') {
                             // Update existing streaming message
                             return [...prev.slice(0, -1), currentMsg];
                         } else {

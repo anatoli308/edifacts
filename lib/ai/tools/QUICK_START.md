@@ -6,7 +6,7 @@
  */
 
 // ============ 1. INITIALIZATION ============
-// Call this once at application startup (server.js or in api/agents/route.js middleware)
+// Call this once at application startup (server.js)
 
 import { initializeToolRegistry, getToolRegistryStatus } from 'lib/ai/tools';
 

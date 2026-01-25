@@ -42,13 +42,16 @@ Synthesizer → Final Answer
 **Key Pattern:** Plan → Act → Observe → Replan (interleaved).
 
 - **App Structure:**
-  - `app/` (Next.js App Router): Feature-based pages, API routes, UI components.
+  - `app/` (Next.js App Router): Feature-based pages, auth routes, UI components.
   - `models/`, `lib/`, `theme/`, `public/`, `uploads/`, `server.js`: See README for details.
 - **State Management:**
   - React Contexts in `_contexts/` for user, theme, socket. 
   - React hooks in `_hooks/` for auth/session and other utilities.
 - **Authentication:**
   - JWT in HTTP-only cookies (SameSite=Strict). Middleware (`proxy.js`, `socketproxy.js`) for HTTP and WebSocket auth. Max 2 device tokens per user.
+- **Real-time Communication:**
+  - All agent invocation via Socket.IO (`lib/socket/handlers/agentHandlers.js`).
+  - Streaming responses with real-time chunks, tool calls, and task plans.
 - **Theming:**
   - MUI v7, custom themes in `theme/`, user preferences in MongoDB or localStorage.
 - **EDIFACT Processing:**
@@ -99,11 +102,6 @@ Adapters handle: JSON schema mapping, streaming deltas, partial JSON recovery, p
 edifacts/
 ├── app/                              # Next.js App Router
 │   ├── api/                          # API Routes
-│   │   ├── agents/                   # Agent orchestration (multi-domain)
-│   │   │   ├── route.js              # POST /api/agents (main endpoint)
-│   │   │   ├── index.js              # Utilities & helpers
-│   │   │   ├── validateRequest.js    # Request validation
-│   │   │   └── logging.js            # GDPR-compliant audit logging
 │   │   ├── auth/                     # Authentication routes
 │   │   ├── generate/session/         # EDIFACT session generation
 │   │   └── user/                     # User management
@@ -311,10 +309,10 @@ EDIFACTS is designed to scale from EDIFACT to any domain (Twitter, ERP, DevOps, 
 - Future domains (Twitter, ERP) will be **separate Next.js apps**
 
 **Future Apps (Twitter, ERP, etc.):**
-- New apps connect via `/api/agents` endpoint (multi-domain ready)
-- OR: Extract `lib/ai/` as NPM package (`@edifacts/agent-core`) and import directly
-- Each app has its own database, models, and domain modules
-- All apps share the same Agent Core logic (Router, Planner, Executor, Critic)
+- New apps use the same `lib/ai/` Agent Core via code import or as NPM package (`@edifacts/agent-core`).
+- OR: Integrate Socket.IO handlers from `lib/socket/handlers/agentHandlers.js` for WebSocket orchestration.
+- Each app has its own database, models, domain modules, and Socket.IO integration.
+- All apps share the same Agent Core logic and WebSocket handler patterns.
 - **Agentic AI:**
   - Agents: `lib/ai/agents/` (router.js, planner.js, executor.js, critic.js, memory.js, recovery.js, index.js)
   - Providers: `lib/ai/providers/` (openai.js, anthropic.js, index.js) - vLLM future
@@ -322,13 +320,13 @@ EDIFACTS is designed to scale from EDIFACT to any domain (Twitter, ERP, DevOps, 
   - Tools: `lib/ai/tools/` (registry.js, index.js) - Central tool registry for all domain modules
   - Prompts: `lib/ai/prompts/` (router.md, planner.md, executor.md, critic.md, index.js)
   - Config: `lib/ai/config/` (agents.config.js, providers.config.js, index.js)
-- **API:**
-  - Next.js API routes in `app/api/`.
-  - Auth/session logic in `app/api/auth/` and `app/api/generate/session/`.
-  - Agent orchestration: `app/api/agents/` (route.js, index.js, validateRequest.js, logging.js)
-    - POST `/api/agents` - Main agent invocation endpoint (multi-domain ready)
-    - Utilities for validation, error handling, GDPR-compliant logging
-    - Support for all agents (router, planner, executor, critic, memory, recovery)
+  - **Real-time Agent Orchestration:**
+  - Socket.IO handlers in `lib/socket/handlers/agentHandlers.js`.
+  - Events: `agent:invoke`, `agent:status`, `agent:cancel` (authentication via Socket context).
+  - Streaming responses: `agent:plan`, `agent:tool_call`, `agent:tool_result`, `response:chunk`, `agent:completed`, `agent:failed`.
+  - Support for all agents (router, planner, executor, critic, memory, recovery).
+  - **API Routes:**
+  - Next.js API routes in `app/api/`.\n  - Auth/session logic in `app/api/auth/` and `app/api/generate/session/`.
 - **Models:**
   - Current structure: Flat (all models in `models/` root)
   - Core models: `User.js`, `ApiKey.js`, `File.js`, `PromptPreset.js` (shared)
@@ -471,7 +469,7 @@ __tests__/
 See also:
 - `app/_contexts/UserContext.js` for user state logic
 - `app/api/auth/login/route.js` for login flow
-- `app/api/agents/route.js` for agent orchestration API
+- `lib/socket/handlers/agentHandlers.js` for WebSocket agent orchestration
 - `lib/ai/tools/registry.js` for tool registration
 - `lib/ai/config/` for agent and provider configuration
 - `lib/ai/prompts/` for agent system prompts

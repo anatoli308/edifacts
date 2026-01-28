@@ -5,10 +5,11 @@
  * Features:
  * - Listens to agent lifecycle events (started, plan, step, tool_call, etc)
  * - Accumulates streaming response chunks
- * - Updates message state in real-time
+ * - Updates message state in real-time via callback
  * - Error handling and recovery
  * 
  * @param {string} sessionId - Current chat session ID
+ * @param {Function} onMessageUpdate - Callback called when message updates (optional)
  * @returns {Object} - { sendAgentMessage, getCurrentMessage, currentAgentState, isStreaming }
  */
 
@@ -16,7 +17,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 
 import { useSocket } from '@/app/_contexts/SocketContext';
 
-export function useAgentStreaming(sessionId) {
+export function useAgentStreaming(sessionId, onMessageUpdate) {
     const { socket } = useSocket();
     const [currentAgentState, setCurrentAgentState] = useState(null);
     const [isStreaming, setIsStreaming] = useState(false);
@@ -51,6 +52,11 @@ export function useAgentStreaming(sessionId) {
                 },
                 timestamp: new Date().toISOString()
             };
+            
+            // Trigger update callback
+            if (onMessageUpdate) {
+                onMessageUpdate(currentMessageRef.current);
+            }
         };
 
         // Agent Plan (HTN Task Tree)
@@ -64,6 +70,9 @@ export function useAgentStreaming(sessionId) {
 
             if (currentMessageRef.current) {
                 currentMessageRef.current.content.reasoning = 'Planning task execution...';
+                if (onMessageUpdate) {
+                    onMessageUpdate(currentMessageRef.current);
+                }
             }
         };
 
@@ -77,6 +86,9 @@ export function useAgentStreaming(sessionId) {
 
             if (currentMessageRef.current) {
                 currentMessageRef.current.content.steps.push(data.stepName);
+                if (onMessageUpdate) {
+                    onMessageUpdate(currentMessageRef.current);
+                }
             }
         };
 
@@ -87,6 +99,12 @@ export function useAgentStreaming(sessionId) {
                 ...prev,
                 toolCalls: [...(prev?.toolCalls || []), { ...data, status: 'calling' }]
             }));
+
+            if (currentMessageRef.current) {
+                if (onMessageUpdate) {
+                    onMessageUpdate(currentMessageRef.current);
+                }
+            }
         };
 
         // Tool Result
@@ -106,13 +124,20 @@ export function useAgentStreaming(sessionId) {
                     name: data.tool,
                     result: typeof data.result === 'string' ? data.result : JSON.stringify(data.result, null, 2)
                 });
+                if (onMessageUpdate) {
+                    onMessageUpdate(currentMessageRef.current);
+                }
             }
         };
 
-        // Response Chunk (LLM Streaming)
+        // Response Chunk - TRIGGERS MOST FREQUENTLY
         const handleResponseChunk = (data) => {
             if (currentMessageRef.current) {
                 currentMessageRef.current.content.text += data.content;
+                // Trigger update callback on every chunk
+                if (onMessageUpdate) {
+                    onMessageUpdate(currentMessageRef.current);
+                }
             }
         };
 
@@ -124,6 +149,9 @@ export function useAgentStreaming(sessionId) {
 
             if (currentMessageRef.current) {
                 currentMessageRef.current.content.status = 'completed';
+                if (onMessageUpdate) {
+                    onMessageUpdate(currentMessageRef.current);
+                }
             }
         };
 
@@ -136,6 +164,9 @@ export function useAgentStreaming(sessionId) {
             if (currentMessageRef.current) {
                 currentMessageRef.current.content.status = 'failed';
                 currentMessageRef.current.content.text = `Error: ${data.error}`;
+                if (onMessageUpdate) {
+                    onMessageUpdate(currentMessageRef.current);
+                }
             }
         };
 
@@ -160,7 +191,7 @@ export function useAgentStreaming(sessionId) {
             socket.off('agent:completed', handleAgentCompleted);
             socket.off('agent:failed', handleAgentFailed);
         };
-    }, [socket]);
+    }, [socket, onMessageUpdate]);
 
     /**
      * Send agent message

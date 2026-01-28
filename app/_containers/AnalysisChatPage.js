@@ -19,41 +19,32 @@ function AnalysisChatPage(props) {
     const [isAssistantTyping, setIsAssistantTyping] = useState(false);
     const messagesEndRef = useRef(null);
 
-    // Agent streaming hook (socket is now used internally)
-    const { sendAgentMessage, getCurrentMessage, currentAgentState, isStreaming } = useAgentStreaming(sessionId);
+    // Callback: Handle message updates from streaming
+    const handleMessageUpdate = useCallback((message) => {
+        setMessages(prev => {
+            const lastMsg = prev[prev.length - 1];
+            if (lastMsg && lastMsg.role === 'assistant') {
+                // Update existing assistant message
+                return [...prev.slice(0, -1), message];
+            } else {
+                // Add new assistant message
+                return [...prev, message];
+            }
+        });
+    }, []);
+
+    // Agent streaming hook with callback
+    const { sendAgentMessage, getCurrentMessage, currentAgentState, isStreaming } = useAgentStreaming(sessionId, handleMessageUpdate);
 
     // Auto-scroll to latest message
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // Update messages when agent streaming is active
+    // Update typing state based on streaming
     useEffect(() => {
-        if (isStreaming) {
-            setIsAssistantTyping(true);
-
-            // Update message in real-time
-            const interval = setInterval(() => {
-                const currentMsg = getCurrentMessage();
-                if (currentMsg) {
-                    setMessages(prev => {
-                        const lastMsg = prev[prev.length - 1];
-                        if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content?.status === 'streaming') {
-                            // Update existing streaming message
-                            return [...prev.slice(0, -1), currentMsg];
-                        } else {
-                            // Add new streaming message
-                            return [...prev, currentMsg];
-                        }
-                    });
-                }
-            }, 100); // Update every 100ms for smooth streaming
-
-            return () => clearInterval(interval);
-        } else {
-            setIsAssistantTyping(false);
-        }
-    }, [isStreaming, getCurrentMessage]);
+        setIsAssistantTyping(isStreaming);
+    }, [isStreaming]);
 
     const handleSendMessage = (userMessageContent) => {
         const newUserMessage = {
@@ -64,10 +55,11 @@ function AnalysisChatPage(props) {
 
         setMessages(prev => [...prev, newUserMessage]);
 
-        // Invoke agent via Socket.IO (socket check is handled in hook)
         sendAgentMessage(userMessageContent, 'Router', {
-            // Add EDIFACT context here
-            edifactData: null, // TODO: Pass parsed EDIFACT data
+            latestMessages: [
+                ...messages.slice(-2), // Letzte 2 Turns/messages
+                newUserMessage
+            ],
             sessionId
         });
     };

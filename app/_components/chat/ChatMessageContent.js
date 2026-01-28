@@ -36,51 +36,41 @@ function ChatMessageContent({ content }) {
 
             {/* Action Bar */}
             {content.status === 'completed' && (
-            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                <Tooltip title={copied ? "Copied!" : "Copy"}>
-                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small" onClick={handleCopy}>
-                        {copied ? (
-                            <Iconify icon="ci:check" sx={{ fontSize: ICON_SIZE, color: 'success.main' }} />
-                        ) : (
-                            <Iconify icon="ci:copy" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
-                        )}
-                    </Button>
-                </Tooltip>
-                <Tooltip title="Good Response">
-                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
-                        <Iconify icon="bi:hand-thumbs-up" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
-                    </Button>
-                </Tooltip>
-                <Tooltip title="Bad Response">
-                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
-                        <Iconify icon="bi:hand-thumbs-down" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
-                    </Button>
-                </Tooltip>
-                <Tooltip title="Share Session">
-                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
-                        <Iconify icon="mdi:share-variant" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
-                    </Button>
-                </Tooltip>
-                <Tooltip title="Try again...">
-                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
-                        <Iconify icon="pajamas:retry" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
-                    </Button>
-                </Tooltip>
-                <Tooltip title="More actions">
-                    <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
-                        <Iconify icon="weui:more-filled" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
-                    </Button>
-                </Tooltip>
-            </Box>
-            )}
-
-            {/* Status Indicator */}
-            {content.status === 'completed' && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                    <Iconify icon="mdi:check-circle" sx={{ fontSize: 14, color: 'success.main' }} />
-                    <Typography variant="caption" sx={{ color: 'success.main' }}>
-                        Completed
-                    </Typography>
+                <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                    <Tooltip title={copied ? "Copied!" : "Copy"}>
+                        <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small" onClick={handleCopy}>
+                            {copied ? (
+                                <Iconify icon="ci:check" sx={{ fontSize: ICON_SIZE, color: 'success.main' }} />
+                            ) : (
+                                <Iconify icon="ci:copy" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                            )}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Good Response">
+                        <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
+                            <Iconify icon="bi:hand-thumbs-up" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Bad Response">
+                        <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
+                            <Iconify icon="bi:hand-thumbs-down" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Share Session">
+                        <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
+                            <Iconify icon="mdi:share-variant" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Try again...">
+                        <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
+                            <Iconify icon="pajamas:retry" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="More actions">
+                        <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
+                            <Iconify icon="weui:more-filled" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
+                        </Button>
+                    </Tooltip>
                 </Box>
             )}
         </>
@@ -88,3 +78,13 @@ function ChatMessageContent({ content }) {
 }
 
 export default ChatMessageContent;
+/*
+            {content.status === 'completed' && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+                    <Iconify icon="mdi:check-circle" sx={{ fontSize: 14, color: 'success.main' }} />
+                    <Typography variant="caption" sx={{ color: 'success.main' }}>
+                        Completed
+                    </Typography>
+                </Box>
+            )}*/
+{/* Status Indicator */ }

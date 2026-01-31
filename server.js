@@ -1,13 +1,12 @@
-import next from "next";
 import "dotenv/config";
 import express from "express";
 import http from "http";
+import next from "next";
 import { Server } from "socket.io";
 
 import socketAuth from "./socketproxy.js";
 
-import dbConnect from "./lib/dbConnect.js";
-import User from "./models/shared/User.js";
+import { getAuthenticatedUser } from "./lib/auth.js";
 
 // Tool Registry initialization
 import { initializeToolRegistry } from "./lib/ai/tools/init.js";
@@ -20,12 +19,15 @@ const app = next({ dev: process.env.NODE_ENV !== "production" });
 const handler = app.getRequestHandler(app);
 const PORT = process.env.PORT || 3010;
 
-async function getAuthenticatedUser(userId, token) {
-    if (!userId) return null;
-    await dbConnect();
-    const user = await User.findOne({ _id: userId, "tokens.token": token });
-    if (!user || user.banned) return null;
-    return user;
+async function updateUserOnlineStatus(socket, isOnline) {
+    const authenticatedUser = await getAuthenticatedUser(socket.userId, socket.token);
+    if (authenticatedUser) {
+        authenticatedUser.isOnline = isOnline;
+        await authenticatedUser.save();
+    }
+    const status = isOnline ? "connected" : "disconnected";
+    console.log(`Socket ${status}: ${socket.id} => (${authenticatedUser?.name || "guest"})`);
+    return authenticatedUser;
 }
 
 app.prepare().then(async () => {
@@ -53,19 +55,14 @@ app.prepare().then(async () => {
 
     // Socket connection handler
     io.on('connection', async socket => {
-        const authenticatedUser = await getAuthenticatedUser(socket.userId, socket.token);
-        if (authenticatedUser) {
-            authenticatedUser.isOnline = true;
-            await authenticatedUser.save();
-        }
-        console.log(`Socket connected: ${socket.id}  => (${authenticatedUser?._id || "unknown"})`);
+        await updateUserOnlineStatus(socket, true);
 
         // Register event handlers
-        registerJobHandlers(socket, authenticatedUser);
-        registerAgentHandlers(socket, authenticatedUser);
+        registerJobHandlers(socket);
+        registerAgentHandlers(socket);
 
         // Socket event listeners
-        socket.on('disconnect', () => handleDisconnect(socket, authenticatedUser));
+        socket.on('disconnect', () => handleDisconnect(socket));
     });
 
     // Express configuration
@@ -81,10 +78,6 @@ app.prepare().then(async () => {
     server.listen(PORT);
 });
 
-async function handleDisconnect(socket, authenticatedUser) {
-    if (authenticatedUser) {
-        authenticatedUser.isOnline = false;
-        await authenticatedUser.save();
-    }
-    console.log(`Socket disconnected: ${socket.id} => (${authenticatedUser?._id || "unknown"})`);
+async function handleDisconnect(socket) {
+    await updateUserOnlineStatus(socket, false);
 }

@@ -11,6 +11,9 @@ function ChatMessageFromUser({ content }) {
                 sx={{
                     p: 1,
                     backgroundColor: 'primary.main',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    maxWidth:'90%'
                 }}
             >
                 <Typography variant="body1" color='common.white'>

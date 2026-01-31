@@ -4,7 +4,7 @@ import {
     Box,
     Container
 } from '@mui/material';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 //app imports
 import ChatMessage from '@/app/_components/chat/ChatMessage';
@@ -16,7 +16,6 @@ function AnalysisChatPage(props) {
     const sessionId = props.sessionId || 'demo-session'; //TODO: remove demo-session fallback
 
     const [messages, setMessages] = useState([]);
-    const [isAssistantTyping, setIsAssistantTyping] = useState(false);
     const messagesEndRef = useRef(null);
 
     // Callback: Handle message updates from streaming
@@ -41,11 +40,6 @@ function AnalysisChatPage(props) {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // Update typing state based on streaming
-    useEffect(() => {
-        setIsAssistantTyping(isStreaming);
-    }, [isStreaming]);
-
     const handleSendMessage = (userMessageContent) => {
         const newUserMessage = {
             role: 'user',
@@ -55,56 +49,74 @@ function AnalysisChatPage(props) {
 
         setMessages(prev => [...prev, newUserMessage]);
 
-        sendAgentMessage(userMessageContent, 'Router', {
-            latestMessages: [
-                ...messages.slice(-2), // Letzte 2 Turns/messages
-                newUserMessage
-            ],
-            sessionId
-        });
+        // Pass messages as explicit parameter (last 10 turns + current)
+        const conversationHistory = [
+            ...messages.slice(-10),
+            newUserMessage
+        ];
+
+        sendAgentMessage(
+            userMessageContent,
+            'Router',
+            conversationHistory,
+            { sessionId } // Context now only contains domain data
+        );
     };
 
     return (
-        <Container maxWidth="md" disableGutters sx={{ height: "100%", display: 'flex', flexDirection: 'column', p: 0 }}>
-            <Box sx={{ p: 0, height: "100%", display: 'flex', flexDirection: 'column' }}>
-                <Box sx={{ height: "100%", display: 'flex', flexDirection: 'column', p: 0, overflow: 'hidden' }}>
-
-                    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%' }}>
-
-                        {/* Chat Messages */}
+        <Box sx={{ height: '100vh', width: '100vw', overflow: 'auto', backgroundColor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+            {/* Outer XXL Container: Scrollbar, fills viewport */}
+            <Container maxWidth="xl" disableGutters sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 0 }}>
+                {/* Inner centered Container */}
+                <Container maxWidth="md" disableGutters sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, py: 0 }}>
+                    {/* Main Chat Area: Flex column, fills inner container */}
+                    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                        {/* Chat Messages: Scrollable */}
                         <Box
                             sx={{
-                                p: 2,
                                 flex: 1,
                                 overflowY: 'auto',
                                 backgroundColor: 'background.paper',
-                                mb: 0,
+                                px: 1,
+                                py: 1,
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: 2,
-                                minHeight: 0
+                                gap: 1,
+                                minHeight: 0,
                             }}
                         >
                             {messages.map((message, index) => (
                                 <ChatMessage key={index} message={message} />
                             ))}
 
-                            {isAssistantTyping && (
-                                <ChatMessageAssistantTyping />
+                            {isStreaming && (
+                                <ChatMessageAssistantTyping content={getCurrentMessage()}
+                                    currentAgentState={currentAgentState} />
                             )}
 
                             <div ref={messagesEndRef} />
                         </Box>
 
-                        {/* Input Field */}
-                        <ChatMessageUserInput
-                            onSendMessage={handleSendMessage}
-                            isAssistantTyping={isAssistantTyping}
-                        />
+                        {/* Sticky User Input */}
+                        <Box
+                            sx={{
+                                position: 'sticky',
+                                bottom: 0,
+                                zIndex: 10,
+                                backgroundColor: 'background.paper',
+                                boxShadow: '0 -2px 8px rgba(0,0,0,0.04)',
+                                py: 1,
+                            }}
+                        >
+                            <ChatMessageUserInput
+                                onSendMessage={handleSendMessage}
+                                isAssistantTyping={isStreaming}
+                            />
+                        </Box>
                     </Box>
-                </Box>
-            </Box>
-        </Container>
+                </Container>
+            </Container>
+        </Box>
     );
 }
 

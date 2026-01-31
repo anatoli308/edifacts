@@ -26,16 +26,21 @@ function ChatMessageUserInput({ onSendMessage, isAssistantTyping }) {
         }
     };
     return (
-        <Box sx={{ flexShrink: 0 }}>
+        <Box sx={{ width: '100%' }}>
             <TextField
                 fullWidth
                 multiline
-                maxRows={4}
+                maxRows={6}
                 value={userMessage}
                 onChange={(e) => setUserMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me anything about your EDIFACT data..."
+                placeholder="Type your message..."
                 variant="outlined"
+                sx={{
+                    backgroundColor: 'background.default',
+                    borderRadius: 2,
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                }}
                 InputProps={{
                     endAdornment: (
                         <InputAdornment position="end">
@@ -43,6 +48,12 @@ function ChatMessageUserInput({ onSendMessage, isAssistantTyping }) {
                                 color="primary"
                                 onClick={handleSendMessage}
                                 disabled={!userMessage.trim() || isAssistantTyping}
+                                sx={{
+                                    backgroundColor: 'primary.main',
+                                    color: 'common.white',
+                                    borderRadius: 2,
+                                    '&:hover': { backgroundColor: 'primary.dark' },
+                                }}
                             >
                                 <Iconify icon="mdi:send" />
                             </IconButton>
@@ -57,7 +68,8 @@ function ChatMessageUserInput({ onSendMessage, isAssistantTyping }) {
                     display: 'block',
                     mt: 1,
                     textAlign: 'center',
-                    fontSize: '0.75rem'
+                    fontSize: '0.75rem',
+                    opacity: 0.7
                 }}
             >
                 EDIFACTS Assistant can make mistakes. Please verify important information. See <MuiLink href="/cookie-preferences" as={Link} underline="always" color='inherit'>cookie preferences</MuiLink>.

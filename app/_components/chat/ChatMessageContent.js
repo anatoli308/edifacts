@@ -18,7 +18,7 @@ function ChatMessageContent({ content }) {
     const [copied, setCopied] = React.useState(false);
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(content.text || content);
+        navigator.clipboard.writeText(content.text);
         setCopied(true);
         setTimeout(() => setCopied(false), 5000);
     };
@@ -27,11 +27,7 @@ function ChatMessageContent({ content }) {
         <>
             {/* Main Response */}
             <ReactMarkdown>
-                {(() => {
-                    if (typeof content === 'string') return content;
-                    if (content?.text && typeof content.text === 'string') return content.text;
-                    return '';
-                })()}
+                {content.text}
             </ReactMarkdown>
 
             {/* Action Bar */}
@@ -73,18 +69,18 @@ function ChatMessageContent({ content }) {
                     </Tooltip>
                 </Box>
             )}
+
+            {/* Status Indicator failed*/}
+            {content.status === 'failed' && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Iconify icon="mdi:alert-circle" sx={{ fontSize: 14, color: 'error.main' }} />
+                    <Typography variant="caption" sx={{ color: 'error.main' }}>
+                        {'Failed to get response.'}
+                    </Typography>
+                </Box>
+            )}
         </>
     );
 }
 
 export default ChatMessageContent;
-/*
-            {content.status === 'completed' && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                    <Iconify icon="mdi:check-circle" sx={{ fontSize: 14, color: 'success.main' }} />
-                    <Typography variant="caption" sx={{ color: 'success.main' }}>
-                        Completed
-                    </Typography>
-                </Box>
-            )}*/
-{/* Status Indicator */ }

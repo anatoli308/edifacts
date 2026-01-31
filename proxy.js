@@ -40,6 +40,7 @@ export async function proxy(request) {
     // User-ID im Request-Header weitergeben für API Routes
     const response = NextResponse.next();
     response.headers.set('x-user-id', payload._id);
+    response.headers.set('x-auth-token', token);
     return response;
 
   } catch (error) {

@@ -6,7 +6,7 @@
  */
 
 /**
- * getWeather: Current weather information for a city
+ * getWeather: Current weather information for a city from an external API
  */
 export const getWeather = {
 	name: 'getWeather',
@@ -80,7 +80,7 @@ export const getWeather = {
 };
 
 /**
- * webSearch: Simple web search results for a query
+ * webSearch: Simple web search results for a query with playwright (TODO: in a worker with python maybe)
  */
 export const webSearch = {
 	name: 'webSearch',

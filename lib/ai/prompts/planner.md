@@ -64,6 +64,38 @@ Query the Tool Registry to see available tools:
 }
 ```
 
+## Task Decomposition Requirements
+
+**CRITICAL RULES:**
+- Break down the goal into **1-6 concrete, executable subtasks**
+- **AVOID duplicate or redundant tasks** (each task should do something unique)
+- **For simple queries, 1-2 tasks are often enough**
+- Specify tool dependencies for each subtask
+- Define task dependencies (which tasks must complete before others)
+- Estimate effort (LOW, MEDIUM, HIGH) for each task
+- Provide a brief rationale for the plan
+- **DO NOT create multiple tasks that do the same thing**
+
+## Response Format
+
+You MUST respond with valid JSON only (no markdown, no code blocks):
+
+```json
+{
+  "subtasks": [
+    {
+      "id": "task_1",
+      "name": "Task name",
+      "description": "What this task does",
+      "tools": ["toolName1", "toolName2"],
+      "effort": "LOW|MEDIUM|HIGH",
+      "dependencies": ["task_id_that_must_complete_first"]
+    }
+  ],
+  "rationale": "Brief explanation of the plan"
+}
+```
+
 ## Important Rules
 
 - Tasks must be atomic (single purpose)

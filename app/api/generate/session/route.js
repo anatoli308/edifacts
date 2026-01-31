@@ -6,7 +6,6 @@ import { NextResponse } from 'next/server';
 import path from 'path';
 import { Readable } from 'stream';
 import { Worker } from 'worker_threads';
-import mongoose from 'mongoose';
 
 //app imports
 import { getAuthenticatedUser } from '@/app/lib/auth';
@@ -346,9 +345,12 @@ export async function POST(req) {
       });
 
       busboy.on('file', async (fieldname, file, fileInfo) => {
+
         try {
           // 4. User authentifizieren/erstellen
-          let authenticatedUser = await getAuthenticatedUser(req);
+          const userId = req.headers.get('x-user-id');
+          const token = req.headers.get('x-auth-token');
+          let authenticatedUser = await getAuthenticatedUser(userId, token);
           console.log('[API] authenticated user:', authenticatedUser ? authenticatedUser._id.toString() : 'unknown');
 
           if (!authenticatedUser) {

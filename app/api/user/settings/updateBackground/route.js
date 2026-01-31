@@ -5,7 +5,9 @@ import { NextResponse } from 'next/server';
 export async function PATCH(request) {
     try {
         // User-ID kommt von Middleware (bereits verifiziert)
-        const user = await getAuthenticatedUser(request);
+        const userId = request.headers.get('x-user-id');
+        const token = request.headers.get('x-auth-token');
+        const user = await getAuthenticatedUser(userId, token);
 
         const { backgroundMode } = await request.json();
         // Validierung + Update

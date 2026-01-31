@@ -4,19 +4,10 @@ import {
 
 //app imports
 import Iconify from '@/app/_components/utils/Iconify';
-import ChatMessageReasoning from '@/app/_components/chat/ChatMessageReasoning';
-import ChatMessageSteps from '@/app/_components/chat/ChatMessageSteps';
-import ChatMessageToolCalls from '@/app/_components/chat/ChatMessageToolCalls';
 
-const display = true; //TODO: for now we not use/display reasoning, steps, tool calls in the UI
-
-function ChatMessageAssistantTyping({ content, currentAgentState }) {
-    // Extract reasoning content from currentAgentState if available
-    const reasoningText = currentAgentState?.reasoning || '';
-    const hasReasoning = reasoningText.length > 0;
-
+function ChatMessageAssistantTyping() {
     return (
-        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <Box
                 sx={{
                     width: 36,
@@ -31,52 +22,47 @@ function ChatMessageAssistantTyping({ content, currentAgentState }) {
             >
                 <Iconify icon="material-symbols-light:smart-toy-outline" sx={{ color: 'white', fontSize: 20 }} />
             </Box>
-            <Box sx={{ flex: 1 }}>
-                <Paper sx={{ p: 2, backgroundColor: 'background.default' }}>
-                    {hasReasoning ? (
-                        <>
-                            <Typography variant="caption" color="textSecondary" sx={{ fontStyle: 'italic', mb: 1, display: 'block' }}>
-                                Thinking...
-                            </Typography>
-                            <Typography 
-                                variant="body2" 
-                                color="text.secondary"
-                                sx={{ 
-                                    fontFamily: 'monospace',
-                                    fontSize: '0.85rem',
-                                    whiteSpace: 'pre-wrap',
-                                    opacity: 0.7
-                                }}
-                            >
-                                {reasoningText}
-                            </Typography>
-                        </>
-                    ) : (
-                        <Typography variant="body2" color="textSecondary">
-                            Thinking...
-                        </Typography>
-                    )}
-                </Paper>
-                {/* Reasoning Section */}
-                {display && content.reasoning && (
-                    <ChatMessageReasoning
-                        reasoning={content.reasoning}
-                    />
-                )}
-
-                {/* Steps Section */}
-                {display && content.steps && content.steps.length > 0 && (
-                    <ChatMessageSteps
-                        steps={content.steps}
-                    />
-                )}
-
-                {/* Tool Calls Section */}
-                {display && content.toolCalls && content.toolCalls.length > 0 && (
-                    <ChatMessageToolCalls
-                        toolCalls={content.toolCalls}
-                    />
-                )}
+            <Box sx={{ flex: 0, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="body2" color="textSecondary">
+                    Thinking
+                </Typography>
+                <Box 
+                    sx={{ 
+                        display: 'flex', 
+                        gap: '4px',
+                        '& > span': {
+                            width: 4,
+                            height: 4,
+                            borderRadius: '50%',
+                            backgroundColor: 'text.secondary',
+                            opacity: 0.4,
+                            animation: 'typingDot 1.4s infinite ease-in-out',
+                        },
+                        '& > span:nth-of-type(1)': {
+                            animationDelay: '0s',
+                        },
+                        '& > span:nth-of-type(2)': {
+                            animationDelay: '0.2s',
+                        },
+                        '& > span:nth-of-type(3)': {
+                            animationDelay: '0.4s',
+                        },
+                        '@keyframes typingDot': {
+                            '0%, 60%, 100%': {
+                                opacity: 0.4,
+                                transform: 'translateY(0)',
+                            },
+                            '30%': {
+                                opacity: 1,
+                                transform: 'translateY(-6px)',
+                            },
+                        },
+                    }}
+                >
+                    <span />
+                    <span />
+                    <span />
+                </Box>
             </Box>
         </Box>
     );

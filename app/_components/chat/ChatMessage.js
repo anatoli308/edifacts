@@ -5,6 +5,7 @@ import {
 //app imports
 import ChatMessageContent from '@/app/_components/chat/ChatMessageContent';
 import ChatMessageFromUser from '@/app/_components/chat/ChatMessageFromUser';
+import ChatMessageAgentDebug from '@/app/_components/chat/ChatMessageAgentDebug';
 
 function ChatMessage({ message }) {
 
@@ -12,11 +13,22 @@ function ChatMessage({ message }) {
         const content = typeof message.content === 'string'
             ? { text: message.content }
             : message.content;
-        {/* Main Response */ }
+        
         return (
-            <ChatMessageContent
-                content={content}
-            />
+            <Box>
+                {/* Agent Debug Info (Plan, Steps, Reasoning) */}
+                {content.agentPlan && (
+                    <ChatMessageAgentDebug 
+                        currentAgentState={null} 
+                        message={message}
+                    />
+                )}
+                
+                {/* Main Response */}
+                <ChatMessageContent
+                    content={content}
+                />
+            </Box>
         );
     };
 

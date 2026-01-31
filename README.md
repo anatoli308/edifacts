@@ -241,7 +241,7 @@ socketproxy.js             # Socket.IO middleware for authentication
     - `agent:started` - Agent execution begins
     - `agent:plan` - Task tree emitted after planning
     - `agent:reasoning` - Internal thoughts streamed during execution
-    - `agent:step` - Pipeline progress (planner_started, scheduler_started, task_started, task_completed, synthesis_started)
+    - `agent:step` - Pipeline progress (planner_started, scheduler_started, task_started, task_completed)
     - `agent:tool_call` - Tool invocation with arguments
     - `agent:tool_result` - Tool execution result with success flag
     - `response:chunk` - Final answer streamed chunk-by-chunk

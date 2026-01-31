@@ -8,7 +8,7 @@
  * - Complex analysis (ANALYSIS intent)
  * - Debug requests (DEBUG intent)
  * - Domain detection (EDIFACT vs Twitter vs ERP)
- * - Pipeline selection (FAST_PATH vs FULL_PIPELINE)
+ * - Pipeline selection (FULL_PIPELINE only)
  * - Multi-intent handling
  * - Edge cases (ambiguous intent, unknown domain)
  */
@@ -34,7 +34,7 @@ describe('Router Agent', () => {
         if (msg.includes('what') || msg.includes('explain')) {
           return {
             intent: 'SIMPLE_EXPLAIN',
-            pipeline: 'FAST_PATH',
+            pipeline: 'FULL_PIPELINE',
             module: 'edifact',
             confidence: 0.88
           };
@@ -72,7 +72,7 @@ describe('Router Agent', () => {
       const result = await mockRouter.classify('What does DTM stand for?');
 
       expect(result.intent).toBe('SIMPLE_EXPLAIN');
-      expect(result.pipeline).toBe('FAST_PATH');
+      expect(result.pipeline).toBe('FULL_PIPELINE');
       expect(result.confidence).toBeGreaterThan(0.8);
     });
 
@@ -109,10 +109,10 @@ describe('Router Agent', () => {
   });
 
   describe('Pipeline Selection', () => {
-    it('should select FAST_PATH for simple questions', async () => {
+    it('should select FULL_PIPELINE for all questions', async () => {
       const result = await mockRouter.classify('What is BGM?');
 
-      expect(result.pipeline).toBe('FAST_PATH');
+      expect(result.pipeline).toBe('FULL_PIPELINE');
     });
 
     it('should select FULL_PIPELINE for complex tasks', async () => {

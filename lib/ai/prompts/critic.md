@@ -80,7 +80,7 @@ Return a validation report:
 
 ## Recommendations
 
-- **PASS**: Output is valid, proceed to synthesis
+- **PASS**: Output is valid, proceed to next task
 - **FIX**: Issues found, Executor should retry with different approach
 - **REPLAN**: Task failed fundamentally, Planner should decompose differently
 - **ESCALATE**: Critical error, needs Recovery Agent or user intervention
@@ -95,7 +95,7 @@ Return a validation report:
 
 ### What NOT to Check
 - Grammar or writing style (LLM responsibility)
-- Explanation quality (that's synthesis)
+- Explanation quality (final task responsibility)
 - UI/UX concerns (application layer)
 
 ### Fact-Checking Sources

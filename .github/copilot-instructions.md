@@ -36,7 +36,7 @@ Critic (Validation & Tests)
   ↓
 Replan (if inconsistencies detected)
   ↓
-Synthesizer → Final Answer
+Final Task (Executor generates answer)
 ```
 
 **Key Pattern:** Plan → Act → Observe → Replan (interleaved).
@@ -305,10 +305,9 @@ EDIFACTS is designed to scale from EDIFACT to any domain (Twitter, ERP, DevOps, 
                                  │
                                  ▼
                  ┌───────────────────────────────┐
-                 │   Router Synthesis Step       │
-                 │ (ALWAYS generates final       │
-                 │  human-readable answer via    │
-                 │  provider.streamComplete()    │
+                 │   Router Streaming Step       │
+                 │ (Streams final answer from    │
+                 │  last Executor task           │
                  │  → emits response:chunk)      │
                  └───────────────┬───────────────┘
                                  │
@@ -320,12 +319,12 @@ EDIFACTS is designed to scale from EDIFACT to any domain (Twitter, ERP, DevOps, 
 
 ──────────────────────────────────────────────────────────────────────────────
 Key Notes:
-- Router orchestrates full pipeline: Intent Classification → Planner → Scheduler → Synthesis
+- Router orchestrates full pipeline: Intent Classification → Planner → Scheduler → Stream Answer
 - Executor runs within Scheduler (one loop per task): Thought → Tool Call → Observation → repeat
 - Executor emits agent:reasoning (internal thoughts), NOT response:chunk
 - Critic validates AFTER each task completes (not inside Executor loop)
 - Scheduler passes previous task results to next task via dependencyResults
-- Router Synthesis ALWAYS generates final answer (streams response:chunk to UI)
+- Router streams final answer from last Executor task (response:chunk to UI)
 - Memory & Recovery available during execution (retry, provider fallback, context management)
 - Tool Execution interfaces with deterministic Domain Core (EDIFACT Engine)
 - Streaming separation: agent:reasoning (thinking) → response:chunk (final answer)
@@ -405,7 +404,7 @@ Key Notes:
 3. **Planner Agent** → Decomposes goal (domain-agnostic)
 4. **Executor calls** → Module-specific tools (e.g., `edifactTools.segmentAnalyze()`)
 5. **Critic validates** → Module-specific validators (e.g., `edifactValidator.validateRules()`)
-6. **Synthesis** → LLM generates answer using module context
+6. **Final Task** → Last Executor task generates user-facing answer
 
 ### Key Benefits
 
@@ -475,10 +474,10 @@ Key Notes:
   - `agent:started` - Agent execution begins
   - `agent:plan` - Task tree from Planner
   - `agent:reasoning` - Internal reasoning/thoughts during task execution (Executor)
-  - `agent:step` - Pipeline steps (planner_started, scheduler_started, task_started, task_completed, synthesis_started)
+  - `agent:step` - Pipeline steps (planner_started, scheduler_started, task_started, task_completed)
   - `agent:tool_call` - Tool invocation with arguments
   - `agent:tool_result` - Tool execution result
-  - `response:chunk` - Final user-facing answer chunks (Router Synthesis only)
+  - `response:chunk` - Final user-facing answer chunks (streamed from Executor's last task)
   - `agent:completed` - Agent execution complete
   - `agent:failed` - Agent execution failed with error details
   - `agent:status_response`, `agent:status_error`, `agent:cancelled`, `agent:cancel_error`
@@ -487,7 +486,7 @@ Key Notes:
 
 ### Streaming Architecture
 - **Executor:** Emits `agent:reasoning` for internal thoughts/analysis (visible during "thinking")
-- **Router Synthesis:** Emits `response:chunk` for final user-facing answer (always streamed)
+- **Router Streaming:** Streams final answer from last Executor task via `response:chunk`
 - **No double-streaming:** Executor reasoning is separate from final answer
 - **User sees:** Reasoning while Agent works → Final answer when complete
 
@@ -508,12 +507,10 @@ Key Notes:
 
 ### Router Agent (lib/ai/agents/router.js)
 - **Intent Classification:** Uses `provider.complete()` (non-streaming) with router system prompt
-- **Pipeline Selection:** FAST_PATH vs FULL_PIPELINE based on intent
+- **Pipeline Selection:** FULL_PIPELINE only (single pipeline)
 - **Error Handling:** Emits `agent:failed` and throws (no fallback returns)
-- **Synthesis:** ALWAYS generates final answer via `provider.streamComplete()` with assistant system prompt
-  - If no tools used: Direct synthesis from user question
-  - If tools used: Synthesis with tool results injected into user message
-- **No double-streaming:** Only Router synthesis streams to client via `response:chunk`
+- **Final Answer Streaming:** Streams the last Executor task's answer via `response:chunk` (no additional LLM call)
+- **No double-streaming:** Only final task answer streams to client via `response:chunk`
 
 ### Planner Agent (lib/ai/agents/planner.js)
 - **Task Decomposition:** Uses `provider.complete()` with structured tools API parameter

@@ -21,8 +21,7 @@ Classify the user's request into one of these intents:
 
 ## Pipeline Selection
 
-- **FAST_PATH**: Simple questions → Direct to Explanation Engine (no agents)
-- **FULL_PIPELINE**: Complex tasks → Router → Planner → Executor → Critic
+- **FULL_PIPELINE**: Router → Planner → Executor → Critic (single pipeline)
 
 ## Module Detection
 
@@ -38,7 +37,7 @@ Return a JSON object:
 ```json
 {
   "intent": "ANALYSIS|DEBUG|PLANNING|CODING|COMPLIANCE|SIMPLE_EXPLAIN",
-  "pipeline": "FAST_PATH|FULL_PIPELINE",
+  "pipeline": "FULL_PIPELINE",
   "module": "edifact|utility",
   "confidence": 0.95,
   "reasoning": "The user wants to analyze segment X for validation errors."
@@ -48,8 +47,7 @@ Return a JSON object:
 ## Important Rules
 
 - Be fast (< 1 second response)
-- Default to FULL_PIPELINE if unsure (err on the side of thoroughness)
-- Use FAST_PATH only for trivial questions
+- Always use FULL_PIPELINE (single pipeline only)
 - Always provide reasoning
 - Confidence score reflects certainty (0-1)
 
@@ -59,7 +57,7 @@ Return a JSON object:
 → Intent: ANALYSIS, Pipeline: FULL_PIPELINE, Module: edifact
 
 **User**: "What does DTM stand for?"
-→ Intent: SIMPLE_EXPLAIN, Pipeline: FAST_PATH, Module: edifact
+→ Intent: SIMPLE_EXPLAIN, Pipeline: FULL_PIPELINE, Module: edifact
 
 **User**: "Fix this segment"
 → Intent: DEBUG, Pipeline: FULL_PIPELINE, Module: edifact

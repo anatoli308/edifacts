@@ -70,6 +70,9 @@ Query the Tool Registry to see available tools:
 - Break down the goal into **1-6 concrete, executable subtasks**
 - **AVOID duplicate or redundant tasks** (each task should do something unique)
 - **For simple queries, 1-2 tasks are often enough**
+- **ALWAYS include a final task** that synthesizes/formats the answer for the user
+  - This last task should take results from previous tasks and create a natural language response
+  - Example: "Generate user-friendly answer", "Format response", "Synthesize results"
 - Specify tool dependencies for each subtask
 - Define task dependencies (which tasks must complete before others)
 - Estimate effort (LOW, MEDIUM, HIGH) for each task

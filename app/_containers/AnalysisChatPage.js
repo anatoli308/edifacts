@@ -11,6 +11,7 @@ import ChatMessage from '@/app/_components/chat/ChatMessage';
 import ChatMessageAssistantTyping from '@/app/_components/chat/ChatMessageAssistantTyping';
 import ChatMessageUserInput from '@/app/_components/chat/ChatMessageUserInput';
 import { useAgentStreaming } from '@/app/_hooks/useAgentStreaming';
+import ChatMessageAgentDebug from '@/app/_components/chat/ChatMessageAgentDebug';
 
 function AnalysisChatPage(props) {
     const sessionId = props.sessionId || 'demo-session'; //TODO: remove demo-session fallback
@@ -88,10 +89,9 @@ function AnalysisChatPage(props) {
                             {messages.map((message, index) => (
                                 <ChatMessage key={index} message={message} />
                             ))}
-
-                            {isStreaming && (
-                                <ChatMessageAssistantTyping content={getCurrentMessage()}
-                                    currentAgentState={currentAgentState} />
+                            
+                            {getCurrentMessage()?.content.agentPlan == null && isStreaming && (
+                                <ChatMessageAssistantTyping />
                             )}
 
                             <div ref={messagesEndRef} />

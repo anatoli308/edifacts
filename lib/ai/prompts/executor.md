@@ -111,4 +111,4 @@ Return final result:
 
 ---
 
-**Note**: All tool calls are logged. Critic Agent will validate your results before synthesis.
+**Note**: All tool calls are logged. Critic Agent will validate your results after each task.

@@ -84,10 +84,13 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
                 role: 'assistant',
                 content: {
                     reasoning: '',
+                    taskReasoning: {},   // Task-spezifisches Reasoning
                     steps: [],
                     toolCalls: [],
                     text: '',
-                    status: 'streaming'
+                    status: 'streaming',
+                    agentPlan: null,     // Wird persistiert bleiben
+                    agentSteps: []       // Wird persistiert bleiben
                 },
                 timestamp: new Date().toISOString()
             };
@@ -104,7 +107,7 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
             setCurrentAgentState(prev => {
                 const newState = {
                     ...prev,
-                    plan: data.taskTree,
+                    plan: data.taskTree || data.subtasks ? data : null,
                     tasks: data.tasks
                 };
                 logAgentState(prev, newState, 'AGENT_PLAN_RECEIVED', data);
@@ -113,6 +116,7 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
 
             if (currentMessageRef.current) {
                 currentMessageRef.current.content.reasoning = 'Planning task execution...';
+                currentMessageRef.current.content.agentPlan = data; // Persistiere Plan in Message
                 if (onMessageUpdate) {
                     onMessageUpdate(currentMessageRef.current);
                 }
@@ -122,23 +126,40 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
         // Agent Reasoning (internal thoughts during task execution)
         const handleAgentReasoning = (data) => {
             console.log('[Agent] Reasoning:', data);
+            const taskId = data.taskId || 'default';
             
             if (data.isComplete) {
-                // Reasoning complete - clear it
+                // Reasoning complete - keep in message for persistence
                 setCurrentAgentState(prev => ({
                     ...prev,
                     reasoning: ''
                 }));
             } else {
-                // Accumulate reasoning chunks
-                setCurrentAgentState(prev => ({
-                    ...prev,
-                    reasoning: (prev.reasoning || '') + data.content
-                }));
+                // Accumulate reasoning chunks per task
+                setCurrentAgentState(prev => {
+                    const taskReasoning = prev.taskReasoning || {};
+                    return {
+                        ...prev,
+                        taskReasoning: {
+                            ...taskReasoning,
+                            [taskId]: (taskReasoning[taskId] || '') + data.content
+                        },
+                        reasoning: (prev.reasoning || '') + data.content
+                    };
+                });
             }
 
             if (currentMessageRef.current && !data.isComplete) {
-                // Don't persist reasoning in message, just show during streaming
+                // Persistiere task-spezifisches Reasoning in message
+                if (!currentMessageRef.current.content.taskReasoning) {
+                    currentMessageRef.current.content.taskReasoning = {};
+                }
+                const currentTaskReasoning = currentMessageRef.current.content.taskReasoning[taskId] || '';
+                currentMessageRef.current.content.taskReasoning[taskId] = currentTaskReasoning + data.content;
+                
+                // Auch global reasoning für Kompatibilität
+                currentMessageRef.current.content.reasoning = (currentMessageRef.current.content.reasoning || '') + data.content;
+                
                 if (onMessageUpdate) {
                     onMessageUpdate(currentMessageRef.current);
                 }
@@ -159,6 +180,11 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
 
             if (currentMessageRef.current) {
                 currentMessageRef.current.content.steps.push(data.stepName);
+                // Persistiere alle Steps in Message
+                if (!currentMessageRef.current.content.agentSteps) {
+                    currentMessageRef.current.content.agentSteps = [];
+                }
+                currentMessageRef.current.content.agentSteps.push(data);
                 if (onMessageUpdate) {
                     onMessageUpdate(currentMessageRef.current);
                 }

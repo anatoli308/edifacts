@@ -76,17 +76,6 @@
 
 ---
 
-## 🎯 Erwarteter Event-Ablauf (FAST_PATH - unverändert)
-
-1. **User sendet Nachricht** → `socket.emit('agent:invoke', ...)`
-2. **Handler empfängt** → `agent:started`
-3. **Router klassifiziert** → (intern, kein Event)
-4. **Router ruft LLM direkt** → `response:chunk` (Streaming)
-5. **Router fertig** → `response:chunk` mit `isComplete: true`
-6. **Handler sendet Completion** → `agent:completed`
-
----
-
 ## ✅ Scheduler Integration ABGESCHLOSSEN!
 
 ### Was wurde hinzugefügt:

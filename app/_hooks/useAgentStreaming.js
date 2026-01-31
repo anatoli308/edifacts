@@ -189,6 +189,11 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
                     onMessageUpdate(currentMessageRef.current);
                 }
             }
+            
+            // Handle task_validation_failed - zeige Fehler in UI
+            if (data.step === 'task_validation_failed') {
+                pushSnackbarMessage(`Task Validierung fehlgeschlagen: ${data.taskName}`, 'warning');
+            }
         };
 
         // Tool Call

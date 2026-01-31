@@ -37,6 +37,16 @@ Each subtask must have:
 }
 ```
 
+**CRITICAL: Tool Selection Rules:**
+- **If task needs external data or computations**: Specify exact tools needed (e.g., `["webSearch"]`, `["validateRules"]`)
+- **If task only generates text/formats/synthesizes**: Use empty array `[]` (NO tools needed)
+- **Examples:**
+  - "Search for EDIFACT definition" → `"tools": ["webSearch"]`
+  - "Validate segments against rules" → `"tools": ["validateRules", "segmentAnalyze"]`
+  - "Generate user-friendly answer" → `"tools": []` (LLM generates text only)
+  - "Format response in German" → `"tools": []` (pure text formatting)
+- **Cost optimization**: Empty tools array saves significant LLM costs!
+
 ## Available Tools
 
 Query the Tool Registry to see available tools:
@@ -53,9 +63,9 @@ Query the Tool Registry to see available tools:
 {
   "goal": "Analyze EDIFACT invoice for errors",
   "subtasks": [
-    { "id": "task_1", "name": "Parse segments", "dependencies": [], "tools": [...] },
-    { "id": "task_2", "name": "Validate rules", "dependencies": ["task_1"], "tools": [...] },
-    { "id": "task_3", "name": "Generate report", "dependencies": ["task_2"], "tools": [...] }
+    { "id": "task_1", "name": "Parse segments", "dependencies": [], "tools": ["segmentAnalyze"] },
+    { "id": "task_2", "name": "Validate rules", "dependencies": ["task_1"], "tools": ["validateRules"] },
+    { "id": "task_3", "name": "Generate report", "dependencies": ["task_2"], "tools": [] }
   ],
   "execution_order": ["task_1", "task_2", "task_3"],
   "rationale": "Parse first, validate second, report third for logical flow.",
@@ -63,6 +73,8 @@ Query the Tool Registry to see available tools:
   "parallelizable_tasks": []
 }
 ```
+
+**Note**: Task 3 uses `"tools": []` because report generation is pure text synthesis (no external data needed).
 
 ## Task Decomposition Requirements
 
@@ -93,11 +105,24 @@ You MUST respond with valid JSON only (no markdown, no code blocks):
       "tools": ["toolName1", "toolName2"],
       "effort": "LOW|MEDIUM|HIGH",
       "dependencies": ["task_id_that_must_complete_first"]
+    },
+    {
+      "id": "task_2",
+      "name": "Generate answer",
+      "description": "Synthesize results into user-friendly response",
+      "tools": [],
+      "effort": "LOW",
+      "dependencies": ["task_1"]
     }
   ],
   "rationale": "Brief explanation of the plan"
 }
 ```
+
+**IMPORTANT**: 
+- Tasks that **fetch/compute data** → specify tools: `["webSearch"]`, `["validateRules"]`, etc.
+- Tasks that **only generate/format text** → empty tools: `[]`
+- **Last task should usually have `"tools": []`** (pure text synthesis)
 
 ## Important Rules
 

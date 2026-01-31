@@ -111,54 +111,51 @@ export const webSearch = {
 	async execute(args, context) {
 		const { query, maxResults = 3, language = 'en' } = args;
 
+		// Track search count to prevent infinite loops (stored in context)
+		if (!context._searchCount) {
+			context._searchCount = {};
+		}
+		const searchKey = String(query).toLowerCase().substring(0, 30);
+		context._searchCount[searchKey] = (context._searchCount[searchKey] || 0) + 1;
+		
+		// Hard limit: max 2 searches for similar queries
+		if (context._searchCount[searchKey] > 2) {
+			return {
+				success: false,
+				error: `You have already searched for "${query}" ${context._searchCount[searchKey]} times. Please use the existing results instead of searching again.`,
+				previousSearchCount: context._searchCount[searchKey],
+				hint: 'Analyze the previous search results and provide your answer.'
+			};
+		}
+
 		try {
-			// Mock search results (replace with real API like Google/Bing in prod)
+			// Enhanced mock search results with more detailed content
 			const mockResults = {
 				EDIFACT: [
 					{
-						title: 'UN/EDIFACT - Electronic Data Interchange',
-						url: 'https://en.wikipedia.org/wiki/EDIFACT',
+						title: 'UN/EDIFACT - Electronic Data Interchange für Administration, Commerce and Transport',
+						url: 'https://de.wikipedia.org/wiki/EDIFACT',
 						snippet:
-							'UN/EDIFACT is a set of internationally agreed ISO standards, directories, and guidelines for electronic data interchange...'
+							'UN/EDIFACT ist ein internationaler Standard der Vereinten Nationen für den elektronischen Datenaustausch (EDI). Entwickelt in den 1980er Jahren, wird EDIFACT weltweit für B2B-Transaktionen verwendet, besonders in Logistik, Handel und Verwaltung. Der Standard definiert Nachrichtentypen wie ORDERS (Bestellung), INVOIC (Rechnung) und DESADV (Lieferavis).'
 					},
 					{
-						title: 'EDIFACT Basics Guide',
-						url: 'https://www.edifactstandard.com/guide',
+						title: 'EDIFACT Nachrichtenstruktur und Segmente',
+						url: 'https://www.edifact.de/standard',
 						snippet:
-							'EDIFACT is used to exchange business documents like invoices, orders, and shipping notifications between trading partners...'
+							'EDIFACT-Nachrichten bestehen aus Segmenten, die jeweils mit einem 3-stelligen Tag beginnen (z.B. UNH für Header, DTM für Datum/Zeit, NAD für Adressen). Jedes Segment enthält Datenelemente, getrennt durch + und :. Die Syntax ist hierarchisch und ermöglicht standardisierte Geschäftsdokumente zwischen verschiedenen Systemen.'
 					},
 					{
-						title: 'EDIFACT Message Standards',
+						title: 'EDIFACT vs. XML/JSON - Moderne Alternativen',
 						url: 'https://www.unece.org/trade/untdid',
 						snippet:
-							'UNTDID provides the definitions of EDIFACT messages and segments...'
-					}
-				],
-				Tokyo: [
-					{
-						title: 'Tokyo Travel Guide',
-						url: 'https://example.com/tokyo',
-						snippet:
-							'Tokyo is the capital of Japan, known for its vibrant culture, advanced technology, and traditional temples...'
-					},
-					{
-						title: 'Tokyo Climate Information',
-						url: 'https://example.com/tokyo-climate',
-						snippet:
-							'Tokyo has a humid subtropical climate with winters around 5°C and summers around 27°C...'
-					},
-					{
-						title: 'Things to Do in Tokyo',
-						url: 'https://example.com/tokyo-activities',
-						snippet:
-							'Visit Senso-ji Temple, Meiji Shrine, Shibuya Crossing, and enjoy traditional Japanese cuisine...'
+							'Während EDIFACT als Legacy-Standard gilt, wird er noch immer in vielen Branchen eingesetzt. Moderne Alternativen wie XML (ebXML) oder JSON-basierte APIs bieten bessere Lesbarkeit, sind aber nicht immer kompatibel mit bestehenden EDIFACT-Systemen. Die UN/CEFACT pflegt EDIFACT-Verzeichnisse und publiziert Updates.'
 					}
 				],
 				default: [
 					{
-						title: `Results for "${query}"`,
+						title: `Suchergebnisse für "${query}"`,
 						url: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
-						snippet: `Search results for your query about "${query}". This is a mock result for demonstration purposes.`
+						snippet: `Dies ist ein Mock-Ergebnis für "${query}". In der Produktion würde hier eine echte Web-Suche (Google/Bing API) durchgeführt. Die Ergebnisse würden relevante Websites, Artikel und Dokumente zum Thema enthalten.`
 					}
 				]
 			};
@@ -167,14 +164,19 @@ export const webSearch = {
 				String(query).toLowerCase().includes(key.toLowerCase())
 			);
 			const results = mockResults[matchedKey || 'default'];
+			
+			// Add more context to help LLM understand the results
+			const resultSummary = results.map((r, i) => `${i+1}. ${r.title}: ${r.snippet.substring(0, 100)}...`).join('\n');
 
 			return {
 				success: true,
 				query,
 				language,
+				resultCount: results.length,
 				results: results.slice(0, maxResults),
+				summary: `Found ${results.length} results for "${query}". Key findings:\n${resultSummary}`,
 				timestamp: new Date().toISOString(),
-				note: 'Mock search results for testing (use real API in production)'
+				note: 'Mock search results for testing. You have enough information to answer - do NOT search again!'
 			};
 		} catch (error) {
 			return {

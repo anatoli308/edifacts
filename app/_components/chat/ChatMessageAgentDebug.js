@@ -53,16 +53,19 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
     // Build task status map from steps
     const taskStatusMap = new Map();
     steps.forEach(step => {
-        if (step.step === 'task_started' || step.step === 'task_completed') {
+        if (step.step === 'task_started' || step.step === 'task_completed' || step.step === 'task_validation_failed') {
             const taskId = step.taskId;
             if (taskId) {
                 const existing = taskStatusMap.get(taskId);
-                if (!existing || step.step === 'task_completed') {
+                // Priority: failed > completed > running
+                if (!existing || step.step === 'task_validation_failed' || (step.step === 'task_completed' && existing.status !== 'failed')) {
                     taskStatusMap.set(taskId, {
-                        status: step.step === 'task_completed' ? 'completed' : 'running',
+                        status: step.step === 'task_validation_failed' ? 'failed' : 
+                                step.step === 'task_completed' ? 'completed' : 'running',
                         taskName: step.taskName,
                         progress: step.progress,
-                        timestamp: step.timestamp
+                        timestamp: step.timestamp,
+                        error: step.step === 'task_validation_failed' ? step.message : undefined
                     });
                 }
             }
@@ -89,6 +92,8 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
         switch (status) {
             case 'completed':
                 return { icon: 'mdi:check-circle', color: 'success.main', label: 'Completed' };
+            case 'failed':
+                return { icon: 'mdi:alert-circle', color: 'error.main', label: 'Failed' };
             case 'running':
                 return { icon: 'mdi:play-circle', color: 'primary.main', label: 'Running' };
             case 'pending':
@@ -194,6 +199,7 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
                                                     backgroundColor: 
                                                         taskStatus.status === 'completed' ? 'success.lighter' : 
                                                         taskStatus.status === 'running' ? 'primary.lighter' :
+                                                        taskStatus.status === 'failed' ? 'error.lighter' :
                                                         'background.default',
                                                     borderLeftWidth: 3,
                                                     borderLeftColor: statusDisplay.color,
@@ -242,6 +248,25 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
                                                         />
                                                     )}
                                                 </Box>
+
+                                                {/* Error Message für failed tasks */}
+                                                {taskStatus.status === 'failed' && taskStatus.error && (
+                                                    <Box sx={{ 
+                                                        mb: 1, 
+                                                        p: 1, 
+                                                        backgroundColor: 'error.lighter',
+                                                        borderRadius: 1,
+                                                        border: '1px solid',
+                                                        borderColor: 'error.main'
+                                                    }}>
+                                                        <Typography variant="caption" color="error.main" fontWeight={600}>
+                                                            ⚠️ Validation Error:
+                                                        </Typography>
+                                                        <Typography variant="caption" color="error.dark" sx={{ display: 'block', mt: 0.5 }}>
+                                                            {taskStatus.error}
+                                                        </Typography>
+                                                    </Box>
+                                                )}
 
                                                 {/* Task Description */}
                                                 <Typography 

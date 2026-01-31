@@ -105,7 +105,6 @@ lib/                       # Library utilities & helpers
 │   │   ├── assistant.md   # General assistant prompt
 │   │   └── index.js       # Prompt loader
 │   └── config/            # Agent configuration
-│       ├── agents.config.js    # Agent parameters (temp, timeouts)
 │       ├── providers.config.js # Provider capabilities
 │       └── index.js
 ├── socket/                # WebSocket handlers

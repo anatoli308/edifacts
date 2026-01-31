@@ -156,7 +156,6 @@ edifacts/
 │   │   │   ├── critic.md             # Critic agent prompt
 │   │   │   └── index.js              # Prompt loader
 │   │   └── config/                   # Configuration
-│   │       ├── agents.config.js      # Agent parameters (temp, timeouts)
 │   │       ├── providers.config.js   # Provider capabilities & tiers
 │   │       └── index.js
 │   ├── auth.js                       # Authentication utilities
@@ -435,7 +434,7 @@ Key Notes:
   - Orchestration: `lib/ai/orchestration/` (scheduler.js, taskGraph.js, replay.js, index.js)
   - Tools: `lib/ai/tools/` (registry.js, index.js) - Central tool registry for all domain modules
   - Prompts: `lib/ai/prompts/` (router.md, planner.md, executor.md, critic.md, index.js)
-  - Config: `lib/ai/config/` (agents.config.js, providers.config.js, index.js)
+  - Config: `lib/ai/config/` ( providers.config.js, index.js)
   - **Real-time Agent Orchestration:**
   - Socket.IO handlers in `lib/socket/handlers/agentHandlers.js`.
   - Events: `agent:invoke`, `agent:status`, `agent:cancel` (authentication via Socket context).

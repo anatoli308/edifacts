@@ -14,7 +14,6 @@
  * 
  * sendAgentMessage signature:
  * @param {string} userMessage - User's message content
- * @param {string} agentType - Agent to invoke (default: 'Router')
  * @param {Array} messages - Conversation history (array of {role, content} objects)
  * @param {Object} context - Additional context (domain data, sessionId, etc)
  */
@@ -125,8 +124,8 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
 
         // Agent Reasoning (internal thoughts during task execution)
         const handleAgentReasoning = (data) => {
-            console.log('[Agent] Reasoning:', data);
-            const taskId = data.taskId || 'default';
+            //console.log('[Agent] Reasoning:', data);
+            const taskId = data.taskId;
             
             if (data.isComplete) {
                 // Reasoning complete - keep in message for persistence
@@ -354,11 +353,10 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
      * Send agent message
      * Invokes agent via Socket.IO and returns current message ref
      * @param {string} userMessage - User's message content
-     * @param {string} agentType - Agent to invoke (default: 'Router')
      * @param {Array} messages - Conversation history
      * @param {Object} context - Additional domain context
      */
-    const sendAgentMessage = useCallback((userMessage, agentType = 'Router', messages = [], context = {}) => {
+    const sendAgentMessage = useCallback((userMessage, messages = [], context = {}) => {
         if (!socket) {
             console.error('[Agent] Socket not available');
             return null;
@@ -375,12 +373,11 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
             toolCalls: [],
             observations: []
         };
-        logAgentState(currentAgentState, idleState, 'SEND_AGENT_MESSAGE (Reset)', { userMessage, agentType });
+        logAgentState(currentAgentState, idleState, 'SEND_AGENT_MESSAGE (Reset)', { userMessage });
         setCurrentAgentState(idleState);
 
         // Emit agent invocation with explicit messages parameter
         socket.emit('agent:invoke', {
-            agentType,
             userMessage,
             sessionId,
             messages,

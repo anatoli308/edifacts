@@ -50,15 +50,14 @@ function AnalysisChatPage(props) {
 
         setMessages(prev => [...prev, newUserMessage]);
 
-        // Pass messages as explicit parameter (last 10 turns + current)
+        // Pass messages as explicit parameter
         const conversationHistory = [
-            ...messages.slice(-10),
+            ...messages,//.slice(-10),
             newUserMessage
         ];
 
         sendAgentMessage(
             userMessageContent,
-            'Router',
             conversationHistory,
             { sessionId } // Context now only contains domain data
         );

@@ -48,7 +48,6 @@
  * - Context builder produces LLM-friendly summaries
  *
  * Integration with Agents:
- * - Router: uses module to determine if EDIFACT module is needed
  * - Executor: calls module tools
  * - Critic: calls module validators
  * - Planner: aware of available tools and their capabilities

@@ -314,13 +314,14 @@ socketproxy.js             # Socket.IO middleware for authentication
   - Modular and reusable code organization
 
 ## Usage
-WIP
+1. start chat session
+2. chat with the agent about your EDIFACT file
+3. get real-time analysis and explanations
 
 ## Known Issues
 - [Windows]: Start vscode with admin rights to avoid issues with turbopack on Windows.
-
-### Contributing
-Contributions are welcome! Please feel free to submit a Pull Request.
+- [Development]: Ollama local LLM hosting requires signin for cloud models. Local models need to be setup separately.
+- [Docker]: serverside/node code changes require container restart at the moment.
 
 ### License
 MIT

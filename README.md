@@ -8,6 +8,29 @@ An intelligent AgentOS platform for EDIFACT analysis powered by multi-agent AI o
 - Node.js (version 18 or higher) ideally latest stable version
 - npm (version 8 or higher) ideally latest stable version
 - MongoDB instance (local or cloud-based) ideally latest stable version.
+- For now: ollama (local LLM hosting) if you want to use vLLM provider https://ollama.com/
+
+## Docker Setup (Development)
+1. Make sure Docker and Docker Compose are installed on your machine.
+2. Clone the repository:
+   ```bash
+      git clone https://github.com/anatoli308/edifacts
+      cd edifacts
+    ```
+3. Create a `.env.docker` file in the root directory (look at `.env.example` for reference)
+4. Start the services using Docker Compose:
+   ```bash
+      docker-compose up --build -d
+   ```
+5. Sign in to ollama:
+   ```bash
+      docker exec -it edifacts-ollama-1 ollama signin
+   ```
+6. You will get a link to authenticate your ollama account. Follow the link and complete the sign-in process.
+    - ollama running on `gpt-oss:120b-cloud` model by default!
+    - you can change to a local model in `ollama_entrypoint.sh` without signin but this require alot of disk space and setup.
+7. Open your browser and navigate to `http://localhost:3010` to access the application.
+
 
 ## Technology Stack
 - Next / React 

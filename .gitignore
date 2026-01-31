@@ -38,3 +38,6 @@ next-env.d.ts
 uploads
 WORKFLOW.md
 TOUGHTS.md
+
+ollama_data
+mongo_data

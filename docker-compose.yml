@@ -1,7 +1,38 @@
 services:
+  app:
+    image: node:latest
+    working_dir: /app
+    ports:
+      - "${PORT:-3010}:3010"
+    env_file:
+      - ./.env.docker
+    volumes:
+      - ./:/app
+      - ./node_modules:/app/node_modules
+    command: sh -c "npm install ; npm run dev"
+    depends_on:
+      - mongo
+      - ollama
+
   mongo:
     image: mongo:latest
     ports:
       - "27017:27017"
     volumes:
       - ./mongo_data:/data/db
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+      - ./ollama_entrypoint.sh:/entrypoint.sh:ro
+    entrypoint: sh /entrypoint.sh
+    command: []
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

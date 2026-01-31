@@ -214,6 +214,123 @@ edifacts/
 EDIFACTS is designed to scale from EDIFACT to any domain (Twitter, ERP, DevOps, Finance, Legal, etc.) without rewriting the Agent Core. Here's the architecture:
 
 ```
+──────────────────────────────────────────────────────────────────────────────
+                        EDIFACTS AgentOS Architecture Overview
+──────────────────────────────────────────────────────────────────────────────
+
+                 ┌───────────────────────────────┐
+                 │          User / UI            │
+                 │ (Next.js Chat, Inspector)    │
+                 └───────────────┬───────────────┘
+                                 │
+                                 ▼
+                 ┌───────────────────────────────┐
+                 │           Router Agent        │
+                 │  (Intent Classification)      │
+                 └───────────────┬───────────────┘
+                                 │
+                                 ▼
+                 ┌───────────────────────────────┐
+                 │           Planner Agent       │
+                 │ (HTN Task Decomposition)      │
+                 └───────────────┬───────────────┘
+                                 │
+                                 ▼
+                 ┌───────────────────────────────┐
+                 │        Coordinator / DAG      │
+                 │      (Parallel/Sequential)    │
+                 └───────────────┬───────────────┘
+                                 │
+                                 ▼
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │                 Scheduler (DAG Task Executor)                             │
+ │                                                                           │
+ │  For each Task in topological order:                                     │
+ │                                                                           │
+ │  ┌─────────────────────────────────────────────────────────────────┐    │
+ │  │                     Executor Agent Loop (per Task)               │    │
+ │  │ ┌─────────────────────┐      ┌──────────────────────────────┐  │    │
+ │  │ │  Thought / Reasoning │─────▶│   Tool Selection / Call      │  │    │
+ │  │ │ (emits agent:        │      │   (LLM decides which tools)  │  │    │
+ │  │ │  reasoning)          │      └──────────────┬───────────────┘  │    │
+ │  │ └──────────┬───────────┘                     │                  │    │
+ │  │            │                                 ▼                  │    │
+ │  │            │                      ┌────────────────────┐        │    │
+ │  │            │                      │   Execute Tool     │        │    │
+ │  │            │                      │ (Domain Core /     │        │    │
+ │  │            │                      │  EDIFACT Engine)   │        │    │
+ │  │            │                      └─────────┬──────────┘        │    │
+ │  │            │                                │                   │    │
+ │  │            │                                ▼                   │    │
+ │  │            │                   ┌──────────────────────┐         │    │
+ │  │            │                   │   Observation /      │         │    │
+ │  │            │                   │ Tool Result (emits   │         │    │
+ │  │            │                   │ agent:tool_result)   │         │    │
+ │  │            │                   └──────────┬───────────┘         │    │
+ │  │            │                              │                     │    │
+ │  │            │         ┌────────────────────┴──────┐              │    │
+ │  │            │         ▼                           ▼              │    │
+ │  │            │   Max iterations          Continue loop            │    │
+ │  │            │   reached?                (next tool call)         │    │
+ │  │            │         │                                          │    │
+ │  │            └─────────┴──────────────────────────────────────────┘    │
+ │  │                      │                                               │
+ │  │                      ▼                                               │
+ │  │            ┌────────────────────┐                                    │
+ │  │            │   Task Result      │                                    │
+ │  │            │ (assistant message │                                    │
+ │  │            │  + tool results)   │                                    │
+ │  │            └─────────┬──────────┘                                    │
+ │  └──────────────────────┼───────────────────────────────────────────────┘
+ │                         │
+ │                         ▼
+ │              ┌─────────────────────┐
+ │              │   Critic Agent      │  ← Validates task result
+ │              │ (schema, rules,     │     before marking complete
+ │              │  hallucination)     │
+ │              └──────────┬──────────┘
+ │                         │
+ │            ┌────────────┴─────────────┐
+ │            ▼                          ▼
+ │     Task Valid                  Task Invalid
+ │     Store result                Retry / Replan
+ │            │
+ │            ▼
+ │     Pass result to
+ │     dependent tasks
+ │     (dependencyResults)
+ │
+ └───────────────────────────────────────────────────────────────────────────┘
+
+                                 │
+                                 ▼
+                 ┌───────────────────────────────┐
+                 │   Router Synthesis Step       │
+                 │ (ALWAYS generates final       │
+                 │  human-readable answer via    │
+                 │  provider.streamComplete()    │
+                 │  → emits response:chunk)      │
+                 └───────────────┬───────────────┘
+                                 │
+                                 ▼
+                 ┌───────────────────────────────┐
+                 │          User / UI            │
+                 │ (Next.js Chat, Inspector)    │
+                 └───────────────────────────────┘
+
+──────────────────────────────────────────────────────────────────────────────
+Key Notes:
+- Router orchestrates full pipeline: Intent Classification → Planner → Scheduler → Synthesis
+- Executor runs within Scheduler (one loop per task): Thought → Tool Call → Observation → repeat
+- Executor emits agent:reasoning (internal thoughts), NOT response:chunk
+- Critic validates AFTER each task completes (not inside Executor loop)
+- Scheduler passes previous task results to next task via dependencyResults
+- Router Synthesis ALWAYS generates final answer (streams response:chunk to UI)
+- Memory & Recovery available during execution (retry, provider fallback, context management)
+- Tool Execution interfaces with deterministic Domain Core (EDIFACT Engine)
+- Streaming separation: agent:reasoning (thinking) → response:chunk (final answer)
+──────────────────────────────────────────────────────────────────────────────
+
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    EDIFACTS Multi-Domain Platform                   │
 │                   (Today: EDIFACT, Tomorrow: X)                     │
@@ -351,17 +468,83 @@ EDIFACTS is designed to scale from EDIFACT to any domain (Twitter, ERP, DevOps, 
 - **EDIFACT Parsing:** via backend workers in `_workers/`.
 
 ## Socket.IO Events & Streaming
+
+### Event Types
 - **Agent inbound:** `agent:invoke`, `agent:status`, `agent:cancel` (requires authenticated socket where available).
-- **Agent outbound:** `agent:started`, `agent:plan`, `agent:step`, `agent:tool_call`, `agent:tool_result`, `agent:observation`, `response:chunk`, `agent:completed`, `agent:failed`, `agent:status_response`, `agent:status_error`, `agent:cancelled`, `agent:cancel_error`.
+- **Agent outbound:** 
+  - `agent:started` - Agent execution begins
+  - `agent:plan` - Task tree from Planner
+  - `agent:reasoning` - Internal reasoning/thoughts during task execution (Executor)
+  - `agent:step` - Pipeline steps (planner_started, scheduler_started, task_started, task_completed, synthesis_started)
+  - `agent:tool_call` - Tool invocation with arguments
+  - `agent:tool_result` - Tool execution result
+  - `response:chunk` - Final user-facing answer chunks (Router Synthesis only)
+  - `agent:completed` - Agent execution complete
+  - `agent:failed` - Agent execution failed with error details
+  - `agent:status_response`, `agent:status_error`, `agent:cancelled`, `agent:cancel_error`
 - **Jobs inbound:** `subscribe`, `unsubscribe` (joins/leaves `job:{jobId}`).
 - **Jobs outbound:** `subscribed`, `unsubscribed`.
-- **Disconnect/Errors:** UI should re-attach subscriptions after reconnect, surface `agent:failed`/`agent:status_error`/`agent:cancel_error` in notifications, and gate duplicate invokes while an execution is in-flight; backpressure is socket-level only (no queuing), so debounce rapid `agent:invoke` from the client.
+
+### Streaming Architecture
+- **Executor:** Emits `agent:reasoning` for internal thoughts/analysis (visible during "thinking")
+- **Router Synthesis:** Emits `response:chunk` for final user-facing answer (always streamed)
+- **No double-streaming:** Executor reasoning is separate from final answer
+- **User sees:** Reasoning while Agent works → Final answer when complete
+
+### Error Handling
+- **Router errors:** Emitted as `agent:failed`, then thrown (no fallback returns)
+- **Disconnect/Errors:** UI should re-attach subscriptions after reconnect, surface `agent:failed` in notifications, and gate duplicate invokes while an execution is in-flight; backpressure is socket-level only (no queuing), so debounce rapid `agent:invoke` from the client.
 
 ## Client Hooks for Streaming
 - **useSocket:** Always access the Socket.IO client via `useSocket` from the context; no Direktzugriff auf `io()` in UI-Komponenten.
-- **useAgentStreaming:** Nutze diesen Hook pro Session/Chat für Agent-Streams: er registriert alle Agent-Events (started/plan/step/tool_call/tool_result/response:chunk/completed/failed) und liefert `{ sendAgentMessage, getCurrentMessage, currentAgentState, isStreaming }`.
+- **useAgentStreaming:** Nutze diesen Hook pro Session/Chat für Agent-Streams: er registriert alle Agent-Events (started/plan/reasoning/step/tool_call/tool_result/response:chunk/completed/failed) und liefert `{ sendAgentMessage, getCurrentMessage, currentAgentState, isStreaming }`.
+  - **currentAgentState.reasoning:** Contains live internal thoughts from Executor (cleared when complete)
+  - **agent:reasoning handler:** Accumulates reasoning chunks, clears on completion
 - **Aufrufmuster:** UI triggert `sendAgentMessage(userMessage, agentType='Router', context)` und liest `currentAgentState`/`getCurrentMessage()` für Live-Updates; Status-/Fehler-UI stützt sich auf die Events aus dem Hook statt eigenen Listenern.
+- **ChatMessageAssistantTyping:** Shows `currentAgentState.reasoning` while Agent is thinking (monospace, gray, italic)
 - **Reconnect/Resubscribe:** Bei Disconnect setzt der Socket-Context `isConnected` zurück; UI sollte Streams schließen/disable senden, bis `isConnected` wieder true ist, und Jobs/Subscriptions erneut anmelden (über `subscribe`/`unsubscribe` im Context, nicht direkt auf `socket`).
+
+## Agent-Specific Implementation Details
+
+### Router Agent (lib/ai/agents/router.js)
+- **Intent Classification:** Uses `provider.complete()` (non-streaming) with router system prompt
+- **Pipeline Selection:** FAST_PATH vs FULL_PIPELINE based on intent
+- **Error Handling:** Emits `agent:failed` and throws (no fallback returns)
+- **Synthesis:** ALWAYS generates final answer via `provider.streamComplete()` with assistant system prompt
+  - If no tools used: Direct synthesis from user question
+  - If tools used: Synthesis with tool results injected into user message
+- **No double-streaming:** Only Router synthesis streams to client via `response:chunk`
+
+### Planner Agent (lib/ai/agents/planner.js)
+- **Task Decomposition:** Uses `provider.complete()` with structured tools API parameter
+- **Requirements:** In system prompt (planner.md), not user prompt
+- **Tools:** Passed as `{ name, description, inputSchema }[]` to provider, not as text
+- **Output:** Streams `agent:plan` immediately after LLM response
+- **Prompt Strategy:** 1-6 tasks, avoid duplicates, minimal for simple queries
+
+### Executor Agent (lib/ai/agents/executor.js)
+- **ReAct Loop:** Thought → Action → Observation → Repeat (max 10 iterations)
+- **Streaming:** Uses `provider.streamComplete()` (streaming-only, no fallback)
+- **Internal Reasoning:** Emits `agent:reasoning` chunks (not `response:chunk`)
+- **Tool Selection:** LLM decides which tools to call with `toolChoice: 'auto'`
+- **Tool Execution:** Emits `agent:tool_call` before, `agent:tool_result` after
+- **Socket Required:** Throws error if socket or streamComplete not available
+- **Task Context:** Receives previous task results via `context.previousResults`
+
+### Scheduler (lib/ai/orchestration/scheduler.js)
+- **Dependency Resolution:** Topological sort ensures tasks run in correct order
+- **Dependency Passing:** Collects results from completed dependency tasks
+- **Task Context:** Injects tool results and assistant messages from previous tasks into task description
+- **Format:** `\n\n**Previous Task Results:**\n**Tool Results:**\n- tool: result\n**Analysis:**\nassistantMessage`
+- **Sequential Execution:** Tasks run one-by-one (parallelization infrastructure exists but not active)
+- **Progress Tracking:** Emits `task_started` (1/N) and `task_completed` (N/N) via `agent:step`
+- **Validation:** Critic validates each task result before marking complete
+
+### Provider Architecture
+- **Streaming Only:** All agents use `provider.streamComplete()` (no `provider.complete()` fallback in Executor)
+- **Router Classification:** Still uses `provider.complete()` (short, no streaming needed)
+- **Universal Tool Format:** `{ name, description, inputSchema }` - adapters translate to provider-specific format
+- **Structured Tools:** Passed via API parameter, not as text in prompts
 
 ## Workflow: AnalysisChat (End-to-End)
 This workflow powers the core chat and analysis experience:

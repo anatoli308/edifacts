@@ -1,10 +1,8 @@
 # EDIFACTS
 
-WIP
+An intelligent AgentOS platform for EDIFACT analysis powered by multi-agent AI orchestration. Built with Next.js, Node.js, and real-time WebSocket streaming, EDIFACTS transforms complex EDI data into actionable insights through hierarchical task planning, deterministic parsing, and LLM-driven explanations. Bring your own OpenAI or Anthropic API key, or leverage managed inference—designed for developers, analysts, and enterprises who demand both transparency and automation.
 
-EDIFACTS is a web application designed to help users read and manage their EDIFACT data easily online with the help of 
-an AI chat assistant. 
-Copilot-Plattform, die heute EDIFACT kann und morgen Social Media, ERP, DevOps, Finance, Legal oder Robotics.
+**Key Features:** Multi-agent reasoning (Router, Planner, Executor, Critic) • Real-time streaming with live progress tracking • Universal tool system with 11+ domain tools • BYOK (Bring Your Own Key) architecture • Fully configurable agents & LLM providers • EDIFACT parsing & validation • Multi-user support with JWT auth • Customizable theming
 
 ## Requirements
 - Node.js (version 18 or higher) ideally latest stable version
@@ -53,16 +51,86 @@ Copilot-Plattform, die heute EDIFACT kann und morgen Social Media, ERP, DevOps, 
 ```
 app/                       # Next.js App Router structure
 ├── _components/           # Reusable UI components
+│   ├── chat/              # Chat components (messages, typing indicator, etc)
+│   ├── dialogs/           # Settings and data control dialogs
+│   ├── layout/            # AppBar, Drawer, Navigation
+│   └── utils/             # Icons, constants
 ├── _contexts/             # React Context providers
+│   ├── UserContext.js     # User authentication & profile
+│   ├── SocketContext.js   # WebSocket connection management
+│   ├── ThemeContext.js    # MUI theme preferences
+│   └── SnackbarContext.js # Global notifications
 ├── _containers/           # Page containers/layouts
+│   ├── AnalysisChatPage.js # EDIFACT analysis chat
+│   ├── StartContainer.js  # File upload & input
+│   └── AccountContainer.js # User settings
 ├── _hooks/                # Custom client hooks
+│   ├── useAgentStreaming.js # Agent event streaming
+│   ├── useProtectedRoute.js # Auth guards
+│   └── useAlreadyAuthenticatedRoute.js
 ├── api/                   # Next.js API routes
-├── auth/                  # Next.js App Router pages (login, register, account)
+│   ├── auth/              # Login, register, logout
+│   ├── generate/session/  # EDIFACT session creation
+│   └── user/              # User management
+├── auth/                  # Auth pages (login, register, account)
+├── a/[sessionId]/         # EDIFACT analysis chat pages
 ├── layout.js              # Root layout with Providers wrapper
 └── page.js                # Root Home page
 
 lib/                       # Library utilities & helpers
 ├── dbConnect.js           # MongoDB connection utility
+├── auth.js                # JWT authentication utilities
+├── ai/                    # Agentic AI Core (domain-agnostic)
+│   ├── agents/            # Agent implementations
+│   │   ├── router.js      # Intent classification & orchestration
+│   │   ├── planner.js     # HTN task decomposition
+│   │   ├── executor.js    # ReAct loop with tool calling
+│   │   ├── critic.js      # Validation & consistency checks
+│   │   └── index.js       # Agent registry
+│   ├── providers/         # LLM provider adapters
+│   │   ├── openai.js      # OpenAI adapter (parallel tools)
+│   │   ├── anthropic.js   # Anthropic adapter (sequential tools)
+│   │   └── index.js       # Provider factory
+│   ├── orchestration/     # Task coordination
+│   │   ├── scheduler.js   # DAG task scheduler with dependencies
+│   │   └── index.js
+│   ├── tools/             # Tool management
+│   │   ├── registry.js    # Central tool registry
+│   │   ├── validateToolContract.js # Tool validation
+│   │   └── index.js
+│   ├── prompts/           # Agent system prompts
+│   │   ├── router.md      # Router classification prompt
+│   │   ├── planner.md     # Planner decomposition prompt
+│   │   ├── executor.md    # Executor ReAct prompt
+│   │   ├── assistant.md   # General assistant prompt
+│   │   └── index.js       # Prompt loader
+│   └── config/            # Agent configuration
+│       ├── agents.config.js    # Agent parameters (temp, timeouts)
+│       ├── providers.config.js # Provider capabilities
+│       └── index.js
+├── socket/                # WebSocket handlers
+│   └── handlers/
+│       └── agentHandlers.js # Agent invocation via Socket.IO
+
+_modules/                  # Domain-specific modules
+├── edifact/               # EDIFACT domain module
+│   ├── index.js           # Module entry point
+│   ├── context.js         # LLM context builder
+│   ├── tools/             # EDIFACT-specific tools
+│   │   ├── segmentTools.js     # Segment analysis
+│   │   ├── validationTools.js  # Rule validation
+│   │   └── index.js
+│   └── validators/        # EDIFACT validators
+│       ├── edifactValidator.js # Validation pipeline
+│       ├── rules.js       # Rule engine
+│       └── index.js
+└── utility/               # Utility tools (weather, etc)
+    └── tools/
+        ├── webTools.js    # Web-based tools
+        └── index.js
+
+_workers/                  # Backend workers
+└── edifactParser.worker.js # EDIFACT parsing (deterministic)
 
 models/                    # Mongoose ODM models
 ├── User.js                # User schema and authentication methods
@@ -144,6 +212,23 @@ socketproxy.js             # Socket.IO middleware for authentication
   - Preview generation from parsed EDIFACT data
   - Backend worker support for heavy parsing operations
 
+- **Agentic AI Layer**
+  - **Multi-Agent System:** Router, Planner, Executor, Critic, Scheduler
+  - **Router Agent:** Intent classification (SIMPLE_EXPLAIN, ANALYSIS, DEBUG, PLANNING, CODING, COMPLIANCE)
+  - **Planner Agent:** Hierarchical task decomposition (HTN) into 1-6 subtasks with dependency tracking
+  - **Scheduler:** DAG-based task orchestration with dependency resolution and sequential execution
+  - **Executor Agent:** ReAct loop (Thought → Action → Observation) with tool calling (max 10 iterations)
+  - **Critic Agent:** Validates task results, checks consistency, detects hallucinations
+  - **Tool System:** Universal tool registry with 11+ tools (getWeather, EDIFACT segment analysis, validation, etc)
+  - **Provider Adapters:** OpenAI, Anthropic support with streaming (BYOK - Bring Your Own Key)
+  - **Streaming Architecture:**
+    - `agent:reasoning` - Internal thoughts during task execution (visible in UI)
+    - `agent:plan` - Task tree from Planner
+    - `agent:tool_call` / `agent:tool_result` - Tool execution tracking
+    - `response:chunk` - Final answer streaming to user
+  - **Context Passing:** Previous task results automatically injected into next task (tool results + analysis)
+  - **Real-time Progress:** Live updates for task execution (1/N, 2/N status)
+
 - **Real-time Communication**
   - WebSocket (Socket.IO) integration for live status updates
   - Automatic socket connection on app startup
@@ -152,12 +237,41 @@ socketproxy.js             # Socket.IO middleware for authentication
   - Real-time worker status indication (Connected/Connecting/Disconnected)
   - Status badge in AppBar showing WebSocket connection state
   - Auto-reconnection with exponential backoff
+  - **Agent Event Streaming:**
+    - `agent:started` - Agent execution begins
+    - `agent:plan` - Task tree emitted after planning
+    - `agent:reasoning` - Internal thoughts streamed during execution
+    - `agent:step` - Pipeline progress (planner_started, scheduler_started, task_started, task_completed, synthesis_started)
+    - `agent:tool_call` - Tool invocation with arguments
+    - `agent:tool_result` - Tool execution result with success flag
+    - `response:chunk` - Final answer streamed chunk-by-chunk
+    - `agent:completed` - Execution finished successfully
+    - `agent:failed` - Execution failed with error details
+  - **Custom Hooks:**
+    - `useAgentStreaming` - Handles all agent events, accumulates reasoning and response chunks
+    - `useSocket` - Manages WebSocket connection state
+  - **UI Components:**
+    - `ChatMessageAssistantTyping` - Shows live reasoning during "thinking"
+    - `ChatMessage` - Displays final streamed responses
 
 - **Database**
   - MongoDB with Mongoose ODM
   - User schema with authentication and theme preferences
+  - API key storage (encrypted) for BYOK (Bring Your Own Key)
   - Token management with device tracking
+  - Chat sessions with agent plans, tool calls, and results persistence
   - Timestamp tracking
+
+- **Provider System & BYOK**
+  - **Bring Your Own Key (BYOK):** Users supply their own OpenAI/Anthropic API keys
+  - **Universal Tool Contract:** Provider-agnostic tool format `{name, description, inputSchema}`
+  - **Provider Adapters:**
+    - OpenAI adapter: Parallel tool execution, streaming with `tool_calls[]`
+    - Anthropic adapter: Sequential tool execution, `tool_use` blocks
+  - **Streaming-Only Architecture:** All agents use `provider.streamComplete()` for real-time responses
+  - **Error Handling:** Automatic retries with exponential backoff (3 attempts)
+  - **Tool Injection:** Tools passed as structured API parameters (not text in prompts)
+  - **Future Support:** Azure OpenAI, vLLM (hosted/on-prem), Gemini
 
 - **Performance & Security**
   - Edge Runtime compatible middleware for fast authentication checks

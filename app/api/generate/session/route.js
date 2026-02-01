@@ -100,7 +100,7 @@ async function loadDefaultSystemApiKeyOpenAI() {
       provider: 'openai',
       name: defaultName,
       encryptedKey: openaiApiKey,
-      models: ['gpt-4.1', 'gpt-3.5-turbo']
+      models: ['gpt-oss:120b-cloud']
     });
   }
   return apiKey;
@@ -123,7 +123,7 @@ async function createEntities(authenticatedUser, fileInfo, subset, subsetVersion
   const chat = new AnalysisChat({
     name: 'My EDIFACT Analysis',
     creatorId: authenticatedUser._id.toString(),
-    selectedModel: 'gpt-4.1', // TODO: model wechseln
+    selectedModel: 'gpt-oss:120b-cloud', // TODO: model wechseln
     apiKeyRef: apiKeyForUser._id,
     domainContext: { // TODO: need generate more domainContext
       edifact: {

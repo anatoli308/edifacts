@@ -46,7 +46,7 @@ export function ThemeConfigProvider({ children }) {
     setThemeBackground(prefersDarkMode ? 'black' : 'white');
   };
 
-  // Sync theme with user or reset to defaults when logged out
+  // Sync theme with user or reset to default when logged out
   useEffect(() => {
     if (user && user.theme) {
       setThemeBackground(user.theme.backgroundMode || 'white');

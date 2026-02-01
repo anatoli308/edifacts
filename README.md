@@ -103,36 +103,40 @@ app/                       # Next.js App Router structure
 lib/                       # Library utilities & helpers
 ├── dbConnect.js           # MongoDB connection utility
 ├── auth.js                # JWT authentication utilities
-├── ai/                    # Agentic AI Core (domain-agnostic)
-│   ├── agents/            # Agent implementations
-│   │   ├── router.js      # Intent classification & orchestration
-│   │   ├── planner.js     # HTN task decomposition
-│   │   ├── executor.js    # ReAct loop with tool calling
-│   │   ├── critic.js      # Validation & consistency checks
-│   │   └── index.js       # Agent registry
-│   ├── providers/         # LLM provider adapters
-│   │   ├── openai.js      # OpenAI adapter (parallel tools)
-│   │   ├── anthropic.js   # Anthropic adapter (sequential tools)
+├── ai/                    # Agentic AI Core (domain-agnostic, EventEmitter-based)
+│   ├── agents/            # Agent implementations (ALL EventEmitters)
+│   │   ├── planner.js     # HTN task decomposition (EventEmitter)
+│   │   ├── executor.js    # ReAct loop with tool calling (EventEmitter)
+│   │   ├── critic.js      # Validation & consistency checks (EventEmitter)
+│   │   ├── memory.js      # Context management (EventEmitter, planned)
+│   │   ├── recovery.js    # Failure handling (EventEmitter, planned)
+│   │   └── index.js       # Agent registry (loadAgent factory)
+│   ├── providers/         # LLM provider adapters (NO agent logic)
+│   │   ├── openai.js      # OpenAI adapter
+│   │   ├── anthropic.js   # Anthropic adapter
 │   │   └── index.js       # Provider factory
 │   ├── orchestration/     # Task coordination
-│   │   ├── scheduler.js   # DAG task scheduler with dependencies
+│   │   ├── agentOrchestrator.js # Planner → Scheduler coordinator (EventEmitter)
+│   │   ├── scheduler.js   # DAG task execution (EventEmitter, future FSM)
 │   │   └── index.js
 │   ├── tools/             # Tool management
 │   │   ├── registry.js    # Central tool registry
 │   │   ├── validateToolContract.js # Tool validation
 │   │   └── index.js
 │   ├── prompts/           # Agent system prompts
-│   │   ├── router.md      # Router classification prompt
 │   │   ├── planner.md     # Planner decomposition prompt
 │   │   ├── executor.md    # Executor ReAct prompt
-│   │   ├── assistant.md   # General assistant prompt
+│   │   ├── critic.md      # Critic validation prompt
 │   │   └── index.js       # Prompt loader
 │   └── config/            # Agent configuration
 │       ├── providers.config.js # Provider capabilities
 │       └── index.js
-├── socket/                # WebSocket handlers
-│   └── handlers/
-│       └── agentHandlers.js # Agent invocation via Socket.IO
+├── socket/                # WebSocket layer (EventEmitter integration)
+│   ├── handlers/
+│   │   └── agentHandlers.js # Agent invocation handlers
+│   ├── sessionContext.js  # SessionContext (DI + event relay)
+│   └── utils/
+│       └── messageUtils.js # Message preparation utilities
 
 _modules/                  # Domain-specific modules
 ├── edifact/               # EDIFACT domain module
@@ -155,7 +159,14 @@ _workers/                  # Backend workers
 └── edifactParser.worker.js # EDIFACT parsing (deterministic)
 
 models/                    # Mongoose ODM models
-├── User.js                # User schema and authentication methods
+├── shared/                # Shared models (recommended structure)
+│   ├── User.js            # User authentication & profile
+│   ├── ApiKey.js          # BYOK API keys (encrypted)
+│   └── File.js            # File uploads
+└── edifact/               # EDIFACT-specific models
+    ├── AnalysisChat.js    # Chat sessions (with agentPlan)
+    ├── AnalysisMessage.js # Messages (with toolCalls[], toolResults[])
+    └── AnalysisMessageChunk.js # Streaming chunks
 
 theme/                     # MUI theme configurations
 ├── colors.js              # Font color definitions
@@ -234,28 +245,43 @@ socketproxy.js             # Socket.IO middleware for authentication
   - Preview generation from parsed EDIFACT data
   - Backend worker support for heavy parsing operations
 
-- **Agentic AI Layer**
-  - **Multi-Agent System:** Router, Planner, Executor, Critic, Scheduler
-  - **Router Agent:** Intent classification (SIMPLE_EXPLAIN, ANALYSIS, DEBUG, PLANNING, CODING, COMPLIANCE)
-  - **Planner Agent:** Hierarchical task decomposition (HTN) into 1-6 subtasks with dependency tracking
-  - **Scheduler:** DAG-based task orchestration with dependency resolution and sequential execution
-  - **Executor Agent:** ReAct loop (Thought → Action → Observation) with tool calling (max 10 iterations)
+- **Agentic AI Layer (EventEmitter Architecture)**
+  - **Multi-Agent System:** All agents extend EventEmitter for decoupled communication
+  - **Planner Agent:** Hierarchical task decomposition (HTN) - emits `agent_planner:started/completed`
+  - **Scheduler:** DAG-based task orchestration with dependency resolution (future State Machine)
+  - **Executor Agent:** ReAct loop (Thought → Action → Observation) - emits `agent_executor:tool_call/tool_result/reasoning`
   - **Critic Agent:** Validates task results, checks consistency, detects hallucinations
+  - **AgentOrchestrator:** Coordinates Planner → Scheduler flow with dependency injection
+  - **SessionContext Pattern:** 
+    - Manages all agent instances per socket connection (DI container)
+    - Event relay: Agent → SessionContext → Socket.IO
+    - Memory leak prevention (listeners registered once in constructor)
+    - Lifecycle management (reset before execution, cleanup on disconnect)
   - **Tool System:** Universal tool registry with 11+ tools (getWeather, EDIFACT segment analysis, validation, etc)
   - **Provider Adapters:** OpenAI, Anthropic support with streaming (BYOK - Bring Your Own Key)
-  - **Streaming Architecture:**
-    - `agent:reasoning` - Internal thoughts during task execution (visible in UI)
-    - `agent:plan` - Task tree from Planner
-    - `agent:tool_call` / `agent:tool_result` - Tool execution tracking
-    - `response:chunk` - Final answer streaming to user
-  - **Context Passing:** Previous task results automatically injected into next task (tool results + analysis)
-  - **Real-time Progress:** Live updates for task execution (1/N, 2/N status)
-
-- **Real-time Communication**
+  - **Event-Driven Architecture:**
+    - Internal events: `agent_{agentName}:{eventType}` (e.g., `agent_planner:started`)
+    - Socket events: `agent:{eventType}` (e.g., `agent:plan`, `agent:tool_call`)
+    - Declarative event map (EventEmitter Integration)**
   - WebSocket (Socket.IO) integration for live status updates
   - Automatic socket connection on app startup
   - Token-based WebSocket authentication via `authToken` cookie
-  - Socket context provider with safe defaults for client components
+  - Socket context provider for global access
+  - Real-time worker status indication (Connected/Connecting/Disconnected)
+  - Status badge in AppBar showing WebSocket connection state
+  - Auto-reconnection with exponential backoff
+  - **SessionContext Pattern:**
+    - One SessionContext instance per socket connection
+    - All agents (planner, scheduler, executor, critic) instantiated per session
+    - Event relay from agents to socket (declarative mappings)
+    - Memory leak prevention (listeners registered once, cleaned up on disconnect)
+  - **Agent Event Streaming:**
+    - `agent:started` - Agent execution begins
+    - `agent:plan` - Task tree emitted after planning (2 events: started/completed)
+    - `agent:reasoning` - Internal thoughts streamed during execution
+    - `agent:step` - Task progress (
+  - Token-based WebSocket authentication via `authToken` cookie
+  - Socket context provider for global access
   - Real-time worker status indication (Connected/Connecting/Disconnected)
   - Status badge in AppBar showing WebSocket connection state
   - Auto-reconnection with exponential backoff

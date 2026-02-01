@@ -11,9 +11,11 @@ import { getAuthenticatedUser } from "./lib/auth.js";
 // Tool Registry initialization
 import { initializeToolRegistry } from "./lib/ai/tools/init.js";
 
+import { SessionContext } from "./lib/socket/sessionContext.js";
+
 // Socket.IO event handlers
-import { registerAgentHandlers } from "./lib/socket/handlers/agentHandlers.js";
-import { registerJobHandlers } from "./lib/socket/handlers/jobHandlers.js";
+import { registerAgentHandlers, unregisterAgentHandlers } from "./lib/socket/handlers/agentHandlers.js";
+import { registerJobHandlers, unregisterJobHandlers } from "./lib/socket/handlers/jobHandlers.js";
 
 const app = next({ dev: process.env.NODE_ENV !== "production" });
 const handler = app.getRequestHandler(app);
@@ -57,12 +59,20 @@ app.prepare().then(async () => {
     io.on('connection', async socket => {
         await updateUserOnlineStatus(socket, true);
 
+        // SessionContext erstellt und verwaltet ALLE Agents + Events
+        socket.sessionContext = new SessionContext(socket);
+
         // Register event handlers
         registerJobHandlers(socket);
         registerAgentHandlers(socket);
 
         // Socket event listeners
-        socket.on('disconnect', () => handleDisconnect(socket));
+        socket.on('disconnect', () => {
+            socket.sessionContext.cleanup();
+            unregisterJobHandlers(socket);
+            unregisterAgentHandlers(socket);
+            handleDisconnect(socket);
+        });
     });
 
     // Express configuration

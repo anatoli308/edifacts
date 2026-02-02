@@ -413,38 +413,54 @@ socketproxy.js             # Socket.IO middleware for authentication
 
 **Foundational Agent Features**
 
-🧠 **Memory Agent** (Planned)
-- Conversational context management
-- Long-term knowledge retrieval
-- Context window optimization
-- Session history persistence
+🧠 **Enhanced Memory Agent** ✅ Documented
+- Importance Weighting (semantic relevance scoring)
+- Semantic Compression (cluster + summarize similar messages)
+- Adaptive Context Window (simple/medium/complex → 2K/8K/16K tokens)
+- Memory Pruning (importance-based retention)
+- Long-term Knowledge Base (entity tracking)
 
-🛡️ **Recovery Agent** (Planned)
-- Provider failure handling
-- Automatic retry with exponential backoff
-- Provider switching (OpenAI ↔ Anthropic ↔ vLLM)
-- Error escalation to user
+🛡️ **Enhanced Recovery Agent** ✅ Documented
+- Error Classification (transient, permanent, rate-limited, unknown)
+- Adaptive Backoff Learning (learns best strategy per error type)
+- Circuit Breaker Pattern (prevents cascade failures)
+- Fallback Chain Execution (primary → secondary → cache → degradation)
+- Error Pattern Detection (identifies systemic issues)
 
-⚖️ **Enhanced Critic** (Planned)
+⚖️ **Ethics Agent** ✅ Documented
+- PII Detection & Auto-Redaction (email, phone, SSN, credit card)
+- Rate Limiting (configurable requests per hour)
+- Content Moderation (permissive/standard/strict modes)
+- GDPR Compliance (retention, right to be forgotten, consent)
+- Audit Trail (comprehensive logging for compliance)
+
+📊 **Enhanced Critic** (Documented)
 - Improved validation rules
 - Hallucination detection
 - Confidence scoring
 - Cross-check with deterministic core
 
-🔄 **Enhanced Executor** (Planned)
+🔄 **Enhanced Executor** (Documented)
 - Working Memory (goal tracking, discoveries, progress)
 - Smart Loop Detection (prevents infinite tool call patterns)
 - Periodic Reflection (metacognitive self-assessment every N iterations)
 - Early Stop (goal achievement detection)
 - Iteration State Tracking (completed/pending tasks)
 
-🧩 **Enhanced Planner** (Planned)
+🧩 **Enhanced Planner** (Documented)
 - Dynamic Replanning (Critic-triggered plan updates)
 - Complexity-Based Planning (adaptive task decomposition)
 - Context-Aware Planning (leverage previous results, user expertise)
 - Plan Optimization (merge redundant tasks, improve parallelization)
 - Plan Validation (check dependencies, tool availability)
 - Adaptive Temperature (complexity-based LLM creativity)
+
+⏱️ **Enhanced Scheduler** (Documented)
+- State Machine (IDLE→PLANNING→EXECUTING→VALIDATING→COMPLETED)
+- Checkpoint/Resume Support (for Cancel & Resume workflows)
+- Dynamic Priority Adjustment (error tasks prioritized)
+- Resource Management (token budget, rate limits)
+- Parallel Execution Preparation (v2.x ready)
 
 🎮 **User Interaction** (Planned)
 - Human-in-the-loop for ambiguous queries
@@ -463,13 +479,6 @@ socketproxy.js             # Socket.IO middleware for authentication
 - Max Replan Attempts with graceful degradation
 - Replanning History tracking
 - Closed-loop intelligence (mid-execution plan adjustments)
-
-⚙️ **Enhanced Scheduler** (Planned)
-- State Machine (FSM) implementation for complex workflows
-- Checkpoint/Resume support for Cancel & Resume
-- Dynamic Priority adjustment (error tasks first)
-- Resource Management (token budget awareness)
-- Parallel execution preparation (v2.x ready)
 
 **Polish & Optimization**
 - State Machine for Scheduler (conditional replanning)

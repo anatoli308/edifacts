@@ -1,8 +1,68 @@
-# EDIFACTS
+<div align="center">
 
-An intelligent AgentOS platform for EDIFACT analysis powered by multi-agent AI orchestration. Built with Next.js, Node.js, and real-time WebSocket streaming, EDIFACTS transforms complex EDI data into actionable insights through hierarchical task planning, deterministic parsing, and LLM-driven explanations. Bring your own OpenAI or Anthropic API key, or leverage managed inference—designed for developers, analysts, and enterprises who demand both transparency and automation.
+# 🤖 EDIFACTS
 
-**Key Features:** Multi-agent reasoning (Router, Planner, Executor, Critic) • Real-time streaming with live progress tracking • Universal tool system with 11+ domain tools • BYOK (Bring Your Own Key) architecture • Fully configurable agents & LLM providers • EDIFACT parsing & validation • Multi-user support with JWT auth • Customizable theming
+### Event-Driven Agentic Workflow Platform for Intelligent EDIFACT Analysis
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org/)
+[![Socket.IO](https://img.shields.io/badge/Socket.IO-4.x-blue)](https://socket.io/)
+
+**Transform complex EDI data into actionable insights with AI-powered sequential agent orchestration**
+
+[Features](#key-features) • [Quick Start](#docker-setup-development) • [Architecture](#development-features) • [Roadmap](#️-roadmap) • [Documentation](#project-structure)
+
+---
+
+</div>
+
+## 🚀 What is EDIFACTS?
+
+EDIFACTS is an **intelligent AgentOS platform** that revolutionizes EDIFACT analysis through **event-driven agentic workflow orchestration**. Built on Next.js and powered by real-time WebSocket streaming, it combines:
+
+- 🧠 **Sequential Agent Pipeline**: Planner → Scheduler → Executor → Critic agents working in coordinated workflow
+- ⚡ **Event-Driven Architecture**: EventEmitter-based communication for decoupled, observable agent coordination
+- 🔄 **Real-Time Streaming**: Live reasoning, tool calls, and progress tracking with WebSocket integration
+- 🔒 **BYOK (Bring Your Own Key)**: Use your own OpenAI or Anthropic API key—full control, zero vendor lock-in
+- 🎯 **Deterministic Core**: Open-source EDIFACT parser/validator as single source of truth
+- 🏢 **Enterprise-Ready**: JWT auth, multi-user support, audit trails, GDPR compliance
+
+> **🚀 Future Vision:** Evolving toward true multi-agent architecture with parallel execution, autonomous recovery, and competitive reasoning (see [Roadmap](#roadmap)).
+
+**For developers, analysts, and enterprises who demand both transparency and automation.**
+
+## ✨ Key Features
+
+🤖 **Agentic Workflow System (EventEmitter-Based)**
+- **Current:** Sequential agent pipeline (Planner → Scheduler → Executor → Critic)
+- **Future:** Hybrid multi-agent with parallel execution, specialized agent pools, autonomous recovery
+- Hierarchical task planning with dependency injection
+- DAG-based task scheduling (with future State Machine support. preparing for parallel execution)
+- ReAct loops with tool calling (11+ domain tools)
+- Validation & hallucination detection
+
+⚡ **Real-Time Streaming**
+- Live reasoning and progress updates (`agent:reasoning`, `agent:plan`, `agent:tool_call`)
+- SessionContext pattern for memory-leak-free event relay
+- Automatic agent state reset before execution
+
+🔐 **Bring Your Own Key (BYOK)**
+- OpenAI & Anthropic support (Azure, vLLM coming soon)
+- Universal tool contract (provider-agnostic)
+- Your API keys, your data, your control
+
+🎨 **Developer Experience**
+- Clean Code Standards (SOLID, DRY, SRP)
+- Dependency Injection pattern throughout
+- EventEmitter architecture for testability
+- Comprehensive TypeScript support
+
+📊 **EDIFACT Processing**
+- Deterministic parsing & validation
+- Subset detection (EANCOM, ODETTE, HIPAA, etc.)
+- File upload with drag-and-drop
+- Custom text input support
 
 ## Requirements
 - Node.js (version 18 or higher) ideally latest stable version
@@ -338,6 +398,116 @@ socketproxy.js             # Socket.IO middleware for authentication
   - Hot Module Replacement (HMR) for faster development
   - Clean component structure with containers and components
   - Modular and reusable code organization
+
+## 🗺️ Roadmap
+
+### v1.x (Early - Implemented) ✅
+**Core Sequential Pipeline:**
+- EventEmitter-based agent architecture
+- Sequential orchestration (Planner → Scheduler → Executor → Critic)
+- Real-time streaming with SessionContext pattern
+- Dependency Injection for testability
+- BYOK (Bring Your Own Key) for OpenAI/Anthropic
+
+### v1.x (Late - In Progress) 🚧
+
+**Foundational Agent Features**
+
+🧠 **Memory Agent** (Planned)
+- Conversational context management
+- Long-term knowledge retrieval
+- Context window optimization
+- Session history persistence
+
+🛡️ **Recovery Agent** (Planned)
+- Provider failure handling
+- Automatic retry with exponential backoff
+- Provider switching (OpenAI ↔ Anthropic ↔ vLLM)
+- Error escalation to user
+
+⚖️ **Enhanced Critic** (Planned)
+- Improved validation rules
+- Hallucination detection
+- Confidence scoring
+- Cross-check with deterministic core
+
+🔄 **Enhanced Executor** (Planned)
+- Working Memory (goal tracking, discoveries, progress)
+- Smart Loop Detection (prevents infinite tool call patterns)
+- Periodic Reflection (metacognitive self-assessment every N iterations)
+- Early Stop (goal achievement detection)
+- Iteration State Tracking (completed/pending tasks)
+
+🧩 **Enhanced Planner** (Planned)
+- Dynamic Replanning (Critic-triggered plan updates)
+- Complexity-Based Planning (adaptive task decomposition)
+- Context-Aware Planning (leverage previous results, user expertise)
+- Plan Optimization (merge redundant tasks, improve parallelization)
+- Plan Validation (check dependencies, tool availability)
+- Adaptive Temperature (complexity-based LLM creativity)
+
+🎮 **User Interaction** (Planned)
+- Human-in-the-loop for ambiguous queries
+- Clarification requests
+- Approval workflows for system changes
+- Interactive debugging
+
+🛑 **Cancel Logic** (Planned)
+- Graceful execution termination
+- Rollback support
+- State cleanup on abort
+- Real-time cancellation feedback
+
+🎯 **Enhanced Orchestrator** (Planned)
+- Adaptive Replanning Loop (Executor/Critic → Planner)
+- Max Replan Attempts with graceful degradation
+- Replanning History tracking
+- Closed-loop intelligence (mid-execution plan adjustments)
+
+⚙️ **Enhanced Scheduler** (Planned)
+- State Machine (FSM) implementation for complex workflows
+- Checkpoint/Resume support for Cancel & Resume
+- Dynamic Priority adjustment (error tasks first)
+- Resource Management (token budget awareness)
+- Parallel execution preparation (v2.x ready)
+
+**Polish & Optimization**
+- State Machine for Scheduler (conditional replanning)
+- Provider adapter for Azure OpenAI
+- Enhanced audit logging
+- Performance profiling & optimization
+
+### v2.x: Hybrid Multi-Agent Architecture 🚀
+
+**Phase 1: Parallel Execution** ⚡
+- ExecutorPool with specialized agents (Syntax, Semantic, Compliance)
+- DAG-based parallel task execution
+- 3-5x speed improvement for complex analyses
+- Backward compatible with sequential mode
+
+**Phase 2: Competitive Execution** 🏆
+- Best-of-N reasoning (multiple executors, Critic selects best)
+- Cross-validation for hallucination detection
+- Consensus-based confidence scoring
+- Higher accuracy on complex queries
+
+**Phase 3: Agent Bus** 🔄
+- Peer-to-peer agent communication
+- Dynamic replanning (Critic → Planner loops)
+- Full multi-agent coordination
+- Event-driven agent discovery
+
+**Phase 4: Meta-Learning** 🧠
+- Router Agent for intelligent task routing
+- Adaptive complexity detection
+- Performance optimization via learning
+- Enterprise-grade observability
+
+**Migration Strategy:**
+- ✅ Feature flags (gradual rollout)
+- ✅ Backward compatible (sequential as fallback)
+- ✅ A/B testing for performance validation
+- ✅ No breaking changes for existing integrations
 
 ## Usage
 1. start chat session

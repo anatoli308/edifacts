@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-import { analysisMessageSchema } from '@/app/models/edifact/AnalysisMessage.js';
+import { analysisMessageSchema } from './AnalysisMessage.js';
+import { edifactAnalysisSchema } from './EdifactAnalysis.js';
 
 const analysisChatSchema = mongoose.Schema({
     name: {
@@ -44,59 +45,28 @@ const analysisChatSchema = mongoose.Schema({
 
     domainContext: {
         edifact: {
-            subset: {
-                type: String, // z.B. ODETTE, INVOIC, ORDERS
-            },
+            subset: String, // User input: Expected subset
+            messageType: String, // User input: Expected version
 
             fileId: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'File'
+                ref: 'File',
+                required: true
             },
-
-            version: String, // D96A, D01B etc.
 
             options: {
                 type: Object,
                 default: {}
-            }
+            },
+
+            _analysis: edifactAnalysisSchema
         }
     },
 
-    analysis: {
-        edifact: {
-            messageType: String, // INVOIC
-            detectedSubset: String, // falls auto-detected
-            segments: [String], // ['UNH','BGM','DTM']
-            segmentCount: Number,
-
-            validation: {
-                errors: Number,
-                warnings: Number,
-                details: [{
-                    segment: String,
-                    error: String,
-                    warning: String,
-                    line: Number
-                }],
-            },
-
-            parties: [String], // BY, SU, DP
-            dates: [String],
-
-            summary: String, // human readable
-            llmContext: String, // token-optimierte Kurzfassung
-
-        },
-
-        status: {
-            type: String,
-            enum: ['pending', 'parsed', 'validated', 'error'],
-            default: 'pending'
-        }
-    }
 }, {
     timestamps: true // Automatisch createdAt und updatedAt
 });
+
 analysisChatSchema.set('toJSON', {
     transform: (doc, ret) => {
         ret._id = ret._id.toString();

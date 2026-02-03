@@ -305,9 +305,9 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
                                                         <Typography variant="caption" color="text.secondary">
                                                             Tools:
                                                         </Typography>
-                                                        {task.tools.map(tool => (
+                                                        {task.tools.map((tool,index) => (
                                                             <Chip
-                                                                key={tool}
+                                                                key={index}
                                                                 label={tool}
                                                                 size="small"
                                                                 icon={<Iconify icon="mdi:wrench" sx={{ fontSize: 12 }} />}

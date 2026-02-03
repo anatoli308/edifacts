@@ -15,7 +15,7 @@ EDIFACTS is a Next.js/React web app for analyzing, explaining, and managing EDIF
 
 Follow these fundamental principles for maintainable, scalable code:
 
-### SOLID Principles
+### Follow the SOLID Principles
 - **Single Responsibility Principle (SRP)**: Each class/function should have one, and only one, reason to change. One responsibility per module.
 - **Open/Closed Principle (OCP)**: Software entities should be open for extension, but closed for modification. Use composition and dependency injection.
 - **Liskov Substitution Principle (LSP)**: Subtypes must be substitutable for their base types without altering program correctness.
@@ -28,6 +28,14 @@ Follow these fundamental principles for maintainable, scalable code:
 - **DRY (Don't Repeat Yourself)**: Eliminate code duplication through abstraction and reuse.
 - **Clear Abstractions**: Use meaningful names. Code should read like prose. Avoid clever tricks.
 - **Separation of Concerns**: Different concerns should be in different modules. UI ≠ Business Logic ≠ Data Access.
+- **YAGNI (You Aren't Gonna Need It)**: Don't implement features until they are necessary.
+- **KISS (Keep It Simple, Stupid)**: Simplicity is key. Avoid over-engineering.
+- **Meaningful Comments**: Comment why, not what. Code should be self-explanatory; use comments for rationale and context.
+- **Consistent Formatting**: Follow established code style (indentation, spacing, naming conventions) for readability.
+- **Error Handling**: Handle errors gracefully. Use try/catch where appropriate and provide meaningful error messages.
+- **Service abstraction**: Separate external service calls (e.g., LLM providers) behind interfaces or adapters.
+- **Control Flow Clarity**: Avoid deeply nested code if possible. Use early returns to reduce complexity.
+- 
 
 ### Practical Application in EDIFACTS
 ```js
@@ -138,57 +146,6 @@ class Planner extends EventEmitter {
 - Supports future observability/monitoring
 
 ### SessionContext Pattern (Dependency Injection)
-
-`SessionContext` manages all agent instances per socket connection:
-
-```js
-class SessionContext {
-  constructor(socket) {
-    this.socket = socket;
-    
-    // Instantiate all agents (session-scoped, one per socket)
-    this.planner = loadAgent('planner');
-    this.scheduler = new Scheduler();
-    this.executor = loadAgent('executor');
-    this.critic = loadAgent('critic');
-    
-    // Orchestrator receives all agents via DI
-    this.orchestrator = new AgentOrchestrator({
-      planner: this.planner,
-      scheduler: this.scheduler,
-      executor: this.executor,
-      critic: this.critic,
-    });
-    
-    // Setup event relays (once, in constructor)
-    this._setupEventRelays();
-  }
-  
-  _setupEventRelays() {
-    // Relay agent events to socket
-    this.planner.on('agent_planner:started', (data) => this.socket.emit('agent:plan', data));
-    this.planner.on('agent_planner:completed', (data) => this.socket.emit('agent:plan', data));
-    // ... more event mappings
-  }
-  
-  resetAgents() {
-    // Reset all agents before new execution
-    this.planner?.reset?.();
-    this.scheduler?.reset?.();
-    this.executor?.reset?.();
-    this.critic?.reset?.();
-  }
-  
-  cleanup() {
-    // Remove all event listeners on disconnect
-    this.orchestrator?.removeAllListeners();
-    this.planner?.removeAllListeners();
-    this.scheduler?.removeAllListeners();
-    this.executor?.removeAllListeners();
-    this.critic?.removeAllListeners();
-  }
-}
-```
 
 **Why SessionContext:**
 - **Single Source of Truth** for agent instances per socket

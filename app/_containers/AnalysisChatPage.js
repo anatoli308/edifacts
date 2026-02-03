@@ -89,7 +89,7 @@ function AnalysisChatPage(props) {
                                 <ChatMessage key={index} message={message} />
                             ))}
                             
-                            {getCurrentMessage()?.content.agentPlan == null && isStreaming && (
+                            {isStreaming && (
                                 <ChatMessageAssistantTyping />
                             )}
 

@@ -6,31 +6,18 @@ import { Server } from "socket.io";
 
 import socketAuth from "./socketproxy.js";
 
-import { getAuthenticatedUser } from "./lib/auth.js";
-
 // Tool Registry initialization
 import { initializeToolRegistry } from "./lib/ai/tools/init.js";
 
 import { SessionContext } from "./lib/socket/sessionContext.js";
 
 // Socket.IO event handlers
-import { registerAgentHandlers, unregisterAgentHandlers } from "./lib/socket/handlers/agentHandlers.js";
-import { registerJobHandlers, unregisterJobHandlers } from "./lib/socket/handlers/jobHandlers.js";
+import { registerAgentHandlers } from "./lib/socket/handlers/agentHandlers.js";
+import { registerJobHandlers } from "./lib/socket/handlers/jobHandlers.js";
 
 const app = next({ dev: process.env.NODE_ENV !== "production" });
 const handler = app.getRequestHandler(app);
 const PORT = process.env.PORT || 3010;
-
-async function updateUserOnlineStatus(socket, isOnline) {
-    const authenticatedUser = await getAuthenticatedUser(socket.userId, socket.token);
-    if (authenticatedUser) {
-        authenticatedUser.isOnline = isOnline;
-        await authenticatedUser.save();
-    }
-    const status = isOnline ? "connected" : "disconnected";
-    console.log(`Socket ${status}: ${socket.id} => (${authenticatedUser?.name || "guest"})`);
-    return authenticatedUser;
-}
 
 app.prepare().then(async () => {
     // Initialize Tool Registry before starting server
@@ -57,8 +44,6 @@ app.prepare().then(async () => {
 
     // Socket connection handler
     io.on('connection', async socket => {
-        await updateUserOnlineStatus(socket, true);
-
         // SessionContext erstellt und verwaltet ALLE Agents + Events
         socket.sessionContext = new SessionContext(socket);
 
@@ -67,12 +52,10 @@ app.prepare().then(async () => {
         registerAgentHandlers(socket);
 
         // Socket event listeners
-        socket.on('disconnect', () => {
-            socket.sessionContext.cleanup();
-            unregisterJobHandlers(socket);
-            unregisterAgentHandlers(socket);
-            handleDisconnect(socket);
-        });
+        socket.on('disconnect', () => handleDisconnect(socket));
+
+        // Error handler for uncaught errors in handlers
+        socket.on('error', (error) => handleError(socket, error));
     });
 
     // Express configuration
@@ -89,5 +72,10 @@ app.prepare().then(async () => {
 });
 
 async function handleDisconnect(socket) {
-    await updateUserOnlineStatus(socket, false);
+    socket.sessionContext.cleanup();
+}
+
+function handleError(socket, error) {
+    console.error(`[Socket ${socket.id}] Error:`, error);
+    //socket.sessionContext?.cleanup(); //dont cleanup listeners on error
 }

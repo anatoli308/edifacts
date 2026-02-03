@@ -106,7 +106,7 @@ async function loadDefaultSystemApiKeyOpenAI() {
   return apiKey;
 }
 
-async function createEntities(authenticatedUser, fileInfo, subset, subsetVersion) {
+async function createEntities(authenticatedUser, fileInfo, subset, messageType) {
   await dbConnect();
   const newFile = new File({
     ownerId: authenticatedUser._id,
@@ -123,14 +123,13 @@ async function createEntities(authenticatedUser, fileInfo, subset, subsetVersion
   const chat = new AnalysisChat({
     name: 'My EDIFACT Analysis',
     creatorId: authenticatedUser._id.toString(),
-    selectedModel: 'gpt-oss:120b-cloud', // TODO: model wechseln
+    selectedModel: 'gpt-oss:120b-cloud', // TODO: model wechseln / model selected from apiKeyForUser
     apiKeyRef: apiKeyForUser._id,
     domainContext: { // TODO: need generate more domainContext
       edifact: {
         subset: subset,
         fileId: newFile._id,
-        version: subsetVersion,
-        options: {}
+        messageType: messageType,
       }
     }
   });

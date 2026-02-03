@@ -288,7 +288,7 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
         // Agent Failed
         const handleAgentFailed = (data) => {
             console.error('[Agent] Failed:', data);
-            pushSnackbarMessage(`Agent failed: ${data.error}`, 'error');
+            pushSnackbarMessage(`${data.error}`, 'error');
             setIsStreaming(false);
             setCurrentAgentState(prev => {
                 const newState = { ...prev, status: 'failed', error: data.error };

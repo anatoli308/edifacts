@@ -4,12 +4,16 @@
 EDIFACTS is a Next.js/React web app for analyzing, explaining, and managing EDIFACT data with an AI chat assistant. It combines an open-source EDIFACT core (parsing, validation, normalization) with an optional LLM-based explanation layer, supporting both "bring your own key" and managed vLLM backends. The platform is SaaS-ready, modular, and designed for extensibility and enterprise use.
 
 ## Important Developer Rules
-1. **Export only public APIs**: When creating new classes, only export the main class or function used by other modules. Helper functions should remain internal.
+1. **Export only public APIs**: When creating new classes, only export the main class or function used by other modules. Helper functions should remain internal and private.
 2. **Private method naming**: Internal private methods should be prefixed with an underscore `_` to indicate they are not part of the public API.
 3. **Code consistency**: Follow existing code style and conventions for consistency across the project.
 4. **Event-driven architecture**: Prefer EventEmitter-based communication over direct coupling where appropriate.
 5. **Dependency Injection**: Use constructor injection for agent dependencies (see SessionContext pattern).
 6. **State Machine readiness**: Agents maintain simple state flags (`idle`, `executing`, `completed`) to prepare for future State Machine implementation where needed.
+7. **Single Responsibility**: Each agent should have one clear responsibility (Planner, Scheduler, Executor, Critic, etc). Avoid mixing concerns.
+8. **MUI components**: For any new UI components, use Material-UI (MUI) and follow the existing design system for consistency.
+9. **@/ alias**: Use the `@/` alias for imports from the `src/` directory to maintain clean and consistent import paths. In `jsconfig.json` you configure this alias. In the backend, use relative imports within the `src/` directory.
+10. **setTimeout/setInterval**: Avoid using `setTimeout` or `setInterval` for timing or scheduling. Instead, use event-driven approaches or a proper way to handle asynchronous operations.
 
 ## Clean Code Standards
 
@@ -35,7 +39,7 @@ Follow these fundamental principles for maintainable, scalable code:
 - **Error Handling**: Handle errors gracefully. Use try/catch where appropriate and provide meaningful error messages.
 - **Service abstraction**: Separate external service calls (e.g., LLM providers) behind interfaces or adapters.
 - **Control Flow Clarity**: Avoid deeply nested code if possible. Use early returns to reduce complexity.
-- 
+- **Event-Driven Communication**: Use events for decoupled communication between modules, especially in agent interactions. Always prefer EventEmitter over direct method calls for inter-agent communication.
 
 ### Practical Application in EDIFACTS
 ```js
@@ -98,8 +102,8 @@ User Message → Planner → Scheduler → Executor → Critic → Result
 **Future Migration Path:** See "Multi-Agent Evolution Strategy" section below.
 
 ### Layered Design
-- **Core (Deterministic):** EDIFACT parser/validator (no LLM dependency). Normalizes to JSON, detects subsets, enforces rules. See `_workers/` and backend logic. **Single source of truth for domain semantics.**
-- **Explanation Engine:** Adapter pattern for LLM providers (OpenAI, Anthropic, Azure, local vLLM, etc). Interface: `explainSegment`, `explainMessage`, `answerQuestion`. User selects provider and supplies own API key.
+- **Core (Deterministic):** EDIFACT parser/validator (no LLM dependency). Normalizes to JSON, detects subsets, enforces rules. See `_workers/` and backend logic. Long running processes designed to run in separate threads or processes to avoid blocking the main event loop. **Single source of truth for domain semantics.**
+- **LLM Agentic Layer:** Stateless agents for planning, scheduling, execution, and critique. Communicate via events. No direct coupling to Socket.IO or each other. See `src/agents/`. Designed for future multi-agent evolution.
 - **Agentic AI Layer:** Provider-agnostic agent orchestration using **EventEmitter pattern**:
   - **Planner Agent:** Hierarchical task decomposition (HTN style) - EventEmitter ✅
   - **Scheduler:** DAG scheduling for task execution - EventEmitter (future State Machine candidate) ✅
@@ -109,6 +113,8 @@ User Message → Planner → Scheduler → Executor → Critic → Result
   - **Recovery Agent:** Fallbacks, retries, provider switching - EventEmitter 🚧 (v1.x Late)
   - **AgentOrchestrator:** Coordinates Planner → Scheduler flow - EventEmitter ✅
 - **Service Layer:** Managed vLLM (hosted or on-prem) is optional and monetized via support/enterprise features. Core remains open source; commercial features (audit logs, SAP helpers, etc) are kept separate.
+- **_workers/**: This directory contains long running processes for independent execution (e.g., EDIFACT parsing, etc). These should be designed to run in separate threads or processes to avoid blocking the main event loop.
+- **_modules/**: This directory contains reusable tools for agent execution (e.g., SAP tool, database tool, edifact tool, etc). These should be designed as stateless functions that can be called by the Executor agent with appropriate parameters and no side effects.
 
 ### EventEmitter Architecture Pattern
 
@@ -2247,88 +2253,6 @@ class RouterAgent extends EventEmitter {
 - Phase 3 (Agent Bus):(full multi-agent)
 - Phase 4 (Meta-Learning):(optimization)
 
-## Complete Project Structure
-
-```
-edifacts/
-├── app/                              # Next.js App Router
-│   ├── api/                          # API Routes
-│   │   ├── auth/                     # Authentication routes
-│   │   ├── generate/session/         # EDIFACT session generation
-│   │   └── user/                     # User management
-│   ├── a/[sessionId]/                # EDIFACT analysis chat pages
-│   ├── auth/                         # Auth pages (login, register)
-│   ├── _components/                  # Reusable UI components
-│   ├── _containers/                  # Page-level containers
-│   ├── _contexts/                    # React Contexts
-│   │   ├── UserContext.js
-│   │   ├── SocketContext.js
-│   │   └── ThemeContext.js
-│   └── _hooks/                       # Custom React hooks
-├── lib/                              # Core libraries
-│   ├── ai/                           # Agent Core (domain-agnostic, reusable)
-│   │   ├── agents/                   # Agent implementations (ALL EventEmitters)
-│   │   │   ├── planner.js            # HTN task decomposition (EventEmitter)
-│   │   │   ├── executor.js           # ReAct loops with tool calling (EventEmitter)
-│   │   │   ├── critic.js             # Validation & hallucination detection (EventEmitter)
-│   │   │   ├── memory.js             # Context management (EventEmitter, planned)
-│   │   │   ├── recovery.js           # Failure handling & fallback (EventEmitter, planned)
-│   │   │   └── index.js              # Agent registry (loadAgent factory)
-│   │   ├── providers/                # LLM provider adapters (NO agent logic)
-│   │   │   ├── openai.js             # OpenAI adapter
-│   │   │   ├── anthropic.js          # Anthropic adapter
-│   │   │   └── index.js              # Provider factory
-│   │   ├── orchestration/            # Task coordination
-│   │   │   ├── agentOrchestrator.js  # Planner → Scheduler coordinator (EventEmitter)
-│   │   │   ├── scheduler.js          # DAG task execution (EventEmitter, future FSM)
-│   │   │   ├── taskGraph.js          # Dependency resolution
-│   │   │   └── index.js
-│   │   ├── tools/                    # Tool management
-│   │   │   ├── registry.js           # Central tool registry
-│   │   │   └── index.js
-│   │   ├── prompts/                  # Agent system prompts
-│   │   │   ├── planner.md
-│   │   │   ├── executor.md
-│   │   │   ├── critic.md
-│   │   │   └── index.js
-│   │   └── config/                   # Configuration
-│   │       └── providers.config.js
-│   ├── socket/                       # Socket.IO layer
-│   │   ├── handlers/
-│   │   │   └── agentHandlers.js      # Agent invocation handlers
-│   │   ├── sessionContext.js         # SessionContext wrapper (DI + event relay)
-│   │   └── utils/
-│   │       └── messageUtils.js       # Message preparation utilities
-│   ├── auth.js                       # Authentication utilities
-│   └── dbConnect.js                  # MongoDB connection
-├── models/                           # Mongoose models
-│   ├── shared/                       # Shared models (recommended structure)
-│   │   ├── User.js
-│   │   ├── ApiKey.js
-│   │   └── File.js
-│   └── edifact/                      # EDIFACT-specific models
-│       ├── AnalysisChat.js           # Chat sessions (with agentPlan)
-│       ├── AnalysisMessage.js        # Messages (with toolCalls[], toolResults[])
-│       └── AnalysisMessageChunk.js   # Streaming chunks
-├── _modules/                         # Domain-specific modules
-│   └── edifact/                      # EDIFACT domain
-│       ├── index.js
-│       ├── context.js                # LLM context builder
-│       ├── tools/                    # EDIFACT tools
-│       └── validators/               # EDIFACT validators
-├── _workers/                         # Backend workers
-│   └── edifactParser.worker.js       # EDIFACT parsing (deterministic)
-├── __tests__/                        # Test suite
-├── theme/                            # MUI theme
-├── public/                           # Static assets
-├── uploads/                          # User uploads
-├── server.js                         # Custom Express + Socket.IO server
-├── proxy.js                          # HTTP auth middleware
-├── socketproxy.js                    # WebSocket auth middleware
-├── package.json
-└── jsconfig.json                     # Path aliases (@/app/*)
-```
-
 ## Socket.IO Events & Streaming
 
 ### Event Types
@@ -2366,7 +2290,7 @@ SessionContext._setupEventRelays()
 Socket.IO → Frontend
 ```
 
-**Benefits:**
+**Event Flow Architecture Benefits:**
 - Clean separation: Agent logic vs Socket.IO transport
 - Event listeners registered once (memory leak prevention)
 - Easy to add new events without modifying agent code
@@ -2456,40 +2380,35 @@ class Executor extends EventEmitter {
 - **Explicit JSON Schemas** (no inference)
 - **No hidden side effects**, log all mutations
 - **Validate tool arguments** before execution
+- **_modules/ for domain-specific tools**. `lib/ai/tools/` is the initial registry only
 
 ### 6. Security
 - **No API keys in logs**, redact in audit logs
 - **Tool sandboxing**: each tool runs in isolated context
 - **Critic validation mandatory** for system-modifying tools
-- **Role-based tool access** (Bronze/Silver/Gold tiers)
 
-### 7. Testing & Validation
-- **Unit tests for agents** (mock LLMs, deterministic prompts)
-- **Integration tests** for tool execution and provider adapters
-- **E2E tests** for multi-turn workflows
-- **Adversarial tests**: prompt injection, tool manipulation, provider failures
 
 ## Best Practices Summary
 
 ### Architecture Patterns
-✅ **EventEmitter for all agents** (decoupling)  
-✅ **SessionContext for DI** (agent lifecycle management)  
-✅ **Event relay pattern** (Agent → SessionContext → Socket)  
-✅ **Constructor-based listener registration** (memory leak prevention)  
-✅ **Simple state tracking** (preparing for FSM)  
-✅ **Provider adapters are thin** (no agent logic)  
+**EventEmitter for all agents** (decoupling)  
+**SessionContext for DI** (agent lifecycle management)  
+**Event relay pattern** (Agent → SessionContext → Socket)  
+**Constructor-based listener registration** (memory leak prevention)  
+**Simple state tracking** (preparing for FSM)  
+**Provider adapters are thin** (no agent logic)  
 
 ### Code Quality
-✅ **Private methods prefixed with _**  
-✅ **Export only public APIs**  
-✅ **Dependency Injection over instantiation**  
-✅ **Pure functions for tools**  
-✅ **YAGNI**: Don't over-engineer (State Machine only when needed)  
+**Private methods prefixed with _**  
+**Export only public APIs when needed**  
+**Dependency Injection over instantiation**  
+**Pure functions for tools**  
+**YAGNI**: Don't over-engineer (State Machine only when needed)  
 
 ### Future-Proofing
-✅ **Scheduler is FSM candidate** (conditional replanning, recovery)  
-✅ **All agents have reset()** (State Machine migration ready)  
-✅ **Event-driven architecture** (observability, monitoring ready)  
+**Scheduler is FSM candidate** (conditional replanning, recovery)  
+**All agents have reset()** (State Machine migration ready)  
+**Event-driven architecture** (observability, monitoring ready)  
 
 ## Strategic Principle: Domain-First Agent Design
 
@@ -2499,7 +2418,7 @@ EDIFACTS follows **Domain-First Agent Design**:
 - LLMs are **explainers, planners, and orchestrators** – never authorities on business rules
 - The agentic layer must remain:
   - **Provider-agnostic** (swap OpenAI ↔ Anthropic ↔ vLLM)
-  - **Deterministic in control flow** (reproducible execution)
+  - **Deterministic in control flow** (reproducible execution as much as possible)
   - **Auditable** (every agent step, tool call persistable and replayable)
   - **Enterprise-grade** (GDPR-compliant, role-based access, audit logs)
   - **Event-driven** (decoupled, observable, testable)

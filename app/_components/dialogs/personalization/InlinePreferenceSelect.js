@@ -1,11 +1,8 @@
 import Iconify from '@/app/_components/utils/Iconify';
+import SelectChevron from '@/app/_components/utils/SelectChevron';
 import { Box, MenuItem, Select, Typography } from '@mui/material';
 import { useState } from 'react';
 import SectionRow from './SectionRow';
-
-const SelectChevron = (props) => (
-    <Iconify icon="mdi:chevron-down" sx={{ fontSize: 18 }} {...props} />
-);
 
 const InlinePreferenceSelect = ({ options, label, description, isDetailed = false, defaultValue = 'default' }) => {
     const [value, setValue] = useState(defaultValue);

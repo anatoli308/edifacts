@@ -46,7 +46,9 @@ const analysisChatSchema = mongoose.Schema({
     domainContext: {
         edifact: {
             subset: String, // User input: Expected subset
-            messageType: String, // User input: Expected version
+            messageType: String, // User input: Expected message type
+            releaseVersion: String, // User input: Expected version
+            standardFamily: String, // User input: Expected standard/family 
 
             fileId: {
                 type: mongoose.Schema.Types.ObjectId,

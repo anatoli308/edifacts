@@ -93,7 +93,7 @@ async function createGuestUser(backgroundMode) {
 async function loadDefaultSystemApiKeyOpenAI() {
   //load OPENAI_API_KEY from env or create a default one
   const openaiApiKey = process.env.OPENAI_API_KEY;
-  const defaultName = 'Default System OpenAI Key';
+  const defaultName = 'Default System Key';
   let apiKey = await ApiKey.findOne({ name: defaultName, encryptedKey: openaiApiKey });
   if (!apiKey) {
     apiKey = new ApiKey({
@@ -106,7 +106,7 @@ async function loadDefaultSystemApiKeyOpenAI() {
   return apiKey;
 }
 
-async function createEntities(authenticatedUser, fileInfo, subset, messageType) {
+async function createEntities(authenticatedUser, fileInfo, edifactContext) {
   await dbConnect();
   const newFile = new File({
     ownerId: authenticatedUser._id,
@@ -121,15 +121,17 @@ async function createEntities(authenticatedUser, fileInfo, subset, messageType) 
   }
 
   const chat = new AnalysisChat({
-    name: 'My EDIFACT Analysis',
+    name: 'My EDIFACT Analysis', // TODO: LLM generieren lassen basierend auf Datei- und Kontextinformationen
     creatorId: authenticatedUser._id.toString(),
     selectedModel: 'gpt-oss:120b-cloud', // TODO: model wechseln / model selected from apiKeyForUser
     apiKeyRef: apiKeyForUser._id,
-    domainContext: { // TODO: need generate more domainContext
+    domainContext: {
       edifact: {
-        subset: subset,
+        subset: edifactContext.subset,
         fileId: newFile._id,
-        messageType: messageType,
+        messageType: edifactContext.messageType,
+        releaseVersion: edifactContext.releaseVersion,
+        standardFamily: edifactContext.standardFamily,
       }
     }
   });
@@ -313,7 +315,6 @@ async function cleanupFile(filePath) {
 }
 
 // ==================== MAIN HANDLER ====================
-
 export async function POST(req) {
   return new Promise(async (resolve, reject) => {
     let createdIds = { userId: null, apiKeyId: null, chatId: null, fileId: null };
@@ -333,13 +334,19 @@ export async function POST(req) {
 
       // 3. Busboy setup
       const busboy = Busboy({ headers: Object.fromEntries(req.headers) });
-      let subset = null;
-      let subsetVersion = null;
-      let backgroundMode = null;
+      const edifactContext = {
+        standardFamily: null,
+        subset: null,
+        releaseVersion: null,
+        messageType: null,
+      };
 
+      let backgroundMode = null;
       busboy.on('field', (field, val) => {
-        if (field === 'subset') subset = val;
-        if (field === 'subsetVersion') subsetVersion = val;
+        if (field === 'standardFamily') edifactContext.standardFamily = val;
+        if (field === 'subset') edifactContext.subset = val;
+        if (field === 'releaseVersion') edifactContext.releaseVersion = val;
+        if (field === 'messageType') edifactContext.messageType = val;
         if (field === 'backgroundMode') backgroundMode = val;
       });
 
@@ -351,6 +358,7 @@ export async function POST(req) {
           const token = req.headers.get('x-auth-token');
           let authenticatedUser = await getAuthenticatedUser(userId, token);
           console.log('[API] authenticated user:', authenticatedUser ? authenticatedUser._id.toString() : 'unknown');
+          console.log('[API] edifactContext from form data:', edifactContext);
 
           if (!authenticatedUser) {
             authenticatedUser = await createGuestUser(backgroundMode);
@@ -370,8 +378,7 @@ export async function POST(req) {
           const { chat, newFile, createdIds: ids } = await createEntities(
             authenticatedUser,
             fileInfo,
-            subset,
-            subsetVersion
+            edifactContext
           );
           createdIds = ids;
 

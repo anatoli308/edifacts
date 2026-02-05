@@ -54,7 +54,8 @@ export async function POST(request) {
             name,
             email,
             password,
-            tosAccepted
+            tosAccepted, //TODO: anatoli - add a ToS to accept
+            role: 'USER',
         });
 
         await user.save();

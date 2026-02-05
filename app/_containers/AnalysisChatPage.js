@@ -11,10 +11,15 @@ import ChatMessage from '@/app/_components/chat/ChatMessage';
 import ChatMessageAssistantTyping from '@/app/_components/chat/ChatMessageAssistantTyping';
 import ChatMessageUserInput from '@/app/_components/chat/ChatMessageUserInput';
 import { useAgentStreaming } from '@/app/_hooks/useAgentStreaming';
-import ChatMessageAgentDebug from '@/app/_components/chat/ChatMessageAgentDebug';
+import { useProtectedRoute } from '@/app/_hooks/useProtectedRoute';
+import { useChatAuthenticatedRoute } from '@/app/_hooks/useChatAuthenticatedRoute';
 
-function AnalysisChatPage(props) {
-    const sessionId = props.sessionId || 'demo-session'; //TODO: remove demo-session fallback
+function AnalysisChatPage({ analysisChat }) {
+    useProtectedRoute('/'); // Redirect to start if not authenticated
+    //redirect if not authorized to access this chat
+    const { isAuthorized, loading } = useChatAuthenticatedRoute(analysisChat);
+
+    const sessionId = analysisChat?._id || 'invalid-session'; //TODO: remove demo-session fallback
 
     const [messages, setMessages] = useState([]);
     const messagesEndRef = useRef(null);
@@ -88,7 +93,7 @@ function AnalysisChatPage(props) {
                             {messages.map((message, index) => (
                                 <ChatMessage key={index} message={message} />
                             ))}
-                            
+
                             {isStreaming && (
                                 <ChatMessageAssistantTyping />
                             )}

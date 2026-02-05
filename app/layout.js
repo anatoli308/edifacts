@@ -25,6 +25,9 @@ export const metadata = {
     icons: { icon: '/logo/logo-color-no-bg.png' }
 }
 
+//TODO eventuell authenticatedUser aus Server Component holen und in Context packen,
+//  damit es in SplashScreen und AppLayout verfügbar ist (und nicht erst in ChatPage)
+
 export default function RootLayout({ children }) {
     return (
         <html lang="en" className={roboto.className}>

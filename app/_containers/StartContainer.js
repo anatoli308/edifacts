@@ -1,7 +1,6 @@
 "use client";
 
 import {
-    Autocomplete,
     Box,
     Button,
     Card,
@@ -10,7 +9,6 @@ import {
     Container,
     Tab,
     Tabs,
-    TextField,
     Typography
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
@@ -19,42 +17,24 @@ import { useState } from 'react';
 //app imports
 import StartSessionFromCustom from '@/app/_components/start/StartSessionFromCustom';
 import StartSessionFromUpload from '@/app/_components/start/StartSessionFromUpload';
+import StandardFamilySelector from '@/app/_components/start/StandardFamilySelector';
+import SubsetSelector from '@/app/_components/start/SubsetSelector';
+import VersionReleaseSelector from '@/app/_components/start/VersionReleaseSelector';
+import MessageTypeSelector from '@/app/_components/start/MessageTypeSelector';
 import { useUser } from '@/app/_contexts/UserContext';
 import { useSocket } from '@/app/_contexts/SocketContext';
 import { useThemeConfig } from "@/app/_contexts/ThemeContext";
 import { useSnackbar } from '@/app/_contexts/SnackbarContext';
-
-const STANDARD_SUBSETS = [
-    { label: 'ANSI ASC X12', value: 'ansi-asc-x12' },
-    { label: 'EANCOM', value: 'eancom' },
-    { label: 'HIPAA', value: 'hipaa' },
-    { label: 'ODETTE Automotive', value: 'odette' },
-    { label: 'Oracle-Gateway', value: 'oracle-gateway' },
-    { label: 'RosettaNet', value: 'rosettanet' },
-    { label: 'SAP', value: 'sap' },
-    { label: 'SWIFT', value: 'swift' },
-    { label: 'TRADACOMS', value: 'tradacoms' },
-    { label: 'UN/EDIFACT', value: 'un-edifact' },
-    { label: 'VDA', value: 'vda' },
-    { label: 'VICS', value: 'vics' },
-];
-
-const MESSAGETYPE_FOCUS_OPTIONS = [
-    { label: 'Orders', value: 'ORDERS' },
-    { label: 'Invoices', value: 'INVOIC' },
-    { label: 'Despatch Advice', value: 'DESADV' },
-    { label: 'Purchase Orders', value: 'ORDERS' },
-    { label: 'Shipping Notices', value: 'DESADV' },
-    { label: 'Customs Declarations', value: 'CUSDEC' },
-];
 
 function StartContainer() {
     const { user, updateGuestCookie, loadUser } = useUser();
     const { disconnect, reconnect } = useSocket();
     const { themeBackground } = useThemeConfig();
     const router = useRouter();
+    const [selectedStandardFamily, setSelectedStandardFamily] = useState(null);
     const [selectedSubset, setSelectedSubset] = useState(null);
-    const [selectedMessageTypeFocus, setSelectedMessageTypeFocus] = useState(null);
+    const [selectedVersion, setSelectedVersion] = useState(null);
+    const [selectedMessageType, setSelectedMessageType] = useState(null);
     const [inputTab, setInputTab] = useState(0); // 0 = Upload, 1 = Custom
     const [inputFile, setInputFile] = useState(null); // File or Blob provided by child component
     const [isLoading, setIsLoading] = useState(false);
@@ -70,13 +50,20 @@ function StartContainer() {
             const formData = new FormData();
             if (!inputFile) throw new Error('Please provide a EDIFACT input first.');
             formData.append('file', inputFile);
+            if (selectedStandardFamily?.value) {
+                formData.append('standardFamily', selectedStandardFamily.value);
+            }
             if (selectedSubset?.value) {
                 formData.append('subset', selectedSubset.value);
             }
-            if (selectedMessageTypeFocus?.value) {
-                formData.append('subsetVersion', selectedMessageTypeFocus.value);
+            if (selectedVersion?.value) {
+                formData.append('releaseVersion', selectedVersion.value);
+            }
+            if (selectedMessageType?.value) {
+                formData.append('messageType', selectedMessageType.value);
             }
 
+            //transfer theme background setting to session for consistent theming in case user starts as guest and later logs in
             formData.append('backgroundMode', themeBackground);
             const res = await fetch('/api/generate/session', {
                 method: 'POST',
@@ -100,6 +87,8 @@ function StartContainer() {
             // Got jobId, subscribe to updates
             const jobId = data.jobId;
             console.log('[Job started]', jobId);
+            //TODO: anatoli - session cookie refresh besser handhaben, die bedingung(user) ist dogshit?!
+            //user kann null sein, wenn guest user eine session startet (browsercache cleared, cookie expired, ...)
             if (data.token !== null && user == null) {
                 updateGuestCookie(data.token);
                 await loadUser();
@@ -141,45 +130,29 @@ function StartContainer() {
                     Upload a file or enter custom EDIFACT data below.
                 </Typography>
 
-                <Box sx={{ my: 1, display: 'flex', gap: 2, alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                    <Box>
-                        <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                            Standard Subset (optional)
-                        </Typography>
-
-                        <Autocomplete
-                            options={STANDARD_SUBSETS}
-                            getOptionLabel={(option) => option.label}
-                            value={selectedSubset}
-                            onChange={(event, newValue) => setSelectedSubset(newValue)}
-                            sx={{ minWidth: 300 }}
-                            renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    placeholder="Search subsets..."
-                                />
-                            )}
-                        />
-                    </Box>
-                    <Box>
-                        <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                            Message Type Focus (optional)
-                        </Typography>
-
-                        <Autocomplete
-                            options={MESSAGETYPE_FOCUS_OPTIONS}
-                            getOptionLabel={(option) => option.label}
-                            value={selectedMessageTypeFocus}
-                            onChange={(event, newValue) => setSelectedMessageTypeFocus(newValue)}
-                            sx={{ minWidth: 300 }}
-                            renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    placeholder="Search message types..."
-                                />
-                            )}
-                        />
-                    </Box>
+                <Box sx={{ my: 1, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    <StandardFamilySelector
+                        value={selectedStandardFamily}
+                        onChange={(newValue) => {
+                            setSelectedStandardFamily(newValue);
+                            // Reset dependent fields when standard family changes
+                            setSelectedVersion(null);
+                        }}
+                    />
+                    <VersionReleaseSelector
+                        value={selectedVersion}
+                        onChange={setSelectedVersion}
+                        standardFamily={selectedStandardFamily}
+                    />
+                    <SubsetSelector
+                        value={selectedSubset}
+                        onChange={setSelectedSubset}
+                        standardFamily={selectedStandardFamily}
+                    />
+                    <MessageTypeSelector
+                        value={selectedMessageType}
+                        onChange={setSelectedMessageType}
+                    />
                 </Box>
 
                 <Card sx={{ mt: 2 }}>
@@ -213,8 +186,8 @@ function StartContainer() {
                         </Box>
                     </CardContent>
                 </Card>
-            </Box>
-        </Container>
+            </Box >
+        </Container >
     );
 }
 

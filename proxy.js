@@ -67,5 +67,7 @@ export async function proxy(request) {
 }
 
 export const config = {
-  matcher: ['/auth/account', '/dashboard', '/api/:path*', '/a/:path*'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+  ],
 };

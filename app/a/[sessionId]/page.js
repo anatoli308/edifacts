@@ -1,7 +1,7 @@
 import AnalysisChatPage from '@/app/_containers/AnalysisChatPage';
 import { headers } from 'next/headers';
 
-import { getAnalysisChat, getAuthenticatedUser } from '../../../lib/auth';
+import { getAnalysisChat, getAuthenticatedUser } from '@/lib/auth';
 
 export default async function AnalysisChat(props) {
     const { sessionId } = await props.params

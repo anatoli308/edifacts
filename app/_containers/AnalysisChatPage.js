@@ -141,7 +141,7 @@ function AnalysisChatPage({ analysisChat }) {
                         onClick={scrollToBottom}
                         sx={{
                             position: 'absolute',
-                            bottom: 90,
+                            bottom: 24,
                             right: 24,
                             zIndex: 2001,
                             boxShadow: 3,

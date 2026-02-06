@@ -1,10 +1,13 @@
 import { Roboto } from 'next/font/google';
 import Script from 'next/script';
+import { headers } from 'next/headers';
 
 //app imports
 import Providers from '@/app/_contexts/providers';
 import SplashScreen from '@/app/_components/SplashScreen';
 import AppLayout from '@/app/_components/AppLayout';
+
+import { getAuthenticatedUser, getAnalysisChatsForUser } from '@/lib/auth';
 
 const roboto = Roboto({
     weight: ["300", "400", "500", "700"],
@@ -28,13 +31,19 @@ export const metadata = {
 //TODO eventuell authenticatedUser aus Server Component holen und in Context packen,
 //  damit es in SplashScreen und AppLayout verfügbar ist (und nicht erst in ChatPage)
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+    const headersList = await headers();
+    const userId = headersList.get('x-user-id');
+    const token = headersList.get('x-auth-token');
+    const authenticatedUser = await getAuthenticatedUser(userId, token);
+    const analysisChats = authenticatedUser ? await getAnalysisChatsForUser(authenticatedUser) : [];
+    console.log("count of analysis chats for user in RootLayout:", analysisChats.length);
     return (
         <html lang="en" className={roboto.className}>
             <body>
                 <Providers>
                     <SplashScreen>
-                        <AppLayout>
+                        <AppLayout analysisChats={analysisChats}>
                             {children}
                         </AppLayout>
                     </SplashScreen>

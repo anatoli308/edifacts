@@ -143,8 +143,6 @@ function AppTopBar({ open }) {
                         onClose={handleCloseUserMenu}
                     >
                         <List sx={{ p: 1 }}>
-                            <Divider />
-                            <ListSubheader><ListItemButton dense disabled></ListItemButton></ListSubheader>
                             {settings.map((setting, index) => (
                                 <ListItem disablePadding key={index}>
                                     <ListItemButton

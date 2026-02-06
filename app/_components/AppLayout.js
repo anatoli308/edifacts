@@ -13,7 +13,7 @@ import AppTopBar from '@/app/_components/layout/AppTopBar';
 import AppDesktopDrawer from '@/app/_components/layout/AppDesktopDrawer';
 import { useUser } from '@/app/_contexts/UserContext';
 
-function AppLayout({ children }) {
+function AppLayout({ analysisChats, children }) {
     const [openSettingsDialog, setOpenSettingsDialog] = React.useState(false);
     const [isDesktopDrawerOpen, setDesktopDrawerOpen] = React.useState(true);
 
@@ -36,7 +36,8 @@ function AppLayout({ children }) {
             />
 
             {/* Desktop left navigation drawer (with mini variant) */}
-            {user !== null && user.role === "USER" && <AppDesktopDrawer open={isDesktopDrawerOpen} setOpen={setDesktopDrawerOpen} />}
+            {user !== null && user.role === "USER" && <AppDesktopDrawer
+                open={isDesktopDrawerOpen} setOpen={setDesktopDrawerOpen} analysisChats={analysisChats} />}
 
             <Box component="main" sx={{ width: "100%" }}>
                 {children}

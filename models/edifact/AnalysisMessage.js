@@ -33,9 +33,38 @@ export const analysisMessageSchema = new mongoose.Schema({
         result: Object,
         success: Boolean,
         duration_ms: Number
-    }]
+    }],
+    
+    // ✨ LLM Usage Tracking (Provider-agnostic)
+    usage: {
+        provider: {
+            type: String,
+            enum: ['openai', 'anthropic', 'vllm', 'ollama'],
+        },
+        model: {
+            type: String, // e.g., 'gpt-4-turbo', 'claude-3-5-sonnet-20241022'
+        },
+        tokens: {
+            input: { type: Number, default: 0 },        // aka prompt_tokens (OpenAI)
+            output: { type: Number, default: 0 },       // aka completion_tokens (OpenAI)
+            total: { type: Number, default: 0 },
+            cached: { type: Number, default: 0 }        // For Anthropic Prompt Caching
+        },
+        cost: {
+            input: { type: Number, default: 0 },        // Cost in USD (input tokens)
+            output: { type: Number, default: 0 },       // Cost in USD (output tokens)
+            total: { type: Number, default: 0 }         // Total cost in USD
+        },
+        latency: {
+            firstToken_ms: { type: Number },            // Time to first streaming chunk
+            total_ms: { type: Number },                 // Total response time
+            tokensPerSecond: { type: Number }           // Generation speed
+        },
+        estimated: { type: Boolean, default: false }    // ✨ True if tokens were estimated (not from provider)
+    }
 }, {
-    timestamps: true // Automatisch createdAt und updatedAt
+    timestamps: true, // Automatisch createdAt und updatedAt
+    _id: false
 });
 
 export default mongoose.models.AnalysisMessage || mongoose.model('AnalysisMessage', analysisMessageSchema);

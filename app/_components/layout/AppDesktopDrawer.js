@@ -20,6 +20,7 @@ import { useState } from 'react';
 
 //app imports
 import AppOptionsPopover from '@/app/_components/layout/AppOptionsPopover';
+import DrawerSessionItem from '@/app/_components/layout/DrawerSessionItem';
 import { useLayoutConstants } from '@/app/_components/utils/Constants';
 import Iconify from '@/app/_components/utils/Iconify';
 import { useUser } from '@/app/_contexts/UserContext';
@@ -72,7 +73,7 @@ const MiniDrawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'op
     }),
 }));
 
-function AppDesktopDrawer({ open, setOpen }) {
+function AppDesktopDrawer({ open, setOpen, analysisChats }) {
     const [anchorElAccount, setAnchorElAccount] = useState(null);
     const [sessionsExpanded, setSessionsExpanded] = useState(true);
     const { isAbove768 } = useLayoutConstants();
@@ -177,43 +178,15 @@ function AppDesktopDrawer({ open, setOpen }) {
                                         />
                                     </ListItem>
                                 </List>
-                                
+
                                 {/* Scrollable Sessions Container */}
                                 <Box sx={{ flex: 1, overflowY: 'auto' }}>
                                     <List sx={{ p: 1, pt: 0 }}>
-                                        {sessionsExpanded && [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5,].map((text, index) => (
-                                            <ListItem
+                                        {sessionsExpanded && analysisChats?.map((session, index) => (
+                                            <DrawerSessionItem
                                                 key={index}
-                                                disablePadding
-                                                sx={{
-                                                    '&:hover .session-item-more': {
-                                                        opacity: 1,
-                                                        pointerEvents: 'auto'
-                                                    }
-                                                }}
-                                                secondaryAction={
-                                                    <IconButton
-                                                        edge="end"
-                                                        aria-label="more"
-                                                        size="small"
-                                                        className="session-item-more"
-                                                        sx={{
-                                                            opacity: 0,
-                                                            pointerEvents: 'none',
-                                                            transition: 'opacity 0.2s ease'
-                                                        }}
-                                                    >
-                                                        <Iconify icon="mdi:dots-horizontal" />
-                                                    </IconButton>
-                                                }>
-                                                <MuiLink color="inherit" as={Link}
-                                                    sx={{ width: "100%" }}
-                                                    href={"/a/abc-def-ged"} underline="none">
-                                                    <ListItemButton as={Button} color='inherit'>
-                                                        <ListItemText primary={<Typography noWrap>Item long long long {text}</Typography>} />
-                                                    </ListItemButton>
-                                                </MuiLink>
-                                            </ListItem>
+                                                session={session}
+                                            />
                                         ))}
                                     </List>
                                 </Box>

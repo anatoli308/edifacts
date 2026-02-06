@@ -2,7 +2,10 @@
 
 import {
     Box,
-    Container
+    Container,
+    Toolbar,
+    Fab,
+    Fade,
 } from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -10,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import ChatMessage from '@/app/_components/chat/ChatMessage';
 import ChatMessageAssistantTyping from '@/app/_components/chat/ChatMessageAssistantTyping';
 import ChatMessageUserInput from '@/app/_components/chat/ChatMessageUserInput';
+import Iconify from '@/app/_components/utils/Iconify';
 import { useAgentStreaming } from '@/app/_hooks/useAgentStreaming';
 import { useProtectedRoute } from '@/app/_hooks/useProtectedRoute';
 import { useChatAuthenticatedRoute } from '@/app/_hooks/useChatAuthenticatedRoute';
@@ -23,6 +27,7 @@ function AnalysisChatPage({ analysisChat }) {
 
     const [messages, setMessages] = useState([]);
     const messagesEndRef = useRef(null);
+    const scrollContainerRef = useRef(null);
 
     // Callback: Handle message updates from streaming
     const handleMessageUpdate = useCallback((message) => {
@@ -45,6 +50,11 @@ function AnalysisChatPage({ analysisChat }) {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    // Scroll to bottom function
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     const handleSendMessage = (userMessageContent) => {
         const newUserMessage = {
@@ -69,15 +79,16 @@ function AnalysisChatPage({ analysisChat }) {
     };
 
     return (
-        <Box sx={{ height: '100vh', width: '100vw', overflow: 'auto', backgroundColor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ height: '100vh', overflow: 'auto', backgroundColor: 'background.default', display: 'flex', flexDirection: 'column' }}>
             {/* Outer XXL Container: Scrollbar, fills viewport */}
             <Container maxWidth="xl" disableGutters sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 0 }}>
                 {/* Inner centered Container */}
-                <Container maxWidth="md" disableGutters sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, py: 0 }}>
+                <Container maxWidth="md" disableGutters sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, py: 0, position: 'relative' }}>
                     {/* Main Chat Area: Flex column, fills inner container */}
                     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                         {/* Chat Messages: Scrollable */}
                         <Box
+                            ref={scrollContainerRef}
                             sx={{
                                 flex: 1,
                                 overflowY: 'auto',
@@ -98,7 +109,7 @@ function AnalysisChatPage({ analysisChat }) {
                                 <ChatMessageAssistantTyping />
                             )}
 
-                            <div ref={messagesEndRef} />
+                            <Toolbar ref={messagesEndRef} />
                         </Box>
 
                         {/* Sticky User Input */}
@@ -118,7 +129,27 @@ function AnalysisChatPage({ analysisChat }) {
                             />
                         </Box>
                     </Box>
+
+
                 </Container>
+                {/* Scroll to Bottom Button */}
+                <Fade in={true}>
+                    <Fab
+                        color="primary"
+                        size="medium"
+                        aria-label="scroll to bottom"
+                        onClick={scrollToBottom}
+                        sx={{
+                            position: 'absolute',
+                            bottom: 90,
+                            right: 24,
+                            zIndex: 2001,
+                            boxShadow: 3,
+                        }}
+                    >
+                        <Iconify icon="mdi:arrow-down" width={24} />
+                    </Fab>
+                </Fade>
             </Container>
         </Box>
     );

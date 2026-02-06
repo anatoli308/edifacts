@@ -57,7 +57,7 @@ function AppMobileDrawer({ onToggle, open }) {
                     }
                 }}>
                     <MuiLink href="/" as={Link} sx={{ display: { xs: 'flex' }, mr: 1 }} >
-                        <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={25} height={25} />
+                        <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={48} height={32} />
                     </MuiLink>
                     <MuiLink href="/" as={Link} underline='none' color='inherit'>
                         EDIFACTS

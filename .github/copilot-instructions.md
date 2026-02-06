@@ -13,7 +13,8 @@ EDIFACTS is a Next.js/React web app for analyzing, explaining, and managing EDIF
 7. **Single Responsibility**: Each agent should have one clear responsibility (Planner, Scheduler, Executor, Critic, etc). Avoid mixing concerns.
 8. **MUI components**: For any new UI components, use Material-UI (MUI) and follow the existing design system for consistency.
 9. **@/ alias**: Use the `@/` alias for imports from the `src/` directory to maintain clean and consistent import paths. In `jsconfig.json` you configure this alias. In the backend, use relative imports within the `src/` directory.
-10. **setTimeout/setInterval**: Avoid using `setTimeout` or `setInterval` for timing or scheduling. Instead, use event-driven approaches or a proper way to handle asynchronous operations.
+10. **setTimeout/setInterval**: Avoid using `setTimeout` or `setInterval` for timing or scheduling. Instead, use event-driven approaches or a proper way to handle asynchronous operations. NEVER USE THAT ideally.
+11. **Latest MUI**: Always use the latest version of Material-UI (MUI) for all UI components to ensure consistency and access to the latest features and improvements. Never use deprecated attributes or components from older versions of MUI.
 
 ## Clean Code Standards
 

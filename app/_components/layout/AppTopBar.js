@@ -63,22 +63,19 @@ function AppTopBar({ open }) {
                     sx={{
                         display: isAbove768 ? 'flex' : 'none', mr: 1,
                         width: (user !== null && user.role === "USER") && open ? (DRAWER_WIDTH - 20) : 45,
-                        '& img': {
-                            width: '100%',
-                            height: 'auto'
-                        }
+                        
                     }} >
-                    <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={100} height={55} />
+                    <Image src="/logo/logo-color-no-bg.png" alt="edifacts logo" width={48} height={32} />
                 </MuiLink>
 
                 <IconButton
-                    color="inherit"
+                    color="primary"
                     aria-label="open drawer"
                     edge="start"
                     onClick={handleDrawerToggle}
-                    sx={{ mr: 2, display: isAbove768 ? 'none' : 'block' }}
+                    sx={{ mr: 2, display: isAbove768 ? 'none' : 'flex' }}
                 >
-                    <Iconify icon="mdi:menu" />
+                    <Iconify icon="mdi:menu" color="inherit" />
                 </IconButton>
 
                 <Stack direction="row" spacing={1} sx={{ flexGrow: 1, alignItems: 'center' }}>

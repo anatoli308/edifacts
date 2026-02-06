@@ -41,24 +41,26 @@ function ChatMessageUserInput({ onSendMessage, isAssistantTyping }) {
                     borderRadius: 2,
                     boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
                 }}
-                InputProps={{
-                    endAdornment: (
-                        <InputAdornment position="end">
-                            <IconButton
-                                color="primary"
-                                onClick={handleSendMessage}
-                                disabled={!userMessage.trim() || isAssistantTyping}
-                                sx={{
-                                    backgroundColor: 'primary.main',
-                                    color: 'common.white',
-                                    borderRadius: 2,
-                                    '&:hover': { backgroundColor: 'primary.dark' },
-                                }}
-                            >
-                                <Iconify icon="mdi:send" />
-                            </IconButton>
-                        </InputAdornment>
-                    )
+                slotProps={{
+                    input: {
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton
+                                    color="primary"
+                                    onClick={handleSendMessage}
+                                    disabled={!userMessage.trim() || isAssistantTyping}
+                                    sx={{
+                                        backgroundColor: 'primary.main',
+                                        color: 'common.white',
+                                        borderRadius: 2,
+                                        '&:hover': { backgroundColor: 'primary.dark' },
+                                    }}
+                                >
+                                    <Iconify icon="mdi:send" />
+                                </IconButton>
+                            </InputAdornment>
+                        )
+                    }
                 }}
             />
             <Typography

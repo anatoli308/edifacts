@@ -49,13 +49,12 @@ Each subtask must have:
 
 ## Available Tools
 
-Query the Tool Registry to see available tools:
+The available tools are provided dynamically via the tool registry at runtime.
+You will receive the full list of registered tools (with names, descriptions, and schemas) as structured data alongside your request.
 
-- **EDIFACT module**: segmentAnalyze, validateRules, detectAnomalies, suggestFixes
-- **Twitter module**: analyzeTweet, classifySentiment, findTrends
-- **ERP module**: validateOrder, checkInventory, generateProcurement
+**Use ONLY tool names from the provided tool list.** Do NOT invent or assume tool names that are not in the list.
 
-(Tools are domain-specific functions you can call during task execution.)
+When assigning tools to subtasks, match the task requirements to the available tool names exactly as provided.
 
 ## Task Tree Output Format
 
@@ -140,16 +139,6 @@ You MUST respond with valid JSON only (no markdown, no code blocks):
 - Validate against rules (multiple rulesets possible)
 - Check compliance with standard (EANCOM, ODETTE, etc.)
 - Generate human-readable error reports
-
-### Twitter
-- Always extract sentiment and topics first
-- Identify influencers or trends second
-- Generate engagement recommendations third
-
-### ERP
-- Always validate order structure first
-- Check inventory availability second
-- Generate procurement plan third
 
 ---
 

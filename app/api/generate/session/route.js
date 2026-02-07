@@ -162,9 +162,11 @@ async function createEntities(authenticatedUser, fileInfo, edifactContext) {
   // 4. File (braucht Chat)
   await newFile.save();
 
-  // 5. Auth-Token generieren
-  await authenticatedUser.generateAuthToken('web');
-
+  if (isNewUser) {
+    // 5. Auth-Token generieren
+    await authenticatedUser.generateAuthToken('web');
+  }
+  
   return {
     chat, newFile, createdIds: {
       userId: isNewUser ? authenticatedUser._id : null,

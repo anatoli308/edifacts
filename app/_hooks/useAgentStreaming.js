@@ -278,6 +278,11 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
             }, 500);
 
             if (currentMessageRef.current) {
+                // Only set assistantMessage as fallback if no text was streamed via response:chunk
+                // (response:chunk already accumulated text during streaming)
+                if (!currentMessageRef.current.content.text && data.result?.assistantMessage) {
+                    currentMessageRef.current.content.text = data.result.assistantMessage;
+                }
                 currentMessageRef.current.content.status = 'completed';
                 if (onMessageUpdate) {
                     onMessageUpdate(currentMessageRef.current);

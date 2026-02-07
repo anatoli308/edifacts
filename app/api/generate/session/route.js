@@ -9,7 +9,7 @@ import { Worker } from 'worker_threads';
 
 //app imports
 import { getAuthenticatedUser } from '@/app/lib/auth';
-import {loadDefaultSystemApiKeyOpenAI} from '@/app/lib/ai/providers/index.js';
+import {loadDefaultSystemApiKey} from '@/app/lib/ai/providers/index.js';
 import AnalysisChat from '@/app/models/shared/AnalysisChat';
 import User from '@/app/models/shared/User';
 import dbConnect from '@/app/lib/dbConnect';
@@ -102,13 +102,13 @@ async function createEntities(authenticatedUser, fileInfo, edifactContext) {
 
   let apiKeyForUser = await ApiKey.findOne({ ownerId: authenticatedUser._id });
   if (!apiKeyForUser) {
-    apiKeyForUser = await loadDefaultSystemApiKeyOpenAI();
+    apiKeyForUser = await loadDefaultSystemApiKey();
   }
 
   const chat = new AnalysisChat({
     name: 'My EDIFACT Analysis', // TODO: LLM generieren lassen basierend auf Datei- und Kontextinformationen
     creatorId: authenticatedUser._id.toString(),
-    selectedModel: 'gpt-oss:120b-cloud', // TODO: model wechseln / model selected from apiKeyForUser
+    selectedModel: 'gpt-oss:120b-cloud', // TODO: model selected from apiKeyForUser
     apiKeyRef: apiKeyForUser._id,
     domainContext: {
       edifact: {

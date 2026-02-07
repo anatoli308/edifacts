@@ -46,7 +46,7 @@ const analysisMessageSchema = new mongoose.Schema({
     usage: {
         provider: {
             type: String,
-            enum: ['openai', 'anthropic', 'vllm', 'ollama'],
+            enum: ['ollama', 'openai', 'anthropic'],
         },
         model: {
             type: String, // e.g., 'gpt-4-turbo', 'claude-3-5-sonnet-20241022'

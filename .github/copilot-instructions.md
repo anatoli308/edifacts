@@ -15,6 +15,12 @@ EDIFACTS is a Next.js/React web app for analyzing, explaining, and managing EDIF
 9. **@/ alias**: Use the `@/` alias for imports from the `src/` directory to maintain clean and consistent import paths. In `jsconfig.json` you configure this alias. In the backend, use relative imports within the `src/` directory.
 10. **setTimeout/setInterval**: Avoid using `setTimeout` or `setInterval` for timing or scheduling. Instead, use event-driven approaches or a proper way to handle asynchronous operations. NEVER USE THAT ideally.
 11. **Latest MUI**: Always use the latest version of Material-UI (MUI) for all UI components to ensure consistency and access to the latest features and improvements. Never use deprecated attributes or components from older versions of MUI.
+12. **NO .md files for documentation**: Don't create any when not told. All documentation should be maintained in Notion. Do not create or update `.md` files in the repository for documentation purposes.
+13. **Don't write test files**: For now, we are not writing test files. Focus on implementing the core functionality and architecture. Testing will be added in a later phase.
+14. **Don't create usage examples**: Do not create or update usage example files. Focus on the core implementation. Usage examples will be added in a later phase.
+15. **No smileys in code**: Avoid using smileys or emojis in code comments or commit messages to maintain a professional tone.
+16. **Don't create unnecessary files**: Only create files that are necessary for the implementation of the required features. Avoid creating placeholder or unnecessary files.
+17. **No await imports**: Avoid using dynamic `import()` statements with `await`. All imports should be static at the top of the file to ensure clarity and maintainability.
 
 ## Clean Code Standards
 

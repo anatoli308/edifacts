@@ -1,6 +1,13 @@
 import mongoose from 'mongoose';
 
-export const analysisMessageSchema = new mongoose.Schema({
+// Separate Collection für bessere Performance bei vielen Messages
+const analysisMessageSchema = new mongoose.Schema({
+    chatId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'AnalysisChat',
+        required: true,
+        index: true 
+    },
     role: {
         type: String,
         enum: ['user', 'assistant', 'system', 'tool'],
@@ -35,7 +42,7 @@ export const analysisMessageSchema = new mongoose.Schema({
         duration_ms: Number
     }],
     
-    // ✨ LLM Usage Tracking (Provider-agnostic)
+    //LLM Usage Tracking (Provider-agnostic)
     usage: {
         provider: {
             type: String,
@@ -63,8 +70,10 @@ export const analysisMessageSchema = new mongoose.Schema({
         estimated: { type: Boolean, default: false }    // ✨ True if tokens were estimated (not from provider)
     }
 }, {
-    timestamps: true, // Automatisch createdAt und updatedAt
-    _id: false
+    timestamps: true // Automatisch createdAt und updatedAt
 });
+
+// Compound Index für optimales Query-Pattern (chatId + chronologische Sortierung)
+analysisMessageSchema.index({ chatId: 1, createdAt: 1 });
 
 export default mongoose.models.AnalysisMessage || mongoose.model('AnalysisMessage', analysisMessageSchema);

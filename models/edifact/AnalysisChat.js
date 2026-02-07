@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { analysisMessageSchema } from './AnalysisMessage.js';
 import { edifactAnalysisSchema } from './EdifactAnalysis.js';
 
 const analysisChatSchema = mongoose.Schema({
@@ -14,11 +13,6 @@ const analysisChatSchema = mongoose.Schema({
         ref: 'User',
         required: true,
         index: true
-    },
-
-    messages: {
-        type: [analysisMessageSchema],
-        default: []
     },
 
     selectedModel: {
@@ -69,7 +63,33 @@ const analysisChatSchema = mongoose.Schema({
     timestamps: true // Automatisch createdAt und updatedAt
 });
 
+// ✨ Virtual für bequemes Laden der Messages
+analysisChatSchema.virtual('messages', {
+    ref: 'AnalysisMessage',
+    localField: '_id',
+    foreignField: 'chatId',
+    options: { sort: { createdAt: 1 } } // Chronologisch sortiert
+});
+
+// 🗑️ Automatisch Messages löschen wenn Chat gelöscht wird
+analysisChatSchema.pre('deleteOne', { document: true, query: false }, async function() {
+    const AnalysisMessage = mongoose.model('AnalysisMessage');
+    await AnalysisMessage.deleteMany({ chatId: this._id });
+    console.log(`[AnalysisChat] Deleted messages for chat ${this._id}`);
+});
+
+analysisChatSchema.pre('findOneAndDelete', async function() {
+    const doc = await this.model.findOne(this.getQuery());
+    if (doc) {
+        const AnalysisMessage = mongoose.model('AnalysisMessage');
+        await AnalysisMessage.deleteMany({ chatId: doc._id });
+        console.log(`[AnalysisChat] Deleted messages for chat ${doc._id}`);
+    }
+});
+
+// ✅ Virtuals in JSON/Object einschließen + Transform
 analysisChatSchema.set('toJSON', {
+    virtuals: true,
     transform: (doc, ret) => {
         ret._id = ret._id.toString();
         if (ret.creatorId) ret.creatorId = ret.creatorId.toString();
@@ -80,4 +100,7 @@ analysisChatSchema.set('toJSON', {
         return ret;
     }
 });
+
+analysisChatSchema.set('toObject', { virtuals: true });
+
 export default mongoose.models.AnalysisChat || mongoose.model('AnalysisChat', analysisChatSchema)

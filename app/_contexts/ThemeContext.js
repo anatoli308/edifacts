@@ -14,7 +14,7 @@ const ThemeContext = createContext(undefined);
 
 export function ThemeConfigProvider({ children }) {
   const { prefersDarkMode } = useLayoutConstants();
-  const { user, loadUser } = useUser();
+  const { user, loadUser, updateGuestCookie } = useUser();
   const { reconnect, disconnect } = useSocket();
 
   const [themeBackground, setThemeBackground] = useState('white');
@@ -92,6 +92,16 @@ export function ThemeConfigProvider({ children }) {
     }
   };
 
+  //no splashscreen restart
+  const reconnectUser = async (token) => {
+    if (token !== null) {
+      updateGuestCookie(token);
+      await loadUser();
+      disconnect();
+      reconnect();
+    }
+  }
+
   const restartSplashscreen = async () => {
     await loadUser();
     disconnect();
@@ -116,7 +126,8 @@ export function ThemeConfigProvider({ children }) {
         updateFontColor: setFontColor,
         updateBackground,
         updateFontSize: setThemeFontSize,
-        restartSplashscreen
+        restartSplashscreen,
+        reconnectUser
       }}
     >
       {children}

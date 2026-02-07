@@ -1,5 +1,4 @@
 import Busboy from 'busboy';
-import { randomUUID } from 'crypto';
 import { createWriteStream, existsSync, unlinkSync } from 'fs';
 import { mkdir } from 'fs/promises';
 import { NextResponse } from 'next/server';
@@ -8,8 +7,8 @@ import { Readable } from 'stream';
 import { Worker } from 'worker_threads';
 
 //app imports
-import { getAuthenticatedUser } from '@/lib/auth';
-import {loadDefaultSystemApiKey} from '@/app/lib/ai/providers/index.js';
+import { getAuthenticatedUser,createGuestUser } from '@/lib/auth';
+import { loadDefaultSystemApiKey } from '@/app/lib/ai/providers/index.js';
 import AnalysisChat from '@/app/models/shared/AnalysisChat';
 import User from '@/app/models/shared/User';
 import dbConnect from '@/app/lib/dbConnect';
@@ -78,19 +77,6 @@ async function writeFileAtomically(stream, targetPath, fileModel) {
 
 // ==================== USER & ENTITY CREATION ====================
 
-async function createGuestUser(backgroundMode) {
-  const nowAsNumber = Date.now();
-  const guestName = `g_${nowAsNumber}`;
-  const newUser = new User({
-    name: guestName,
-    email: guestName + '@edifacts.com',
-    password: randomUUID(),
-    tosAccepted: true,
-    theme: { backgroundMode: backgroundMode || 'white' },
-  });
-  return newUser;
-}
-
 async function createEntities(authenticatedUser, fileInfo, edifactContext) {
   await dbConnect();
   const newFile = new File({
@@ -151,7 +137,7 @@ async function createEntities(authenticatedUser, fileInfo, edifactContext) {
     // 5. Auth-Token generieren
     await authenticatedUser.generateAuthToken('web');
   }
-  
+
   return {
     chat, newFile, createdIds: {
       userId: isNewUser ? authenticatedUser._id : null,
@@ -178,7 +164,7 @@ function setupWorker(newFile, chat, authenticatedUser, resolve, reject) {
   });
 
   worker.on('message', async (msg) => {
-    console.log(`[API] Message from worker for job ${jobId}:`, msg);
+    //console.log(`[API] Message from worker for job ${jobId}:`, msg);
 
     if (msg.type === 'progress' && global.io) {
       global.io.to(`job:${jobId}`).emit('progress', {

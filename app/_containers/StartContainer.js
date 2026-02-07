@@ -22,14 +22,12 @@ import SubsetSelector from '@/app/_components/start/SubsetSelector';
 import VersionReleaseSelector from '@/app/_components/start/VersionReleaseSelector';
 import MessageTypeSelector from '@/app/_components/start/MessageTypeSelector';
 import { useUser } from '@/app/_contexts/UserContext';
-import { useSocket } from '@/app/_contexts/SocketContext';
 import { useThemeConfig } from "@/app/_contexts/ThemeContext";
 import { useSnackbar } from '@/app/_contexts/SnackbarContext';
 
 function StartContainer() {
-    const { user, updateGuestCookie, loadUser } = useUser();
-    const { disconnect, reconnect } = useSocket();
-    const { themeBackground } = useThemeConfig();
+    const { user} = useUser();
+    const { themeBackground, reconnectUser } = useThemeConfig();
     const router = useRouter();
     const [selectedStandardFamily, setSelectedStandardFamily] = useState(null);
     const [selectedSubset, setSelectedSubset] = useState(null);
@@ -89,14 +87,9 @@ function StartContainer() {
             console.log('[Job started]', jobId);
             //TODO: anatoli - session cookie refresh besser handhaben, die bedingung(user) ist dogshit?!
             //user kann null sein, wenn guest user eine session startet (browsercache cleared, cookie expired, ...)
-            if (data.token !== null && user == null) {
-                updateGuestCookie(data.token);
-                await loadUser();
-                disconnect();
-                reconnect();
-            }
+            await reconnectUser(data.token);
             router.push(`/a/${jobId}`);
-
+            console.log('[Navigation] Redirecting to session page:', `/a/${jobId}`);
         } catch (e) {
             pushSnackbarMessage(e.message || 'Failed to start analysis session.', 'error');
             setIsLoading(false);

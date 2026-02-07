@@ -51,6 +51,10 @@ function SettingsDialogDataControl() {
             }
         }
         loadProviders();
+
+        return () => {
+            console.log('SettingsDialogDataControl unmounted, cleanup if necessary');
+        };
     }, []);
 
     const handleSaveProvider = async () => {

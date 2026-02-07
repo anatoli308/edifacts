@@ -1,5 +1,5 @@
 // app/api/user/settings/updateBackground/route.js
-import { getAuthenticatedUser } from '@/app/lib/auth';
+import { getAuthenticatedUser } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
 export async function PATCH(request) {

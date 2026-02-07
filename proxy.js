@@ -8,7 +8,9 @@ import { jwtVerify } from 'jose'; // Next.js Edge Runtime kompatibel
 **/
 export async function proxy(request) {
   const token = request.cookies.get('authToken')?.value;
-  const allowedRoutes = ['/api/auth/login', '/api/auth/register', '/api/generate/session'];
+  // Routes, die auch ohne Token zugänglich sein sollen
+  const allowedRoutes = ['/api/auth/login', '/api/auth/register', '/api/generate/session',
+    '/api/provider/loadProviders', '/', "/api/provider/addProvider"];
   const isApiRoute = request.nextUrl.pathname.startsWith('/api');
 
   console.log('Middleware check for path:', request.nextUrl.pathname);
@@ -26,7 +28,12 @@ export async function proxy(request) {
       return NextResponse.next(); // Allow routes without token
     }
 
-    // UI Routes → Redirect
+    // UI Routes:
+    // Wenn Startseite ("/"), dann NICHT redirecten, sondern Seite anzeigen lassen
+    if (request.nextUrl.pathname === '/') {
+      return NextResponse.next();
+    }
+    // Sonst redirect auf Startseite
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -68,6 +75,6 @@ export async function proxy(request) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!_next/static|_next/image|favicon.ico|logo|images).*)',
   ],
 };

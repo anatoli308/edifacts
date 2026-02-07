@@ -8,7 +8,7 @@ import { Readable } from 'stream';
 import { Worker } from 'worker_threads';
 
 //app imports
-import { getAuthenticatedUser } from '@/app/lib/auth';
+import { getAuthenticatedUser } from '@/lib/auth';
 import {loadDefaultSystemApiKey} from '@/app/lib/ai/providers/index.js';
 import AnalysisChat from '@/app/models/shared/AnalysisChat';
 import User from '@/app/models/shared/User';

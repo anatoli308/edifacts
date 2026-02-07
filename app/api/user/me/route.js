@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 
 //app imports
-import { getAuthenticatedUser } from '@/app/lib/auth';
+import { getAuthenticatedUser } from '@/lib/auth';
 
 export async function GET(request) {
     try {

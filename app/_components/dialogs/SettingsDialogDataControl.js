@@ -1,15 +1,15 @@
 import { Box, Divider, Typography, Card, CardContent, TextField, IconButton, MenuItem, Select, Button, Collapse } from '@mui/material';
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Iconify from '@/app/_components/utils/Iconify';
 import SectionRow from '@/app/_components/dialogs/personalization/SectionRow';
-
+// TODO: i will add later manually
+//{ value: 'system', label: 'System', caption: 'Use our System AI services' },
+//{ value: 'anthropic', label: 'Anthropic', caption: 'Use Anthropic AI services' },
+//{ value: 'azure', label: 'Azure', caption: 'Use Azure AI services' },
+//{ value: 'google', label: 'Google', caption: 'Use Google AI services' },
+//{ value: 'openrouter', label: 'OpenRouter', caption: 'Use OpenRouter AI services' },
 const providerOptions = [
-    //{ value: 'system', label: 'System', caption: 'Use our System AI services' },
-    { value: 'anthropic', label: 'Anthropic', caption: 'Use Anthropic AI services' },
-    { value: 'azure', label: 'Azure', caption: 'Use Azure AI services' },
-    { value: 'google', label: 'Google', caption: 'Use Google AI services' },
     { value: 'openai', label: 'OpenAI', caption: 'Use OpenAI services' },
-    { value: 'openrouter', label: 'OpenRouter', caption: 'Use OpenRouter AI services' },
     { value: 'custom', label: 'Custom', caption: 'Use your own hosted AI services' }
 ];
 
@@ -32,10 +32,59 @@ function SettingsDialogDataControl() {
         }
     };
 
-    const handleSaveProvider = () => {
+    useEffect(() => {
+        async function loadProviders() {
+            try {
+                const response = await fetch('/api/provider/loadProviders', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    setSavedProviders(data.providers);
+                } else {
+                    console.error('Error loading providers:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading providers:', error);
+            }
+        }
+        loadProviders();
+    }, []);
+
+    const handleSaveProvider = async () => {
         if (draftProvider && draftProvider.apiKey.trim()) {
-            setSavedProviders([...savedProviders, draftProvider]);
-            setDraftProvider(null);
+            try {
+                const response = await fetch('/api/provider/addProvider', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include', // Send cookies with request
+                    body: JSON.stringify({
+                        provider: draftProvider.provider,
+                        name: draftProvider.name,
+                        apiKey: draftProvider.apiKey,
+                        baseUrl: draftProvider.baseUrl
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    console.error('Error saving provider:', data.error);
+                    // TODO: Show error message to user
+                    return;
+                }
+
+                // Add to saved providers list
+                setSavedProviders([...savedProviders, { ...draftProvider, id: data.apiKeyId }]);
+                setDraftProvider(null);
+            } catch (error) {
+                console.error('Error saving provider:', error);
+                // TODO: Show error message to user
+            }
         }
     };
 
@@ -89,7 +138,7 @@ function SettingsDialogDataControl() {
     const handleSaveEdit = (e) => {
         e.preventDefault();
         if (editProvider && editProvider.apiKey.trim()) {
-            setSavedProviders(savedProviders.map(p => 
+            setSavedProviders(savedProviders.map(p =>
                 p.id === editProvider.id ? editProvider : p
             ));
             setEditingProviderId(null);

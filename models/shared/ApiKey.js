@@ -8,7 +8,7 @@ const apiKeySchema = new mongoose.Schema({
 
   provider: {
     type: String,
-    enum: ['ollama', 'openai', 'anthropic'],
+    enum: ['ollama', 'openai', 'anthropic', 'custom'],
     required: true
   },
 

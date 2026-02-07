@@ -36,7 +36,7 @@ export default async function RootLayout({ children }) {
     const userId = headersList.get('x-user-id');
     const token = headersList.get('x-auth-token');
     const authenticatedUser = await getAuthenticatedUser(userId, token);
-    const analysisChats = authenticatedUser ? await getAnalysisChatsForUser(authenticatedUser) : [];
+    const analysisChats = authenticatedUser && authenticatedUser.role !== "GUEST" ? await getAnalysisChatsForUser(authenticatedUser) : [];
     console.log("count of analysis chats for user in RootLayout:", analysisChats.length);
     return (
         <html lang="en" className={roboto.className}>

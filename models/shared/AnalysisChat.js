@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { edifactAnalysisSchema } from './EdifactAnalysis.js';
+import { edifactAnalysisSchema } from '../edifact/EdifactAnalysis.js';
 
 const analysisChatSchema = mongoose.Schema({
     name: {

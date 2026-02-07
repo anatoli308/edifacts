@@ -9,7 +9,8 @@ import { Worker } from 'worker_threads';
 
 //app imports
 import { getAuthenticatedUser } from '@/app/lib/auth';
-import AnalysisChat from '@/app/models/edifact/AnalysisChat';
+import {loadDefaultSystemApiKeyOpenAI} from '@/app/lib/ai/providers/index.js';
+import AnalysisChat from '@/app/models/shared/AnalysisChat';
 import User from '@/app/models/shared/User';
 import dbConnect from '@/app/lib/dbConnect';
 import File from '@/app/models/shared/File';
@@ -88,22 +89,6 @@ async function createGuestUser(backgroundMode) {
     theme: { backgroundMode: backgroundMode || 'white' },
   });
   return newUser;
-}
-
-async function loadDefaultSystemApiKeyOpenAI() {
-  //load OPENAI_API_KEY from env or create a default one
-  const openaiApiKey = process.env.OPENAI_API_KEY;
-  const defaultName = 'Default System Key';
-  let apiKey = await ApiKey.findOne({ name: defaultName, encryptedKey: openaiApiKey });
-  if (!apiKey) {
-    apiKey = new ApiKey({
-      provider: 'openai',
-      name: defaultName,
-      encryptedKey: openaiApiKey,
-      models: ['gpt-oss:120b-cloud']
-    });
-  }
-  return apiKey;
 }
 
 async function createEntities(authenticatedUser, fileInfo, edifactContext) {

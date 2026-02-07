@@ -1,7 +1,7 @@
 # Copilot Coding Agent Instructions for EDIFACTS
 
 ## Project Overview
-EDIFACTS is a Next.js/React web app for analyzing, explaining, and managing EDIFACT data with an AI chat assistant. It combines an open-source EDIFACT core (parsing, validation, normalization) with an optional LLM-based explanation layer, supporting both "bring your own key" and managed vLLM backends. The platform is SaaS-ready, modular, and designed for extensibility and enterprise use.
+EDIFACTS is a Next.js/React web app for analyzing, explaining, and managing EDIFACT data with an AI chat assistant. It combines an open-source EDIFACT core (parsing, validation, normalization) with an optional LLM-based explanation layer, supporting both a system default (Ollama) and "bring your own key" (BYOK) for OpenAI/Anthropic. The platform is SaaS-ready, modular, and designed for extensibility and enterprise use.
 
 ## Important Developer Rules
 1. **Export only public APIs**: When creating new classes, only export the main class or function used by other modules. Helper functions should remain internal and private.
@@ -120,7 +120,7 @@ User Message → Planner → Scheduler → Executor → Critic → Result
   - **Memory Agent:** Conversational context + long-term knowledge retrieval - EventEmitter 🚧 (v1.x Late)
   - **Recovery Agent:** Fallbacks, retries, provider switching - EventEmitter 🚧 (v1.x Late)
   - **AgentOrchestrator:** Coordinates Planner → Scheduler flow - EventEmitter ✅
-- **Service Layer:** Managed vLLM (hosted or on-prem) is optional and monetized via support/enterprise features. Core remains open source; commercial features (audit logs, SAP helpers, etc) are kept separate.
+- **Service Layer:** Ollama is the system default LLM backend (OpenAI-compatible API). Users can bring their own keys (BYOK) for OpenAI or Anthropic. Core remains open source; commercial features (audit logs, SAP helpers, etc) are kept separate.
 - **_workers/**: This directory contains long running processes for independent execution (e.g., EDIFACT parsing, etc). These should be designed to run in separate threads or processes to avoid blocking the main event loop.
 - **_modules/**: This directory contains reusable tools for agent execution (e.g., SAP tool, database tool, edifact tool, etc). These should be designed as stateless functions that can be called by the Executor agent with appropriate parameters and no side effects.
 
@@ -1826,7 +1826,7 @@ class EnhancedRecovery extends EventEmitter {
   }
   
   _getAlternativeProviders(current) {
-    const all = ['openai', 'anthropic', 'vllm'];
+    const all = ['ollama', 'openai', 'anthropic'];
     return all.filter(p => p !== current);
   }
   
@@ -2251,7 +2251,7 @@ class RouterAgent extends EventEmitter {
 
 **Migration Principles:**
 - ✅ Backward compatible (existing flows still work)
-- ✅ Feature flags (enable multi-agent per user tier)
+- ✅ Feature flags (enable multi-agent progressively)
 - ✅ Gradual rollout (A/B testing)
 - ✅ Deterministic fallback (if multi-agent fails, use sequential)
 
@@ -2425,7 +2425,7 @@ EDIFACTS follows **Domain-First Agent Design**:
 - The EDIFACT engine is the **single source of truth** for domain semantics
 - LLMs are **explainers, planners, and orchestrators** – never authorities on business rules
 - The agentic layer must remain:
-  - **Provider-agnostic** (swap OpenAI ↔ Anthropic ↔ vLLM)
+  - **Provider-agnostic** (swap OpenAI ↔ Anthropic ↔ Ollama)
   - **Deterministic in control flow** (reproducible execution as much as possible)
   - **Auditable** (every agent step, tool call persistable and replayable)
   - **Enterprise-grade** (GDPR-compliant, role-based access, audit logs)

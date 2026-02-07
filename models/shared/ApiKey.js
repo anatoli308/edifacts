@@ -13,7 +13,7 @@ const apiKeySchema = new mongoose.Schema({
   },
 
   name: {
-    type: String, // z.B. "Work OpenAI", "Local vLLM"
+    type: String, // z.B. "Work OpenAI", "Personal Anthropic"
     required: true
   },
 
@@ -22,7 +22,7 @@ const apiKeySchema = new mongoose.Schema({
     required: true
   },
 
-  baseUrl: String, // für vLLM / OpenAI compatible APIs
+  baseUrl: String, // for OpenAI-compatible API endpoints (Ollama, etc.)
 
   models: [String], // z.B. ['gpt-4.1', 'llama3']
 

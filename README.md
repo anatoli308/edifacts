@@ -48,7 +48,7 @@ EDIFACTS is an **intelligent AgentOS platform** that revolutionizes EDIFACT anal
 - Automatic agent state reset before execution
 
 🔐 **Bring Your Own Key (BYOK)**
-- OpenAI & Anthropic support (Azure, vLLM coming soon)
+- OpenAI & Anthropic support (BYOK)
 - Universal tool contract (provider-agnostic)
 - Your API keys, your data, your control
 
@@ -68,7 +68,7 @@ EDIFACTS is an **intelligent AgentOS platform** that revolutionizes EDIFACT anal
 - Node.js (version 18 or higher) ideally latest stable version
 - npm (version 8 or higher) ideally latest stable version
 - MongoDB instance (local or cloud-based) ideally latest stable version.
-- For now: ollama (local LLM hosting) if you want to use vLLM provider https://ollama.com/
+- Ollama (local LLM hosting) as system default: https://ollama.com/
 
 ## Docker Setup (Development)
 1. Make sure Docker and Docker Compose are installed on your machine.
@@ -379,7 +379,7 @@ socketproxy.js             # Socket.IO middleware for authentication
   - **Streaming-Only Architecture:** All agents use `provider.streamComplete()` for real-time responses
   - **Error Handling:** Automatic retries with exponential backoff (3 attempts)
   - **Tool Injection:** Tools passed as structured API parameters (not text in prompts)
-  - **Future Support:** Azure OpenAI, vLLM (hosted/on-prem), Gemini
+  - **Future Support:** Azure OpenAI, Gemini
 
 - **Performance & Security**
   - Edge Runtime compatible middleware for fast authentication checks

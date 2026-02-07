@@ -89,7 +89,7 @@ const analysisChatSettingsSchema = new mongoose.Schema({
         contextWindowSize: {
             type: Number,
             enum: [2000, 4000, 8000, 16000, 32000],
-            default: 4000
+            default: 8000
         },
         internetSearch: {
             type: Boolean,

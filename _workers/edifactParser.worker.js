@@ -1,90 +1,89 @@
-import { createReadStream, statSync } from 'fs';
-import readline from 'readline';
+import { readFileSync, statSync } from 'fs';
 import { parentPort } from 'worker_threads';
+import { buildAnalysis } from './edifactAnalysisBuilder.js';
 
 parentPort.on('message', async ({ chat, file, user }) => {
   try {
-    console.log(`[Worker ${chat._id}] Starting EDIFACT parsing from: '${file.path}' for user: ${user._id}`);
-    // Get file size for progress calculation
+    console.log(`[Worker ${chat._id}] Starting EDIFACT analysis from: '${file.path}' for user: ${user._id}`);
+
     const fileSize = statSync(file.path).size;
-    let bytesRead = 0;
-    // Create readline interface for streaming
-    const rl = readline.createInterface({
-      input: createReadStream(file.path),
-      crlfDelay: Infinity,
+
+    // Progress: File reading
+    parentPort.postMessage({
+      type: 'progress',
+      chatId: chat._id,
+      percent: 10,
+      message: `Reading file (${(fileSize / 1024).toFixed(1)} KB)...`,
     });
 
-    let messageType = null;
-    const segments = [];
-    let lineNumber = 0;
-    let lastProgressPercent = 0;
-    // Stream line by line
-    for await (const line of rl) {
-      lineNumber++;
-      bytesRead += Buffer.byteLength(line, 'utf8') + 1; // +1 for newline
+    // Read entire file (EDIFACT files are typically < 10MB)
+    const rawContent = readFileSync(file.path, 'utf8');
 
-      if (!line.trim()) continue;
+    parentPort.postMessage({
+      type: 'progress',
+      chatId: chat._id,
+      percent: 30,
+      message: 'Parsing EDIFACT segments...',
+    });
 
-      // Detect message type from UNH segment
-      if (!messageType && line.startsWith('UNH')) {
-        const match = line.match(/UNH[^:]*:([A-Z0-9]+):/i);
-        if (match && match[1]) {
-          messageType = match[1].toUpperCase();
-        }
-      }
-
-      // Simple segment parsing (extract segment tag)
-      const segmentMatch = line.match(/^([A-Z]{3})/);
-      if (segmentMatch) {
-        segments.push({
-          tag: segmentMatch[1],
-          content: line,
-          line: lineNumber,
-        });
-      }
-
-      // Send progress every 500 lines or when percent changes
-      if (lineNumber % 500 === 0) {
-        const percent = Math.min(Math.round((bytesRead / fileSize) * 100), 99);
-        if (percent !== lastProgressPercent) {
-          lastProgressPercent = percent;
-          parentPort.postMessage({
-            type: 'progress',
-            chatId: chat._id,
-            percent,
-            message: `Parsed ${lineNumber.toLocaleString()} lines, ${segments.length.toLocaleString()} segments`,
-          });
-        }
-      }
-    }
-
-    // Build preview from first 50 segments
-    const preview = segments.slice(0, 50).map(s => s.content).join('\n');
-
-    // Build result - only return first 5000 segments to UI (prevents memory issues)
-    const result = {
-      file: { name: file.originalName || 'upload.edi', size: fileSize },
-      detected: { messageType: messageType || 'Unknown' },
-      stats: {
-        bytes: fileSize,
-        lines: lineNumber,
-        totalSegments: segments.length,
-      },
-      subset: chat.domainContext.edifact.subset,
-      views: {
-        segments: { ready: true, count: segments.length },
-      },
-      preview: preview.slice(0, 4000),
-      segments: segments.slice(0, 5000), // Limit to first 5000 for UI performance
-      segmentsTruncated: segments.length > 5000,
+    // Build complete analysis using deterministic builder
+    const userContext = {
+      subset: chat.domainContext?.edifact?.subset || '',
+      messageType: chat.domainContext?.edifact?.messageType || '',
+      releaseVersion: chat.domainContext?.edifact?.releaseVersion || '',
+      standardFamily: chat.domainContext?.edifact?.standardFamily || '',
     };
 
-    console.log(`[Worker ${chat._id}] Parsing complete: ${segments.length} segments from ${lineNumber} lines`);
+    const fileInfo = {
+      name: file.originalName || 'upload.edi',
+      size: fileSize,
+      path: file.path,
+    };
 
+    const analysis = buildAnalysis(rawContent, fileInfo, userContext);
+
+    parentPort.postMessage({
+      type: 'progress',
+      chatId: chat._id,
+      percent: 80,
+      message: `Validated ${analysis.segmentCount} segments (${analysis.validation.errorCount} errors, ${analysis.validation.warningCount} warnings)`,
+    });
+
+    console.log(`[Worker ${chat._id}] Analysis complete: ${analysis.segmentCount} segments, ${analysis.parties.length} parties, status: ${analysis.status}`);
+
+    parentPort.postMessage({
+      type: 'progress',
+      chatId: chat._id,
+      percent: 99,
+      message: 'Building analysis result...',
+    });
+
+    // Send complete result with full analysis
     parentPort.postMessage({
       type: 'complete',
       chatId: chat._id,
-      result,
+      analysis, // Full EdifactAnalysis schema-compatible object
+      result: {
+        // Backward-compatible result for UI
+        file: { name: fileInfo.name, size: fileSize },
+        detected: { messageType: analysis.messageHeader?.messageType || 'Unknown' },
+        stats: {
+          bytes: fileSize,
+          lines: analysis.processing.lineCount,
+          totalSegments: analysis.segmentCount,
+        },
+        subset: chat.domainContext?.edifact?.subset,
+        views: {
+          segments: { ready: true, count: analysis.segmentCount },
+        },
+        preview: analysis.processing.rawPreview,
+        segments: analysis.segmentDetails.slice(0, 5000).map(s => ({
+          tag: s.tag,
+          content: s.content,
+          line: s.position,
+        })),
+        segmentsTruncated: analysis.processing.truncated,
+      },
     });
   } catch (error) {
     console.error(`[Worker ${chat._id}] Error:`, error);

@@ -150,6 +150,7 @@ export const edifactAnalysisSchema = new mongoose.Schema({
         default: 'pending'
     }
 }, {
-    timestamps: true // Automatisch createdAt und updatedAt
+    timestamps: true, // Automatisch createdAt und updatedAt
+    _id: false // Eingebettet im AnalysisChat, kein eigenes _id TODO: anatoli vielleicht eigene collection
 });
 export default mongoose.models.EdifactAnalysis || mongoose.model('EdifactAnalysis', edifactAnalysisSchema)

@@ -21,6 +21,7 @@ EDIFACTS is a Next.js/React web app for analyzing, explaining, and managing EDIF
 15. **No smileys in code**: Avoid using smileys or emojis in code comments or commit messages to maintain a professional tone.
 16. **Don't create unnecessary files**: Only create files that are necessary for the implementation of the required features. Avoid creating placeholder or unnecessary files.
 17. **No await imports**: Avoid using dynamic `import()` statements with `await`. All imports should be static at the top of the file to ensure clarity and maintainability.
+18. **No virtual modules**: Do not create virtual modules or files that do not have a clear purpose in the project structure. All files should have a defined role and be part of the overall architecture.
 
 ## Clean Code Standards
 

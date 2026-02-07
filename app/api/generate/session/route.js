@@ -210,6 +210,20 @@ function setupWorker(newFile, chat, authenticatedUser, resolve, reject) {
       newFile.status = 'complete';
       await newFile.save();
 
+      // Save _analysis to AnalysisChat
+      if (msg.analysis) {
+        try {
+          await AnalysisChat.findByIdAndUpdate(
+            jobId,
+            { $set: { 'domainContext.edifact._analysis': msg.analysis } },
+            { new: true }
+          );
+          console.log(`[API] Saved _analysis to chat ${jobId} (${msg.analysis.segmentCount} segments, status: ${msg.analysis.status})`);
+        } catch (analysisError) {
+          console.error(`[API] Failed to save _analysis for chat ${jobId}:`, analysisError.message);
+        }
+      }
+
       if (global.io) {
         global.io.to(`job:${jobId}`).emit('complete', { jobId, result: msg.result });
       }

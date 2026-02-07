@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { edifactAnalysisSchema } from '../edifact/EdifactAnalysis.js';
+import { analysisChatSettingsSchema } from './AnalysisChatSettings.js';
 
 const analysisChatSchema = mongoose.Schema({
     name: {
@@ -16,7 +17,7 @@ const analysisChatSchema = mongoose.Schema({
     },
 
     selectedModel: {
-        type: String, // gpt-4.1, llama3, mistral, ...
+        type: String, // gpt-4.1, llama3, mistral, ... from provider selected
         required: true
     },
 
@@ -26,15 +27,9 @@ const analysisChatSchema = mongoose.Schema({
         required: true
     },
 
-    personalizedPrompt: {
-        type: String,
-        default: ''
-    },
-
-    promptPreset: {
-        type: String,
-        enum: ['default', 'manager', 'business', 'tech', 'analyst'],
-        default: 'default'
+    settings: {
+        type: analysisChatSettingsSchema,
+        default: () => ({})
     },
 
     domainContext: {

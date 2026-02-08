@@ -8,145 +8,13 @@
  * Designed to run inside worker_threads.
  */
 
-// ==================== SEGMENT PARSERS ====================
-
-/**
- * Parse UNA service string (defines delimiters)
- * @param {string} raw - Raw file content
- * @returns {object} Delimiter config
- */
-function _parseUNA(raw) {
-    const defaults = {
-        componentSeparator: ':',
-        fieldSeparator: '+',
-        decimalNotation: '.',
-        escapeCharacter: '?',
-        reserved: ' ',
-        segmentTerminator: "'",
-        hasUNA: false
-    };
-
-    if (raw.startsWith('UNA')) {
-        return {
-            componentSeparator: raw[3] || defaults.componentSeparator,
-            fieldSeparator: raw[4] || defaults.fieldSeparator,
-            decimalNotation: raw[5] || defaults.decimalNotation,
-            escapeCharacter: raw[6] || defaults.escapeCharacter,
-            reserved: raw[7] || defaults.reserved,
-            segmentTerminator: raw[8] || defaults.segmentTerminator,
-            hasUNA: true
-        };
-    }
-
-    return defaults;
-}
-
-/**
- * Split raw content into segments, respecting escape characters
- * @param {string} raw - Raw EDIFACT content
- * @param {object} delimiters - Parsed delimiters
- * @returns {string[]} Array of segment strings
- */
-function _splitSegments(raw, delimiters) {
-    const { segmentTerminator, escapeCharacter } = delimiters;
-    const segments = [];
-    let current = '';
-
-    // Skip UNA if present
-    let startIndex = 0;
-    if (raw.startsWith('UNA')) {
-        startIndex = 9; // UNA + 6 chars + possible newline
-        // Skip newlines/whitespace after UNA
-        while (startIndex < raw.length && (raw[startIndex] === '\n' || raw[startIndex] === '\r')) {
-            startIndex++;
-        }
-    }
-
-    for (let i = startIndex; i < raw.length; i++) {
-        const char = raw[i];
-
-        // Check for escaped terminator
-        if (char === escapeCharacter && i + 1 < raw.length && raw[i + 1] === segmentTerminator) {
-            current += segmentTerminator;
-            i++; // Skip next char
-            continue;
-        }
-
-        if (char === segmentTerminator) {
-            const trimmed = current.trim();
-            if (trimmed.length > 0) {
-                segments.push(trimmed);
-            }
-            current = '';
-            continue;
-        }
-
-        // Skip line breaks (EDIFACT ignores them)
-        if (char === '\n' || char === '\r') {
-            continue;
-        }
-
-        current += char;
-    }
-
-    // Handle last segment (if no terminator at end)
-    const trimmed = current.trim();
-    if (trimmed.length > 0) {
-        segments.push(trimmed);
-    }
-
-    return segments;
-}
-
-/**
- * Parse a segment into tag and fields
- * @param {string} segmentStr - Raw segment string
- * @param {object} delimiters - Parsed delimiters
- * @returns {object} { tag, fields: [{ value, components: [] }] }
- */
-function _parseSegment(segmentStr, delimiters) {
-    const { fieldSeparator, componentSeparator, escapeCharacter } = delimiters;
-
-    // Split by field separator (respecting escape)
-    const fields = _splitWithEscape(segmentStr, fieldSeparator, escapeCharacter);
-    const tag = fields[0] || '';
-
-    const parsedFields = fields.slice(1).map((field, index) => {
-        const components = _splitWithEscape(field, componentSeparator, escapeCharacter);
-        return {
-            index,
-            value: field,
-            components,
-            isComposite: components.length > 1
-        };
-    });
-
-    return { tag, fields: parsedFields, raw: segmentStr };
-}
-
-/**
- * Split string by delimiter respecting escape character
- */
-function _splitWithEscape(str, delimiter, escape) {
-    const parts = [];
-    let current = '';
-
-    for (let i = 0; i < str.length; i++) {
-        if (str[i] === escape && i + 1 < str.length && str[i + 1] === delimiter) {
-            current += delimiter;
-            i++;
-            continue;
-        }
-        if (str[i] === delimiter) {
-            parts.push(current);
-            current = '';
-            continue;
-        }
-        current += str[i];
-    }
-    parts.push(current);
-    return parts;
-}
+import {
+    parseUNA,
+    splitSegments,
+    parseSegment,
+    parseEdifactDate,
+    partyQualifierLabel
+} from '../_modules/edifact/parser.js';
 
 // ==================== DATA EXTRACTORS ====================
 
@@ -253,7 +121,7 @@ function _extractBusinessData(parsedSegments) {
                 const dateValue = dtmField[1] || '';
                 const format = dtmField[2] || '';
 
-                const parsedDate = _parseEdifactDate(dateValue, format);
+                const parsedDate = parseEdifactDate(dateValue, format);
                 business.dates.push({ qualifier, date: parsedDate, format });
 
                 // Document date (qualifier 137 or 3)
@@ -557,7 +425,7 @@ function _buildLLMContext(analysis) {
     if (analysis.parties?.length > 0) {
         lines.push(`\nParties:`);
         for (const p of analysis.parties) {
-            const label = _partyQualifierLabel(p.qualifier);
+            const label = partyQualifierLabel(p.qualifier);
             lines.push(`- ${label}: ${p.name || p.id} (${p.qualifier})`);
         }
     }
@@ -618,59 +486,7 @@ function _buildSummary(analysis) {
 
 // ==================== HELPERS ====================
 
-function _parseEdifactDate(dateStr, format) {
-    if (!dateStr) return null;
 
-    try {
-        switch (format) {
-            case '102': { // CCYYMMDD
-                const y = dateStr.slice(0, 4);
-                const m = dateStr.slice(4, 6);
-                const d = dateStr.slice(6, 8);
-                return new Date(`${y}-${m}-${d}T00:00:00Z`);
-            }
-            case '203': { // CCYYMMDDHHMM
-                const y = dateStr.slice(0, 4);
-                const m = dateStr.slice(4, 6);
-                const d = dateStr.slice(6, 8);
-                const h = dateStr.slice(8, 10);
-                const min = dateStr.slice(10, 12);
-                return new Date(`${y}-${m}-${d}T${h}:${min}:00Z`);
-            }
-            default: {
-                // Try YYMMDD
-                if (dateStr.length === 6) {
-                    const y = '20' + dateStr.slice(0, 2);
-                    const m = dateStr.slice(2, 4);
-                    const d = dateStr.slice(4, 6);
-                    return new Date(`${y}-${m}-${d}T00:00:00Z`);
-                }
-                // Try CCYYMMDD
-                if (dateStr.length === 8) {
-                    const y = dateStr.slice(0, 4);
-                    const m = dateStr.slice(4, 6);
-                    const d = dateStr.slice(6, 8);
-                    return new Date(`${y}-${m}-${d}T00:00:00Z`);
-                }
-                return null;
-            }
-        }
-    } catch {
-        return null;
-    }
-}
-
-function _partyQualifierLabel(qualifier) {
-    const labels = {
-        'BY': 'Buyer', 'SE': 'Seller', 'SU': 'Supplier',
-        'DP': 'Delivery Party', 'IV': 'Invoicee', 'MR': 'Message Recipient',
-        'MS': 'Message Sender', 'PE': 'Payee', 'PR': 'Payer',
-        'ST': 'Ship To', 'SF': 'Ship From', 'UC': 'Ultimate Consignee',
-        'CN': 'Consignee', 'CZ': 'Consignor', 'CA': 'Carrier',
-        'FW': 'Freight Forwarder', 'II': 'Issuer of Invoice'
-    };
-    return labels[qualifier] || qualifier;
-}
 
 /**
  * Estimate token count for LLM context
@@ -697,14 +513,14 @@ export function buildAnalysis(rawContent, fileInfo, userContext = {}) {
     const startTime = Date.now();
 
     // 1. Parse delimiters (UNA)
-    const delimiters = _parseUNA(rawContent);
+    const delimiters = parseUNA(rawContent);
 
     // 2. Split into segments
-    const segmentStrings = _splitSegments(rawContent, delimiters);
+    const segmentStrings = splitSegments(rawContent, delimiters);
 
     // 3. Parse each segment
     const parsedSegments = segmentStrings.map((str, index) => {
-        const parsed = _parseSegment(str, delimiters);
+        const parsed = parseSegment(str, delimiters);
         return { ...parsed, position: index + 1 };
     });
 
@@ -784,10 +600,4 @@ export function buildAnalysis(rawContent, fileInfo, userContext = {}) {
     return analysis;
 }
 
-/**
- * Build analysis from pre-parsed segments (for worker compatibility)
- * If the worker already parsed segments, use this to avoid re-reading the file
- */
-export function buildAnalysisFromSegments(segments, rawContent, fileInfo, userContext = {}) {
-    return buildAnalysis(rawContent, fileInfo, userContext);
-}
+

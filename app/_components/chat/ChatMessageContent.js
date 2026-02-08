@@ -211,6 +211,7 @@ const _markdownComponents = {
 
     // Horizontal rule
     hr: () => <Box component="hr" sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 2 }} />,
+    //br: () => <Box component="br" />,
 };
 
 function ChatMessageContent({ content }) {

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { edifactAnalysisSchema } from '../edifact/EdifactAnalysis.js';
 
 // Separate Collection für bessere Performance bei vielen Messages
 const analysisMessageSchema = new mongoose.Schema({
@@ -22,6 +23,17 @@ const analysisMessageSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'File'
     }],
+
+    // Per-Message EDIFACT analysis (Worker-generated per invoke)
+    domainContext: {
+        edifact: {
+            _analysis: {
+                type: edifactAnalysisSchema,
+                default: undefined
+            }
+        }
+    },
+
     metadata: {
         type: Object,
         default: {}

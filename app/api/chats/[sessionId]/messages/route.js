@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
 import AnalysisChat from '@/models/edifact/AnalysisChat';
-import { loadChatMessagesPaginated } from '@/lib/helpers/messageHelpers';
+import { loadChatMessagesPaginated } from '@/lib/messageHelpers';
 
 /**
  * GET /api/chats/[sessionId]/messages

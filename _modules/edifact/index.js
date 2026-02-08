@@ -1,60 +1,65 @@
 /**
  * EDIFACT Module Entry Point
  * ==========================
- * Purpose: Central registry and interface for all EDIFACT-specific agent tools and validators.
- *
- * Responsibilities:
- * - Export all EDIFACT-specific implementations
- * - Provide module-level API (tools, validators, context builder)
- * - Handle EDIFACT-specific configuration
- * - Manage EDIFACT rule engine and validation logic
- * - Serve as single point of entry for other parts of the system
+ * Central registry and interface for all EDIFACT-specific agent tools and validators.
  *
  * Exports:
- * - edifactTools: { segmentAnalyze, validateRules, generateReport, ... }
- * - edifactValidators: { validateSegment, validateMessage, checkCompliance, ... }
- * - contextBuilder: function to build EDIFACT LLMContext from parsed data
- * - rules: EDIFACT rule engine
+ * - tools:      All agent tools (segmentAnalyze, validateRules, etc.)
+ * - validator:  { validate, quickCheck } from edifactValidator.js
+ * - rules:      { getRules, getRequiredSegments, ... } from rules.js
+ * - parser:     { parseRawEdifact, parseUNA, ... } from parser.js
  *
  * Usage:
- * import edifactModule from '_modules/edifact';
- * 
- * // Use EDIFACT tools in Executor
- * const result = await edifactModule.tools.segmentAnalyze(segment);
- * 
- * // Use EDIFACT validators in Critic
- * const validation = edifactModule.validators.validateSegment(segment, rules);
- * 
- * // Build context for LLM
- * const context = edifactModule.contextBuilder(parsedData, userPrefs);
- *
- * Module Structure:
- * edifact/
- *   ├── index.js (this file)
- *   ├── context.js (EDIFACT context/LLMContext builder)
- *   ├── tools/
- *   │   ├── segmentTools.js
- *   │   ├── validationTools.js
- *   │   └── index.js (export all tools)
- *   └── validators/
- *       ├── edifactValidator.js
- *       ├── rules.js (EDIFACT rules engine)
- *       └── index.js (export all validators)
- *
- * Implementation Notes:
- * - Module is self-contained: all EDIFACT logic here
- * - Tools and validators are pluggable (can be replaced)
- * - Rules are configurable (can be updated without code change)
- * - Context builder produces LLM-friendly summaries
- *
- * Integration with Agents:
- * - Executor: calls module tools
- * - Critic: calls module validators
- * - Planner: aware of available tools and their capabilities
- *
- * Future: Similar modules for Twitter, ERP, etc.
+ *   import edifact from '_modules/edifact';
+ *   const report = edifact.validator.validate(rawString);
+ *   const rules  = edifact.rules.getRules({ messageType: 'INVOIC' });
  */
 
-// TODO: Export edifactTools, edifactValidators, contextBuilder
+import { tools } from './tools/index.js';
+import { validate, quickCheck } from './validators/edifactValidator.js';
+import {
+    getRules,
+    getRequiredSegments,
+    getPartyRequirements,
+    getFieldFormat,
+    getSupportedMessageTypes,
+    getEancomRules
+} from './validators/rules.js';
+import {
+    parseRawEdifact,
+    parseUNA,
+    splitSegments,
+    parseSegment,
+    parseEdifactDate,
+    KNOWN_SEGMENT_TAGS,
+    DTM_QUALIFIERS,
+    RFF_QUALIFIERS,
+    NAD_QUALIFIERS
+} from './parser.js';
 
-// TODO: falls ich validators und contextBuilder implementiert habe
+export { tools };
+
+export const validator = { validate, quickCheck };
+
+export const rules = {
+    getRules,
+    getRequiredSegments,
+    getPartyRequirements,
+    getFieldFormat,
+    getSupportedMessageTypes,
+    getEancomRules
+};
+
+export const parser = {
+    parseRawEdifact,
+    parseUNA,
+    splitSegments,
+    parseSegment,
+    parseEdifactDate,
+    KNOWN_SEGMENT_TAGS,
+    DTM_QUALIFIERS,
+    RFF_QUALIFIERS,
+    NAD_QUALIFIERS
+};
+
+export default { tools, validator, rules, parser };

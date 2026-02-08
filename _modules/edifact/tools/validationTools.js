@@ -803,23 +803,51 @@ export const validateDataTypes = {
  */
 export const suggestFixes = {
     name: 'suggestFixes',
-    description: 'Generate fix suggestions for EDIFACT validation issues. Pass an array of issues from validateRules, checkCompliance, or detectAnomalies.',
+    description: 'Generate fix suggestions for EDIFACT validation issues. Pass the raw EDIFACT message to automatically detect all issues and generate fixes.',
     category: 'validation',
     module: 'edifact',
-    version: '2.0',
+    version: '2.1',
     inputSchema: {
         type: 'object',
         properties: {
+            raw: {
+                type: 'string',
+                description: 'Raw EDIFACT message string to analyze and suggest fixes for'
+            },
             issues: {
                 type: 'array',
-                description: 'Array of validation issues (from validateRules, checkCompliance, detectAnomalies, or validateDataTypes)',
+                description: 'Optional: pre-computed array of validation issues. If omitted, issues are collected automatically from raw.',
                 items: { type: 'object' }
             }
         },
-        required: ['issues']
+        required: ['raw']
     },
     execute: async (args) => {
-        const { issues } = args;
+        let issues = args.issues;
+
+        // If no pre-computed issues, run all validators to collect them
+        if (!issues || issues.length === 0) {
+            issues = [];
+            if (args.raw) {
+                const validationResult = await validateRules.execute({ raw: args.raw });
+                if (validationResult.violations?.length > 0) {
+                    issues.push(...validationResult.violations);
+                }
+                const complianceResult = await checkCompliance.execute({ raw: args.raw });
+                if (complianceResult.issues?.length > 0) {
+                    issues.push(...complianceResult.issues);
+                }
+                const anomalyResult = await detectAnomalies.execute({ raw: args.raw });
+                if (anomalyResult.anomalies?.length > 0) {
+                    issues.push(...anomalyResult.anomalies);
+                }
+                const dataTypeResult = await validateDataTypes.execute({ raw: args.raw });
+                if (dataTypeResult.issues?.length > 0) {
+                    issues.push(...dataTypeResult.issues);
+                }
+            }
+        }
+
         const suggestions = [];
 
         for (const issue of issues) {

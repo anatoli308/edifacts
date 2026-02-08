@@ -6,8 +6,10 @@ import {
 import ChatMessageContent from '@/app/_components/chat/ChatMessageContent';
 import ChatMessageFromUser from '@/app/_components/chat/ChatMessageFromUser';
 import ChatMessageAgentDebug from '@/app/_components/chat/ChatMessageAgentDebug';
+import EdifactAnalysisPanel from '@/app/_components/chat/EdifactAnalysisPanel';
 
 function ChatMessage({ message }) {
+    const messageAnalysis = message.domainContext?.edifact?._analysis;
 
     const renderAssistantMessage = () => {
         const content = typeof message.content === 'string'
@@ -33,7 +35,12 @@ function ChatMessage({ message }) {
     };
 
     if (message.role === 'user') {
-        return <ChatMessageFromUser content={message.content} />;
+        return (
+            <Box>
+                <ChatMessageFromUser content={message.content} />
+                {messageAnalysis && <EdifactAnalysisPanel analysis={messageAnalysis} />}
+            </Box>
+        );
     }
 
     return renderAssistantMessage();

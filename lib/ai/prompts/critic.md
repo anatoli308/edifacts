@@ -83,7 +83,7 @@ Return a validation report:
 - **PASS**: Output is valid, proceed to next task
 - **FIX**: Issues found, Executor should retry with different approach
 - **REPLAN**: Task failed fundamentally, Planner should decompose differently
-- **ESCALATE**: Critical error, needs Recovery Agent or user intervention
+- **ESCALATE**: Critical error, needs user intervention
 
 ## Important Rules
 
@@ -125,4 +125,4 @@ Return a validation report:
 
 ---
 
-**Note**: Your validation results are logged. Recovery Agent uses this feedback for replanning or retries.
+**Note**: Your validation results are logged and used by the Orchestrator for replanning or retries.

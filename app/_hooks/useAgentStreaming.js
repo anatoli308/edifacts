@@ -43,7 +43,7 @@ function logAgentState(prevState, newState, event, data) {
     console.groupEnd();
 }
 
-export function useAgentStreaming(sessionId, onMessageUpdate) {
+export function useAgentStreaming(sessionId, onMessageUpdate, onAnalysisReceived) {
     const { socket } = useSocket();
     const { pushSnackbarMessage } = useSnackbar();
 
@@ -193,6 +193,11 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
             if (data.step === 'task_validation_failed') {
                 pushSnackbarMessage(`Task Validierung fehlgeschlagen: ${data.taskName}`, 'warning');
             }
+
+            // Handle task_incomplete - zeige Warning in UI
+            if (data.step === 'task_incomplete') {
+                pushSnackbarMessage(`Task unvollstaendig: ${data.taskName} (${data.uncalledTools?.join(', ')})`, 'warning');
+            }
         };
 
         // Tool Call
@@ -290,6 +295,14 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
             }
         };
 
+        // Agent Analysis (per-message EDIFACT analysis from backend)
+        const handleAgentAnalysis = (data) => {
+            console.log('[Agent] Analysis received:', data.analysis?.segmentCount, 'segments');
+            if (onAnalysisReceived && data.analysis) {
+                onAnalysisReceived(data.analysis);
+            }
+        };
+
         // Agent Failed
         const handleAgentFailed = (data) => {
             console.log('[Agent] Failed:', data);
@@ -337,6 +350,7 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
         socket.on('agent:tool_result', handleToolResult);
         socket.on('response:chunk', handleResponseChunk);
         socket.on('agent:completed', handleAgentCompleted);
+        socket.on('agent:analysis', handleAgentAnalysis);
         socket.on('agent:failed', handleAgentFailed);
 
         return () => {
@@ -350,6 +364,7 @@ export function useAgentStreaming(sessionId, onMessageUpdate) {
             socket.off('agent:tool_result', handleToolResult);
             socket.off('response:chunk', handleResponseChunk);
             socket.off('agent:completed', handleAgentCompleted);
+            socket.off('agent:analysis', handleAgentAnalysis);
             socket.off('agent:failed', handleAgentFailed);
         };
     }, [socket, onMessageUpdate]);

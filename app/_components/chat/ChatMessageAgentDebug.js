@@ -53,19 +53,29 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
     // Build task status map from steps
     const taskStatusMap = new Map();
     steps.forEach(step => {
-        if (step.step === 'task_started' || step.step === 'task_completed' || step.step === 'task_validation_failed') {
+        if (step.step === 'task_started' || step.step === 'task_completed' || step.step === 'task_validation_failed' || step.step === 'task_incomplete') {
             const taskId = step.taskId;
             if (taskId) {
                 const existing = taskStatusMap.get(taskId);
-                // Priority: failed > completed > running
-                if (!existing || step.step === 'task_validation_failed' || (step.step === 'task_completed' && existing.status !== 'failed')) {
+                // Priority: failed > incomplete > completed > running
+                const getStepStatus = () => {
+                    if (step.step === 'task_validation_failed') return 'failed';
+                    if (step.step === 'task_incomplete') return 'incomplete';
+                    if (step.step === 'task_completed') return step.partial ? 'incomplete' : 'completed';
+                    return 'running';
+                };
+                const stepStatus = getStepStatus();
+                const statusPriority = { failed: 3, incomplete: 2, completed: 1, running: 0 };
+                const existingPriority = statusPriority[existing?.status] || -1;
+                const newPriority = statusPriority[stepStatus] || 0;
+                if (!existing || newPriority > existingPriority) {
                     taskStatusMap.set(taskId, {
-                        status: step.step === 'task_validation_failed' ? 'failed' : 
-                                step.step === 'task_completed' ? 'completed' : 'running',
+                        status: stepStatus,
                         taskName: step.taskName,
                         progress: step.progress,
                         timestamp: step.timestamp,
-                        error: step.step === 'task_validation_failed' ? step.message : undefined
+                        error: step.step === 'task_validation_failed' ? step.message : undefined,
+                        uncalledTools: step.uncalledTools
                     });
                 }
             }
@@ -92,6 +102,8 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
         switch (status) {
             case 'completed':
                 return { icon: 'mdi:check-circle', color: 'success.main', label: 'Completed' };
+            case 'incomplete':
+                return { icon: 'mdi:alert-circle-outline', color: 'warning.main', label: 'Incomplete' };
             case 'failed':
                 return { icon: 'mdi:alert-circle', color: 'error.main', label: 'Failed' };
             case 'running':

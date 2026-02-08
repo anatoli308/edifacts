@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import ChatMessage from '@/app/_components/chat/ChatMessage';
 import ChatMessageAssistantTyping from '@/app/_components/chat/ChatMessageAssistantTyping';
 import ChatMessageUserInput from '@/app/_components/chat/ChatMessageUserInput';
+import EdifactAnalysisPanel from '@/app/_components/chat/EdifactAnalysisPanel';
 import Iconify from '@/app/_components/utils/Iconify';
 import { useAgentStreaming } from '@/app/_hooks/useAgentStreaming';
 import { useProtectedRoute } from '@/app/_hooks/useProtectedRoute';
@@ -43,8 +44,22 @@ function AnalysisChatPage({ analysisChat }) {
         });
     }, []);
 
+    // Callback: Attach per-message analysis to the last user message
+    const handleAnalysisReceived = useCallback((analysis) => {
+        setMessages(prev => {
+            const lastUserIdx = prev.findLastIndex(m => m.role === 'user');
+            if (lastUserIdx === -1) return prev;
+            const updated = [...prev];
+            updated[lastUserIdx] = {
+                ...updated[lastUserIdx],
+                domainContext: { edifact: { _analysis: analysis } }
+            };
+            return updated;
+        });
+    }, []);
+
     // Agent streaming hook with callback
-    const { sendAgentMessage, getCurrentMessage, currentAgentState, isStreaming } = useAgentStreaming(sessionId, handleMessageUpdate);
+    const { sendAgentMessage, getCurrentMessage, currentAgentState, isStreaming } = useAgentStreaming(sessionId, handleMessageUpdate, handleAnalysisReceived);
 
     // Auto-scroll to latest message
     useEffect(() => {
@@ -101,6 +116,9 @@ function AnalysisChatPage({ analysisChat }) {
                                 minHeight: 0,
                             }}
                         >
+                            {/* Session-level EDIFACT Analysis Panel */}
+                            <EdifactAnalysisPanel analysis={analysisChat?.domainContext?.edifact?._analysis} />
+
                             {messages.map((message, index) => (
                                 <ChatMessage key={index} message={message} />
                             ))}

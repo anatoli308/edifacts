@@ -1,6 +1,9 @@
 import {
     Box,
     Button,
+    Chip,
+    LinearProgress,
+    Stack,
     Typography,
     Tooltip,
     Table,
@@ -10,13 +13,18 @@ import {
     TableHead,
     TableRow,
     Paper,
-    Link
+    Link,
+    Alert,
 } from '@mui/material';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import 'katex/dist/katex.min.css';
 
 //app imports
 import Iconify from '@/app/_components/utils/Iconify';
@@ -127,6 +135,153 @@ function _CodeBlock({ children, className, ...props }) {
 }
 
 /**
+ * Color map for badge/status components
+ * @private
+ */
+const _COLOR_MAP = {
+    success: 'success', ok: 'success', pass: 'success', valid: 'success',
+    error: 'error', fail: 'error', invalid: 'error', critical: 'error',
+    warning: 'warning', warn: 'warning', caution: 'warning',
+    info: 'info', note: 'info', default: 'default',
+    primary: 'primary', secondary: 'secondary',
+};
+
+/**
+ * Resolve MUI color from string
+ * @private
+ */
+function _resolveColor(color) {
+    return _COLOR_MAP[(color || 'default').toLowerCase()] || 'default';
+}
+
+/**
+ * Recursively extract plain text from React children
+ * @private
+ */
+function _extractText(children) {
+    if (typeof children === 'string') return children;
+    if (typeof children === 'number') return String(children);
+    if (!children) return '';
+    if (Array.isArray(children)) return children.map(_extractText).join('');
+    if (children.props?.children) return _extractText(children.props.children);
+    return '';
+}
+
+/**
+ * Parse a single [[type:...]] pattern and return a React element
+ * @private
+ */
+function _parseSinglePattern(raw) {
+    const trimmed = raw.trim();
+
+    // [[badge:label:color]] — last colon-segment is the color
+    const badgeMatch = trimmed.match(/^\[\[badge:(.+)\]\]$/);
+    if (badgeMatch) {
+        const parts = badgeMatch[1].split(':');
+        const color = parts.length > 1 ? parts.pop() : 'default';
+        const label = parts.join(':');
+        return (
+            <Chip
+                label={label}
+                color={_resolveColor(color)}
+                size="small"
+                sx={{ fontWeight: 600, mr: 0.5 }}
+            />
+        );
+    }
+
+    // [[progress:value]] or [[progress:value:color]]
+    const progressMatch = trimmed.match(/^\[\[progress:(\d+)(?::(.+?))?\]\]$/);
+    if (progressMatch) {
+        const value = Math.min(100, Math.max(0, parseInt(progressMatch[1], 10)));
+        const color = _resolveColor(progressMatch[2]);
+        return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: 1 }}>
+                <LinearProgress
+                    variant="determinate"
+                    value={value}
+                    color={color === 'default' ? 'primary' : color}
+                    sx={{ flexGrow: 1, height: 8, borderRadius: 4 }}
+                />
+                <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 40 }}>
+                    {value}%
+                </Typography>
+            </Box>
+        );
+    }
+
+    // [[metric:value|label]] or [[metric:value|label:color]]
+    const metricMatch = trimmed.match(/^\[\[metric:(.+?)\|(.+?)(?::(.+?))?\]\]$/);
+    if (metricMatch) {
+        const color = _resolveColor(metricMatch[3]);
+        const colorValue = color === 'default' ? 'text.primary' : `${color}.main`;
+        return (
+            <Paper
+                variant="outlined"
+                sx={{
+                    display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
+                    px: 3, py: 1.5, borderRadius: 2, minWidth: 100,
+                }}
+            >
+                <Typography variant="h5" sx={{ fontWeight: 700, color: colorValue }}>
+                    {metricMatch[1]}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.25 }}>
+                    {metricMatch[2]}
+                </Typography>
+            </Paper>
+        );
+    }
+
+    // [[status:type|message]]
+    const statusMatch = trimmed.match(/^\[\[status:(.+?)\|(.+)\]\]$/);
+    if (statusMatch) {
+        const severity = _resolveColor(statusMatch[1]);
+        const validSeverities = ['success', 'error', 'warning', 'info'];
+        return (
+            <Alert
+                severity={validSeverities.includes(severity) ? severity : 'info'}
+                variant="outlined"
+                sx={{ my: 1 }}
+            >
+                {statusMatch[2]}
+            </Alert>
+        );
+    }
+
+    return null;
+}
+
+/**
+ * Parse custom component patterns from paragraph children
+ * Handles single and multiple [[...]] patterns, and mixed text + patterns
+ * @private
+ */
+function _CustomComponent({ children }) {
+    const text = _extractText(children).trim();
+    if (!text.includes('[[')) return null;
+
+    // Single pattern on its own line
+    const singleResult = _parseSinglePattern(text);
+    if (singleResult) return singleResult;
+
+    // Multiple patterns on separate lines (LLM may group them in one paragraph)
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const parsed = lines.map((line, index) => _parseSinglePattern(line) || null);
+
+    // Only render if ALL lines are valid patterns (avoid partial matches with normal text)
+    if (parsed.every(Boolean)) {
+        return (
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', my: 0.5, gap: 0.5 }}>
+                {parsed.map((el, index) => <React.Fragment key={index}>{el}</React.Fragment>)}
+            </Stack>
+        );
+    }
+
+    return null;
+}
+
+/**
  * Markdown components mapped to MUI
  * @private
  */
@@ -162,12 +317,17 @@ const _markdownComponents = {
         </TableCell>
     ),
 
-    // Typography
-    p: ({ children }) => (
-        <Typography variant="body1" sx={{ mb: 1, lineHeight: 1.7 }}>
-            {children}
-        </Typography>
-    ),
+    // Typography (with custom component pattern detection)
+    p: ({ children }) => {
+        const custom = _CustomComponent({ children });
+        if (custom) return custom;
+
+        return (
+            <Typography variant="body1" sx={{ mb: 1, lineHeight: 1.7 }}>
+                {children}
+            </Typography>
+        );
+    },
     h1: ({ children }) => <Typography variant="h5" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>{children}</Typography>,
     h2: ({ children }) => <Typography variant="h6" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>{children}</Typography>,
     h3: ({ children }) => <Typography variant="subtitle1" sx={{ mt: 1.5, mb: 0.5, fontWeight: 'bold' }}>{children}</Typography>,
@@ -176,9 +336,9 @@ const _markdownComponents = {
     h6: ({ children }) => <Typography variant="body2" sx={{ mt: 1.5, mb: 0.5, fontWeight: 'bold', fontSize: '0.9rem' }}>{children}</Typography>,
 
     // Text styling
-    strong: ({ children }) => <Typography component="strong" sx={{ fontWeight: 'bold' }}>{children}</Typography>,
-    em: ({ children }) => <Typography component="em" sx={{ fontStyle: 'italic' }}>{children}</Typography>,
-    del: ({ children }) => <Typography component="del" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>{children}</Typography>,
+    strong: ({ children }) => <Box component="strong" sx={{ fontWeight: 'bold' }}>{children}</Box>,
+    em: ({ children }) => <Box component="em" sx={{ fontStyle: 'italic' }}>{children}</Box>,
+    del: ({ children }) => <Box component="del" sx={{ textDecoration: 'line-through', color: 'text.secondary', display: 'inline' }}>{children}</Box>,
 
     // Images
     img: ({ src, alt }) => (
@@ -210,12 +370,31 @@ const _markdownComponents = {
         />
     ),
 
-    // Links
-    a: ({ href, children }) => (
-        <Link href={href} target="_blank" rel="noopener noreferrer" underline="hover">
-            {children}
-        </Link>
-    ),
+    // Links (footnote anchors scroll instead of navigating)
+    a: ({ href, children }) => {
+        if (href && (href.startsWith('#user-content-fn-') || href.startsWith('#user-content-fnref-'))) {
+            return (
+                <Link
+                    component="a"
+                    href={href}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        const id = href.replace('#', '');
+                        const el = document.getElementById(id);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    sx={{ fontSize: '0.75em', verticalAlign: 'super', cursor: 'pointer' }}
+                >
+                    {children}
+                </Link>
+            );
+        }
+        return (
+            <Link href={href} target="_blank" rel="noopener noreferrer" underline="hover">
+                {children}
+            </Link>
+        );
+    },
 
     // Lists
     ul: ({ children }) => (
@@ -230,33 +409,99 @@ const _markdownComponents = {
         </Typography>
     ),
 
-    // Blockquote
-    blockquote: ({ children }) => (
+    // Blockquote with Callout detection
+    blockquote: ({ children }) => {
+        const text = React.Children.toArray(children)
+            .map(c => (typeof c === 'string' ? c : c?.props?.children || ''))
+            .join('');
+        const calloutMap = { warning: 'warning', tip: 'info', success: 'success', note: 'info', alert: 'warning', info: 'info' };
+        const match = text.match(/\*\*(Warning|Tip|Success|Note|Alert|Info):/i);
+        if (match) {
+            const severity = calloutMap[match[1].toLowerCase()] || 'info';
+            return <Alert severity={severity} sx={{ my: 1 }}>{children}</Alert>;
+        }
+        return (
+            <Box
+                sx={{
+                    borderLeft: 3,
+                    borderColor: 'primary.main',
+                    pl: 2,
+                    py: 0.5,
+                    my: 1,
+                    bgcolor: 'action.hover',
+                    borderRadius: 1,
+                }}
+            >
+                {children}
+            </Box>
+        );
+    },
+
+    // Horizontal rule
+    hr: () => <Box component="hr" sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 2 }} />,
+
+    // Line break
+    br: () => <br />,
+
+    // Details/Summary (Collapsible)
+    details: ({ children, ...props }) => (
         <Box
+            component="details"
             sx={{
-                borderLeft: 3,
-                borderColor: 'primary.main',
-                pl: 2,
-                py: 0.5,
-                my: 1,
+                my: 1.5, px: 1.5, py: 1,
+                border: 1, borderColor: 'divider', borderRadius: 1,
                 bgcolor: 'action.hover',
-                borderRadius: 1,
+                '&[open]': { bgcolor: 'background.paper' },
             }}
+            {...props}
         >
             {children}
         </Box>
     ),
+    summary: ({ children }) => (
+        <Typography
+            component="summary"
+            sx={{ cursor: 'pointer', fontWeight: 'bold', py: 0.5, '&:hover': { color: 'primary.main' } }}
+        >
+            {children}
+        </Typography>
+    ),
 
-    // Horizontal rule
-    hr: () => <Box component="hr" sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 2 }} />,
-    //br: () => <Box component="br" />,
+    // Footnote superscript
+    sup: ({ children }) => (
+        <Typography component="sup" variant="caption" sx={{ color: 'primary.main', cursor: 'pointer' }}>
+            {children}
+        </Typography>
+    ),
+
+    // Footnote section styling
+    section: ({ children, className, ...props }) => {
+        if (className === 'footnotes') {
+            return (
+                <Box
+                    component="section"
+                    sx={{ mt: 3, pt: 1, borderTop: 1, borderColor: 'divider', fontSize: '0.85rem', color: 'text.secondary' }}
+                    {...props}
+                >
+                    {children}
+                </Box>
+            );
+        }
+        return <section className={className} {...props}>{children}</section>;
+    },
 };
 
 function ChatMessageContent({ content }) {
     const [copied, setCopied] = React.useState(false);
 
+    // Normalize Unicode dashes/hyphens that break KaTeX
+    const normalizedText = content.text
+        .replace(/[\u2010-\u2015]/g, '-')
+        .replace(/\u00AD/g, '')
+        .replace(/\u2011/g, '-');
+
     const handleCopy = () => {
-        navigator.clipboard.writeText(content.text);
+        navigator.clipboard.writeText(normalizedText);
         setCopied(true);
         setTimeout(() => setCopied(false), 5000);
     };
@@ -265,10 +510,11 @@ function ChatMessageContent({ content }) {
         <>
             {/* Main Response */}
             <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
+                remarkPlugins={[remarkGfm, remarkMath]}
+                rehypePlugins={[rehypeKatex, rehypeRaw]}
                 components={_markdownComponents}
             >
-                {content.text}
+                {normalizedText}
             </ReactMarkdown>
 
             {/* Action Bar */}

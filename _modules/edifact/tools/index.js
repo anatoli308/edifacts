@@ -31,10 +31,12 @@
 
 export * from './segmentTools.js';
 export * from './validationTools.js';
+export * from './analysisTools.js';
 
 // Import all tools for convenient bundling
 import * as segmentTools from './segmentTools.js';
 import * as validationTools from './validationTools.js';
+import * as analysisTools from './analysisTools.js';
 
 /**
  * All EDIFACT tools as object (for registry registration)
@@ -45,6 +47,7 @@ export const tools = {
   parseSegmentField: segmentTools.parseSegmentField,
   compareSegments: segmentTools.compareSegments,
   groupSegmentsByType: segmentTools.groupSegmentsByType,
+  analyzeEdifact: analysisTools.analyzeEdifact,
 
   // Validation tools
   validateRules: validationTools.validateRules,

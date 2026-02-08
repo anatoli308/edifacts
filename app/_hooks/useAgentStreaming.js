@@ -233,6 +233,11 @@ export function useAgentStreaming(sessionId, onMessageUpdate, onAnalysisReceived
                 return newState;
             });
 
+            // Detect analyzeEdifact tool result → trigger analysis panel
+            if (data.tool === 'analyzeEdifact' && data.result?._type === 'edifact_analysis' && onAnalysisReceived) {
+                onAnalysisReceived(data.result.analysis);
+            }
+
             if (currentMessageRef.current) {
                 currentMessageRef.current.content.toolCalls.push({
                     name: data.tool,

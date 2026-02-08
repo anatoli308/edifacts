@@ -678,7 +678,7 @@ function EdifactAnalysisPanel({ analysis }) {
                 />
                 <Iconify icon="mdi:file-search-outline" sx={{ fontSize: 18, color: 'primary.main' }} />
                 <Typography variant="subtitle2" sx={{ flex: 1 }}>
-                    EDIFACT Analysis
+                    EDIFACTS Analysis
                 </Typography>
 
                 {/* Quick badges */}

@@ -68,7 +68,7 @@ function AnalysisChatPage({ analysisChat }) {
         // Pass messages as explicit parameter
         const conversationHistory = [
             ...messages,//.slice(-10),
-            newUserMessage
+            //newUserMessage
         ];
 
         sendAgentMessage(

@@ -89,7 +89,6 @@ function StartContainer() {
             //user kann null sein, wenn guest user eine session startet (browsercache cleared, cookie expired, ...)
             await reconnectUser(data.token);
             router.push(`/a/${jobId}`);
-            console.log('[Navigation] Redirecting to session page:', `/a/${jobId}`);
         } catch (e) {
             pushSnackbarMessage(e.message || 'Failed to start analysis session.', 'error');
             setIsLoading(false);

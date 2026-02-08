@@ -2,6 +2,8 @@ import { Box, Divider, Typography, Card, CardContent, TextField, IconButton, Men
 import { useState, useEffect } from 'react';
 import Iconify from '@/app/_components/utils/Iconify';
 import SectionRow from '@/app/_components/dialogs/personalization/SectionRow';
+import { useThemeConfig } from "@/app/_contexts/ThemeContext";
+
 // TODO: i will add later manually
 //{ value: 'system', label: 'System', caption: 'Use our System AI services' },
 //{ value: 'anthropic', label: 'Anthropic', caption: 'Use Anthropic AI services' },
@@ -10,7 +12,7 @@ import SectionRow from '@/app/_components/dialogs/personalization/SectionRow';
 //{ value: 'openrouter', label: 'OpenRouter', caption: 'Use OpenRouter AI services' },
 const providerOptions = [
     { value: 'openai', label: 'OpenAI', caption: 'Use OpenAI services' },
-    { value: 'custom', label: 'Custom', caption: 'Use your own hosted AI services' }
+    { value: 'ollama', label: 'Custom', caption: 'Use your own hosted AI services' }
 ];
 
 function SettingsDialogDataControl() {
@@ -19,6 +21,9 @@ function SettingsDialogDataControl() {
     const [selectOpen, setSelectOpen] = useState(false);
     const [editingProviderId, setEditingProviderId] = useState(null);
     const [editProvider, setEditProvider] = useState(null);
+    const { themeBackground, reconnectUser } = useThemeConfig();
+
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSelectProvider = (selectedProvider) => {
         if (selectedProvider) {
@@ -26,7 +31,7 @@ function SettingsDialogDataControl() {
                 id: Date.now(),
                 provider: selectedProvider,
                 name: '',
-                apiKey: '',
+                encryptedKey: '',
                 baseUrl: ''
             });
         }
@@ -35,10 +40,11 @@ function SettingsDialogDataControl() {
     useEffect(() => {
         async function loadProviders() {
             try {
+                setIsLoading(true);
                 const response = await fetch('/api/provider/loadProviders', {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
+                    credentials: 'include'
                 });
                 const data = await response.json();
                 if (response.ok) {
@@ -48,6 +54,8 @@ function SettingsDialogDataControl() {
                 }
             } catch (error) {
                 console.error('Error loading providers:', error);
+            } finally {
+                setIsLoading(false);
             }
         }
         loadProviders();
@@ -58,8 +66,9 @@ function SettingsDialogDataControl() {
     }, []);
 
     const handleSaveProvider = async () => {
-        if (draftProvider && draftProvider.apiKey.trim()) {
+        if (draftProvider && draftProvider.encryptedKey.trim()) {
             try {
+                setIsLoading(true);
                 const response = await fetch('/api/provider/addProvider', {
                     method: 'POST',
                     headers: {
@@ -69,8 +78,9 @@ function SettingsDialogDataControl() {
                     body: JSON.stringify({
                         provider: draftProvider.provider,
                         name: draftProvider.name,
-                        apiKey: draftProvider.apiKey,
-                        baseUrl: draftProvider.baseUrl
+                        encryptedKey: draftProvider.encryptedKey,
+                        baseUrl: draftProvider.baseUrl,
+                        backgroundMode: themeBackground
                     })
                 });
 
@@ -81,13 +91,15 @@ function SettingsDialogDataControl() {
                     // TODO: Show error message to user
                     return;
                 }
-
+                await reconnectUser(data.token);
                 // Add to saved providers list
-                setSavedProviders([...savedProviders, { ...draftProvider, id: data.apiKeyId }]);
+                setSavedProviders([...savedProviders, { ...draftProvider, _id: data._id }]);
                 setDraftProvider(null);
             } catch (error) {
                 console.error('Error saving provider:', error);
                 // TODO: Show error message to user
+            } finally {
+                setIsLoading(false);
             }
         }
     };
@@ -101,8 +113,29 @@ function SettingsDialogDataControl() {
         setDraftProvider(null);
     };
 
-    const handleRemoveProvider = (id) => {
-        setSavedProviders(savedProviders.filter(p => p.id !== id));
+    const handleRemoveProvider = async (id) => {
+        try {
+            setIsLoading(true);
+            const response = await fetch('/api/provider/removeProvider', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include', // Send cookies with request
+                body: JSON.stringify({ providerId: id })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                console.error('Error removing provider:', data.error);
+                return;
+            }
+            await reconnectUser(data.token);
+            setSavedProviders(savedProviders.filter(p => p._id !== id));
+        } catch (error) {
+            console.error('Error removing provider:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleUpdateDraft = (field, value) => {
@@ -124,11 +157,11 @@ function SettingsDialogDataControl() {
     };
 
     const handleEditProvider = (provider) => {
-        if (editingProviderId === provider.id) {
+        if (editingProviderId === provider._id) {
             setEditingProviderId(null);
             setEditProvider(null);
         } else {
-            setEditingProviderId(provider.id);
+            setEditingProviderId(provider._id);
             setEditProvider({ ...provider });
         }
     };
@@ -141,9 +174,9 @@ function SettingsDialogDataControl() {
 
     const handleSaveEdit = (e) => {
         e.preventDefault();
-        if (editProvider && editProvider.apiKey.trim()) {
+        if (editProvider && editProvider.encryptedKey.trim()) {
             setSavedProviders(savedProviders.map(p =>
-                p.id === editProvider.id ? editProvider : p
+                p._id === editProvider._id ? editProvider : p
             ));
             setEditingProviderId(null);
             setEditProvider(null);
@@ -231,8 +264,8 @@ function SettingsDialogDataControl() {
                                 label="API Key"
                                 size="small"
                                 required
-                                value={draftProvider.apiKey}
-                                onChange={(e) => handleUpdateDraft('apiKey', e.target.value)}
+                                value={draftProvider.encryptedKey}
+                                onChange={(e) => handleUpdateDraft('encryptedKey', e.target.value)}
                                 placeholder="Enter your API key"
                             />
                             {draftProvider.provider === 'custom' && (
@@ -254,7 +287,7 @@ function SettingsDialogDataControl() {
                                 variant="contained"
                                 size="small"
                                 type="submit"
-                                disabled={!draftProvider.apiKey.trim()}
+                                disabled={!draftProvider.encryptedKey.trim() || isLoading}
                             >
                                 Save Provider
                             </Button>
@@ -263,6 +296,7 @@ function SettingsDialogDataControl() {
                                 size="small"
                                 onClick={handleCancelDraft}
                                 type="button"
+                                disabled={isLoading}
                             >
                                 Cancel
                             </Button>
@@ -298,8 +332,8 @@ function SettingsDialogDataControl() {
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 {savedProviders.length > 0 ? (
-                    savedProviders.map((provider) => (
-                        <Box key={provider.id}>
+                    savedProviders.map((provider, index) => (
+                        <Box key={index}>
                             <Card
                                 variant="outlined"
                                 sx={{
@@ -321,9 +355,10 @@ function SettingsDialogDataControl() {
                                     <IconButton
                                         size="small"
                                         color="error"
+                                        disabled={isLoading}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            handleRemoveProvider(provider.id);
+                                            handleRemoveProvider(provider._id);
                                         }}
                                     >
                                         <Iconify icon="eva:trash-2-outline" />
@@ -331,7 +366,7 @@ function SettingsDialogDataControl() {
                                 </Box>
                             </Card>
 
-                            <Collapse in={editingProviderId === provider.id}>
+                            <Collapse in={editingProviderId === provider._id}>
                                 <Box sx={{ p: 2, bgcolor: 'background.neutral', borderLeft: '3px solid', borderColor: 'primary.main' }}>
                                     <Box component="form" onSubmit={handleSaveEdit}>
                                         <Typography variant="subtitle2" sx={{ mb: 2 }}>
@@ -353,8 +388,8 @@ function SettingsDialogDataControl() {
                                                 label="API Key"
                                                 size="small"
                                                 required
-                                                value={editProvider?.apiKey || ''}
-                                                onChange={(e) => handleUpdateEdit('apiKey', e.target.value)}
+                                                value={editProvider?.encryptedKey || ''}
+                                                onChange={(e) => handleUpdateEdit('encryptedKey', e.target.value)}
                                                 placeholder="Enter your API key"
                                             />
                                             {editProvider?.provider === 'custom' && (
@@ -376,7 +411,7 @@ function SettingsDialogDataControl() {
                                                 variant="contained"
                                                 size="small"
                                                 type="submit"
-                                                disabled={!editProvider?.apiKey?.trim()}
+                                                disabled={!editProvider?.encryptedKey?.trim() || isLoading}
                                             >
                                                 Update Provider
                                             </Button>
@@ -385,6 +420,7 @@ function SettingsDialogDataControl() {
                                                 size="small"
                                                 onClick={handleCancelEdit}
                                                 type="button"
+                                                disabled={isLoading}
                                             >
                                                 Cancel
                                             </Button>

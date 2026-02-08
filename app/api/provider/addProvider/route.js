@@ -1,5 +1,5 @@
 // app/api/provider/addProvider/route.js
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, createGuestUser } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import ApiKey from '@/app/models/shared/ApiKey';
 
@@ -8,19 +8,15 @@ export async function POST(request) {
         // Get authenticated user
         const userId = request.headers.get('x-user-id');
         const token = request.headers.get('x-auth-token');
-        const user = await getAuthenticatedUser(userId, token);
+        let user = await getAuthenticatedUser(userId, token);
 
+        const { provider, backgroundMode, name, encryptedKey, baseUrl } = await request.json();
         if (!user) {
-            return NextResponse.json(
-                { error: 'Unauthorized' },
-                { status: 401 }
-            );
+            user = await createGuestUser(backgroundMode);
         }
 
-        const { provider, name, apiKey, baseUrl } = await request.json();
-
         // Validation
-        const validProviders = ['ollama', 'openai', 'anthropic', 'custom'];
+        const validProviders = ['ollama', 'openai', 'anthropic'];
         if (!validProviders.includes(provider)) {
             return NextResponse.json(
                 { error: 'Invalid provider type' },
@@ -28,9 +24,9 @@ export async function POST(request) {
             );
         }
 
-        if (!apiKey || !apiKey.trim()) {
+        if (!encryptedKey || !encryptedKey.trim()) {
             return NextResponse.json(
-                { error: 'API key is required' },
+                { error: 'Api key is required' },
                 { status: 400 }
             );
         }
@@ -42,23 +38,63 @@ export async function POST(request) {
             );
         }
 
+        // WICHTIG: Reihenfolge der Saves (ohne Transaction)
+        // 1. User (falls neu)
+        const isNewUser = user.isNew;
+        if (isNewUser) {
+            await user.save();
+            await user.generateAuthToken('web');
+        }
+
         // Create new API key document
         // TODO: Implement actual encryption for apiKey before storing
         const newApiKey = new ApiKey({
             ownerId: user._id,
             provider,
             name: name || `${provider} API Key`,
-            encryptedKey: apiKey, // TODO: Encrypt this value
+            encryptedKey: encryptedKey, // TODO: Encrypt this value
             baseUrl: provider === 'custom' ? baseUrl : undefined,
             models: [] // Can be populated later
         });
 
         await newApiKey.save();
+        
+        let models = [];
+        if (provider === 'openai') {
+            const res = await fetch('https://api.openai.com/v1/models', {
+                headers: { Authorization: `Bearer ${encryptedKey}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                models = data.data.map(m => m.id);
+            }
+        } else if (provider === 'anthropic') {
+            const res = await fetch('https://api.anthropic.com/v1/models', {
+                headers: { Authorization: `Bearer ${encryptedKey}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                models = data.data.map(m => m.id);
+            }
+        } else if (provider === 'ollama' || provider === 'custom') {
+            const res = await fetch(`${provider === 'custom' ? baseUrl : 'http://localhost:11434'}/v1/models`, {
+                headers: { Authorization: `Bearer ${encryptedKey}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                models = data.data.map(m => m.id);
+            }
+        }
+        //TODO : Add model fetching for other providers if needed
+        newApiKey.models = models;
+        await newApiKey.save();
+
 
         return NextResponse.json({
             success: true,
             apiKeyId: newApiKey._id,
-            message: 'Provider added successfully'
+            message: 'Provider added successfully',
+            token: isNewUser ? user.tokens[user.tokens.length - 1].token : null
         });
 
     } catch (error) {

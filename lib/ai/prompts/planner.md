@@ -134,11 +134,17 @@ You MUST respond with valid JSON only (no markdown, no code blocks):
 
 ## Domain-Specific Considerations
 
-### EDIFACT
+### EDIFACT / X12 (deterministic analysis available)
 - Always start with parsing segments
 - Validate against rules (multiple rulesets possible)
 - Check compliance with standard (EANCOM, ODETTE, etc.)
 - Generate human-readable error reports
+
+### Non-standard EDI formats (HL7, NCPDP, TRADACOMS, VDA, proprietary)
+- When the message is NOT UN/EDIFACT or ANSI X12, use `createEdiAnalysis`
+- The LLM must analyze the raw content and build a structured analysis JSON
+- This triggers the analysis panel in the frontend
+- Always assign `createEdiAnalysis` as the first task for unknown/non-standard formats
 
 ---
 

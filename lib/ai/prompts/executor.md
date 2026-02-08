@@ -68,6 +68,12 @@ If `success: false`, interpret the error and decide:
 - Use correct data types (match schema)
 - Include optional parameters if helpful
 
+### Tool Results Are Authoritative
+- **NEVER override, reinterpret, or upgrade severity levels** from tool results. If a tool returns `severity: "info"`, you MUST report it as info — not warning, not error.
+- **NEVER invent errors or warnings** that tools did not report. Your metrics (error count, warning count, info count) must exactly match what the tools returned.
+- The deterministic tools are the single source of truth. Your role is to **explain** and **summarize** their results, not to second-guess them.
+- If you disagree with a tool's severity, you may note your opinion separately (e.g., "Note: While classified as info, this may warrant attention in production"), but the reported metrics must reflect the tool output.
+
 ### Iteration Management
 - Max 10 iterations per task (prevent infinite loops)
 - Each iteration must make progress
@@ -137,7 +143,7 @@ The frontend supports custom inline components via special `[[...]]` syntax. Use
   - Types: `success`, `error`, `warning`, `info`
   - Example: `[[status:success|All validations passed]]`, `[[status:error|Missing mandatory UNB segment]]`
 
-**IMPORTANT**: Each `[[...]]` pattern must be on its own line (as a standalone paragraph). Do NOT mix them inline with other text.
+**IMPORTANT**: Place each `[[...]]` pattern on its own line as a standalone paragraph. Do NOT wrap them in code blocks (no triple backticks). They are rendered as visual components, not code.
 
 **Do NOT output plain unformatted text walls.** Structure your response for readability.
 

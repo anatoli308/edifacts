@@ -1,11 +1,12 @@
 /**
- * EDIFACT Validation Tools
- * =======================
- * Real implementations using the deterministic EDIFACT parser and analysis engine.
+ * EDI Validation Tools
+ * ====================
+ * Real implementations using the deterministic EDIFACT/X12 parser and analysis engine.
+ * Supports both UN/EDIFACT and ANSI X12 formats with automatic detection.
  *
  * Tools:
  * 1. validateRules      — Structural validation (envelope, counts, required segments)
- * 2. checkCompliance    — Standard compliance (EANCOM, UN/EDIFACT, version detection)
+ * 2. checkCompliance    — Standard compliance (EANCOM, UN/EDIFACT, X12 version detection)
  * 3. detectAnomalies    — Anomaly detection (duplicates, unusual values, data quality)
  * 4. validateDataTypes  — Field-level type/format validation (dates, amounts, identifiers)
  * 5. suggestFixes       — Generate fix suggestions for found issues
@@ -20,6 +21,107 @@ import {
     NAD_QUALIFIERS
 } from '../parser.js';
 
+// ==================== X12 FORMAT DETECTION & PARSING ====================
+
+/**
+ * Known X12 segment tags for validation.
+ * @private
+ */
+const KNOWN_X12_TAGS = new Set([
+    'ISA', 'IEA', 'GS', 'GE', 'ST', 'SE',
+    'BHT', 'HL', 'NM1', 'N3', 'N4', 'REF', 'DTP', 'TRN', 'STC',
+    'SBR', 'CLM', 'CLP', 'CAS', 'SV1', 'SV2', 'SVD', 'HI',
+    'DMG', 'OI', 'NTE', 'PER', 'AMT', 'QTY', 'LX', 'LQ',
+    'PRV', 'CLM', 'CN1', 'PWK', 'CR1', 'CR2', 'CRC', 'HCP',
+    'PAT', 'INS', 'HD', 'DTP', 'EB', 'MSG', 'III', 'LS', 'LE',
+    'AAA', 'MOA', 'MIA', 'PLB', 'RDM', 'BPR', 'DTM', 'ENT',
+    'AK1', 'AK2', 'AK3', 'AK4', 'AK5', 'AK9', 'CTX',
+    'BGN', 'CUR', 'K3', 'MEA', 'PWK', 'RAS', 'TOO',
+    'TA1', 'IK3', 'IK4', 'IK5', 'FA1', 'FA2'
+]);
+
+/**
+ * Detect if raw content is X12 format.
+ * @param {string} raw - Raw EDI content
+ * @returns {boolean}
+ * @private
+ */
+function _isX12Format(raw) {
+    if (!raw || typeof raw !== 'string') return false;
+    const trimmed = raw.trim();
+    // Full X12 with ISA envelope
+    if (/^ISA[^A-Za-z0-9\s]/.test(trimmed)) return true;
+    // Partial X12 (transaction set or functional group without ISA envelope)
+    // Detect ST, GS followed by a typical X12 element separator (* or |)
+    if (/^(ST|GS)[*|]/.test(trimmed)) return true;
+    return false;
+}
+
+/**
+ * Parse X12 raw content into segments array compatible with validation tools.
+ * Returns { segments, delimiters, format: 'x12' }
+ * @param {string} raw - Raw X12 content
+ * @returns {{ segments: Array, delimiters: object, format: string }}
+ * @private
+ */
+function _parseRawX12(raw) {
+    const trimmed = raw.trim();
+    let elementSep, componentSep, segmentTerm;
+
+    if (/^ISA[^A-Za-z0-9\s]/.test(trimmed) && trimmed.length >= 106) {
+        // Full ISA: use fixed character positions
+        elementSep = trimmed.charAt(3);
+        componentSep = trimmed.charAt(104);
+        segmentTerm = trimmed.charAt(105);
+    } else {
+        // No ISA (bare ST/GS): infer delimiters from content
+        const sepMatch = trimmed.match(/^[A-Z][A-Z0-9]{1,2}([^A-Za-z0-9\s\r\n])/);
+        elementSep = sepMatch?.[1] || '*';
+        segmentTerm = trimmed.includes('~') ? '~' : '\n';
+        // Component separator: X12 typically uses : or >
+        componentSep = trimmed.includes('>') ? '>' : ':';
+    }
+
+    if (!elementSep || !segmentTerm) {
+        return { segments: [], delimiters: {}, format: 'x12' };
+    }
+
+    const rawSegments = trimmed
+        .split(segmentTerm)
+        .map(s => s.trim().replace(/^[\r\n]+|[\r\n]+$/g, ''))
+        .filter(s => s.length > 0);
+
+    const segments = rawSegments.map((segStr, idx) => {
+        const parts = segStr.split(elementSep);
+        const tag = parts[0] || '';
+        const fields = parts.slice(1).map(val => ({
+            value: val,
+            components: componentSep ? val.split(componentSep) : [val]
+        }));
+        return { tag, fields, position: idx + 1, raw: segStr };
+    });
+
+    return {
+        segments,
+        delimiters: { element: elementSep, component: componentSep, segment: segmentTerm },
+        format: 'x12'
+    };
+}
+
+/**
+ * Universal parse: auto-detect format and parse.
+ * @param {string} raw - Raw EDI content
+ * @returns {{ segments: Array, delimiters: object, format: string }}
+ * @private
+ */
+function _parseEDI(raw) {
+    if (_isX12Format(raw)) {
+        return _parseRawX12(raw);
+    }
+    const result = parseRawEdifact(raw);
+    return { ...result, format: 'edifact' };
+}
+
 // ==================== TOOL IMPLEMENTATIONS ====================
 
 /**
@@ -28,26 +130,31 @@ import {
  */
 export const validateRules = {
     name: 'validateRules',
-    description: 'Validate an EDIFACT message structure: check required segments (UNB, UNH, BGM, UNT, UNZ), segment counts, control references, and structural integrity. Pass the raw EDIFACT message string.',
+    description: 'Validate an EDI message structure (UN/EDIFACT or ANSI X12): check required envelope segments, segment counts, control references, and structural integrity. Pass the raw EDI message string.',
     category: 'validation',
     module: 'edifact',
-    version: '2.0',
+    version: '2.1',
     inputSchema: {
         type: 'object',
         properties: {
             raw: {
                 type: 'string',
-                description: 'Complete raw EDIFACT message string'
+                description: 'Complete raw EDI message string (EDIFACT or X12)'
             }
         },
         required: ['raw']
     },
     execute: async (args) => {
         const { raw } = args;
-        const { segments, delimiters } = parseRawEdifact(raw);
+        const { segments, delimiters, format } = _parseEDI(raw);
 
         if (segments.length === 0) {
-            return { valid: false, error: 'No segments found in raw EDIFACT content', violations: [] };
+            return { valid: false, error: 'No segments found in raw EDI content', violations: [] };
+        }
+
+        // Dispatch to format-specific validation
+        if (format === 'x12') {
+            return _validateRulesX12(segments);
         }
 
         const violations = [];
@@ -111,7 +218,7 @@ export const validateRules = {
                 if (declaredCount && declaredCount !== actualCount) {
                     violations.push({
                         rule: 'SEGMENT_COUNT',
-                        severity: 'warning',
+                        severity: 'error',
                         segment: 'UNT',
                         message: `Message ${msgRef}: UNT declares ${declaredCount} segments but actual count is ${actualCount}`,
                         expected: declaredCount,
@@ -208,39 +315,232 @@ export const validateRules = {
 };
 
 /**
+ * X12-specific structural validation.
+ * @param {Array} segments - Parsed X12 segments
+ * @returns {object} Validation result
+ * @private
+ */
+function _validateRulesX12(segments) {
+    const violations = [];
+    const segmentTags = segments.map(s => s.tag);
+
+    // 1. Required envelope segments
+    const requiredEnvelope = [
+        { tag: 'ISA', label: 'Interchange Control Header' },
+        { tag: 'IEA', label: 'Interchange Control Trailer' },
+        { tag: 'GS', label: 'Functional Group Header' },
+        { tag: 'GE', label: 'Functional Group Trailer' },
+        { tag: 'ST', label: 'Transaction Set Header' },
+        { tag: 'SE', label: 'Transaction Set Trailer' }
+    ];
+
+    for (const req of requiredEnvelope) {
+        if (!segmentTags.includes(req.tag)) {
+            violations.push({
+                rule: 'REQUIRED_SEGMENT',
+                severity: 'error',
+                segment: req.tag,
+                message: `Missing required segment: ${req.tag} (${req.label})`
+            });
+        }
+    }
+
+    // 2. ISA/IEA pairing and control number match
+    const isaSegments = segments.filter(s => s.tag === 'ISA');
+    const ieaSegments = segments.filter(s => s.tag === 'IEA');
+
+    if (isaSegments.length !== ieaSegments.length) {
+        violations.push({
+            rule: 'ENVELOPE_PAIRING',
+            severity: 'error',
+            segment: 'ISA/IEA',
+            message: `ISA/IEA count mismatch: ${isaSegments.length} ISA vs ${ieaSegments.length} IEA`
+        });
+    }
+
+    for (let i = 0; i < Math.min(isaSegments.length, ieaSegments.length); i++) {
+        const isaControl = (isaSegments[i].fields[12]?.value || '').trim();
+        const ieaControl = (ieaSegments[i].fields[1]?.value || '').trim();
+        if (isaControl && ieaControl && isaControl !== ieaControl) {
+            violations.push({
+                rule: 'CONTROL_REFERENCE',
+                severity: 'error',
+                segment: 'ISA/IEA',
+                message: `Control number mismatch: ISA="${isaControl}" vs IEA="${ieaControl}"`
+            });
+        }
+    }
+
+    // 3. GS/GE pairing and control number match
+    const gsSegments = segments.filter(s => s.tag === 'GS');
+    const geSegments = segments.filter(s => s.tag === 'GE');
+
+    if (gsSegments.length !== geSegments.length) {
+        violations.push({
+            rule: 'ENVELOPE_PAIRING',
+            severity: 'error',
+            segment: 'GS/GE',
+            message: `GS/GE count mismatch: ${gsSegments.length} GS vs ${geSegments.length} GE`
+        });
+    }
+
+    for (let i = 0; i < Math.min(gsSegments.length, geSegments.length); i++) {
+        const gsControl = (gsSegments[i].fields[5]?.value || '').trim();
+        const geControl = (geSegments[i].fields[1]?.value || '').trim();
+        if (gsControl && geControl && gsControl !== geControl) {
+            violations.push({
+                rule: 'CONTROL_REFERENCE',
+                severity: 'error',
+                segment: 'GS/GE',
+                message: `Group control number mismatch: GS="${gsControl}" vs GE="${geControl}"`
+            });
+        }
+    }
+
+    // 4. ST/SE pairing and segment count
+    const stSegments = segments.filter(s => s.tag === 'ST');
+    const seSegments = segments.filter(s => s.tag === 'SE');
+
+    if (stSegments.length !== seSegments.length) {
+        violations.push({
+            rule: 'ENVELOPE_PAIRING',
+            severity: 'error',
+            segment: 'ST/SE',
+            message: `ST/SE count mismatch: ${stSegments.length} ST vs ${seSegments.length} SE`
+        });
+    }
+
+    for (let i = 0; i < Math.min(stSegments.length, seSegments.length); i++) {
+        const se = seSegments[i];
+        const st = stSegments[i];
+        const stControl = (st.fields[1]?.value || '').trim();
+        const seControl = (se.fields[1]?.value || '').trim();
+
+        if (stControl && seControl && stControl !== seControl) {
+            violations.push({
+                rule: 'CONTROL_REFERENCE',
+                severity: 'error',
+                segment: 'ST/SE',
+                message: `Transaction set control number mismatch: ST="${stControl}" vs SE="${seControl}"`
+            });
+        }
+
+        // SE segment count validation
+        const declaredCount = parseInt(se.fields[0]?.value, 10);
+        if (declaredCount) {
+            const stIdx = segments.indexOf(st);
+            const seIdx = segments.indexOf(se);
+            const actualCount = seIdx - stIdx + 1;
+            if (declaredCount !== actualCount) {
+                violations.push({
+                    rule: 'SEGMENT_COUNT',
+                    severity: 'error',
+                    segment: 'SE',
+                    message: `SE declares ${declaredCount} segments but actual count is ${actualCount} (ST to SE inclusive)`,
+                    expected: declaredCount,
+                    actual: actualCount
+                });
+            }
+        }
+    }
+
+    // 5. IEA group count
+    for (const iea of ieaSegments) {
+        const declaredGroups = parseInt(iea.fields[0]?.value, 10);
+        if (declaredGroups && declaredGroups !== gsSegments.length) {
+            violations.push({
+                rule: 'MESSAGE_COUNT',
+                severity: 'warning',
+                segment: 'IEA',
+                message: `IEA declares ${declaredGroups} functional groups but found ${gsSegments.length}`,
+                expected: declaredGroups,
+                actual: gsSegments.length
+            });
+        }
+    }
+
+    // 6. GE transaction set count
+    for (const ge of geSegments) {
+        const declaredTxSets = parseInt(ge.fields[0]?.value, 10);
+        if (declaredTxSets && declaredTxSets !== stSegments.length) {
+            violations.push({
+                rule: 'MESSAGE_COUNT',
+                severity: 'warning',
+                segment: 'GE',
+                message: `GE declares ${declaredTxSets} transaction sets but found ${stSegments.length}`,
+                expected: declaredTxSets,
+                actual: stSegments.length
+            });
+        }
+    }
+
+    // 7. Unknown segment tags
+    for (const seg of segments) {
+        if (!KNOWN_X12_TAGS.has(seg.tag) && /^[A-Z]{2,3}\d?$/.test(seg.tag)) {
+            violations.push({
+                rule: 'UNKNOWN_SEGMENT',
+                severity: 'info',
+                segment: seg.tag,
+                position: seg.position,
+                message: `Unknown X12 segment tag: ${seg.tag}`
+            });
+        }
+    }
+
+    const errorCount = violations.filter(v => v.severity === 'error').length;
+    const warningCount = violations.filter(v => v.severity === 'warning').length;
+
+    return {
+        valid: errorCount === 0,
+        totalSegments: segments.length,
+        messageCount: stSegments.length,
+        standard: 'ANSI X12',
+        errorCount,
+        warningCount,
+        violationCount: violations.length,
+        violations
+    };
+}
+
+/**
  * Tool: checkCompliance
- * Check EDIFACT message compliance against a standard
+ * Check EDI message compliance against a standard
  */
 export const checkCompliance = {
     name: 'checkCompliance',
-    description: 'Check EDIFACT message compliance against a standard (EANCOM, UN/EDIFACT, ODETTE). Detects standard, version, and subset from the message itself. Pass the raw EDIFACT message string.',
+    description: 'Check EDI message compliance against a standard (EANCOM, UN/EDIFACT, ODETTE, ANSI X12). Detects standard, version, and subset from the message itself. Pass the raw EDI message string.',
     category: 'validation',
     module: 'edifact',
-    version: '2.0',
+    version: '2.1',
     inputSchema: {
         type: 'object',
         properties: {
             raw: {
                 type: 'string',
-                description: 'Complete raw EDIFACT message string'
+                description: 'Complete raw EDI message string (EDIFACT or X12)'
             },
             standard: {
                 type: 'string',
-                description: 'Optional: expected standard (e.g., "EANCOM", "UN/EDIFACT"). If omitted, auto-detected from UNB/UNH.'
+                description: 'Optional: expected standard (e.g., "EANCOM", "UN/EDIFACT", "ANSI X12"). If omitted, auto-detected.'
             },
             subset: {
                 type: 'string',
-                description: 'Optional: expected subset or version (e.g., "D96A"). If omitted, auto-detected from UNH.'
+                description: 'Optional: expected subset or version (e.g., "D96A", "005010X222A1"). If omitted, auto-detected.'
             }
         },
         required: ['raw']
     },
     execute: async (args) => {
         const { raw, standard: expectedStandard, subset: expectedSubset } = args;
-        const { segments } = parseRawEdifact(raw);
+        const { segments, format } = _parseEDI(raw);
 
         if (segments.length === 0) {
-            return { compliant: false, error: 'No segments found in raw EDIFACT content' };
+            return { compliant: false, error: 'No segments found in raw EDI content' };
+        }
+
+        // Dispatch to X12 compliance check
+        if (format === 'x12') {
+            return _checkComplianceX12(segments, expectedStandard, expectedSubset);
         }
 
         const issues = [];
@@ -354,31 +654,131 @@ export const checkCompliance = {
 };
 
 /**
+ * X12-specific compliance check.
+ * @param {Array} segments - Parsed X12 segments
+ * @param {string|undefined} expectedStandard
+ * @param {string|undefined} expectedSubset
+ * @returns {object} Compliance result
+ * @private
+ */
+function _checkComplianceX12(segments, expectedStandard, expectedSubset) {
+    const issues = [];
+    const segmentTags = segments.map(s => s.tag);
+    const uniqueTags = [...new Set(segmentTags)];
+
+    // Extract version info from GS and ST
+    const gsSegment = segments.find(s => s.tag === 'GS');
+    const stSegment = segments.find(s => s.tag === 'ST');
+    const isaSegment = segments.find(s => s.tag === 'ISA');
+
+    const functionalIdCode = gsSegment?.fields[0]?.value || '';
+    const gsVersion = gsSegment?.fields[7]?.value || '';
+    const messageType = stSegment?.fields[0]?.value || '';
+    const stVersion = stSegment?.fields[2]?.value || '';
+    const isaVersion = isaSegment?.fields[11]?.value?.trim() || '';
+
+    const detectedStandard = 'ANSI X12';
+    const detectedVersion = stVersion || gsVersion || isaVersion;
+    const standard = expectedStandard || detectedStandard;
+    const subset = expectedSubset || functionalIdCode;
+
+    // Required envelope segments
+    const requiredSegments = ['ISA', 'GS', 'ST', 'SE', 'GE', 'IEA'];
+    const missingRequired = requiredSegments.filter(tag => !segmentTags.includes(tag));
+
+    for (const tag of missingRequired) {
+        issues.push({
+            severity: 'error',
+            segment: tag,
+            message: `${standard}: Missing required envelope segment ${tag}`
+        });
+    }
+
+    // ISA version check (should be 00501 for 5010)
+    if (isaVersion && !['00501', '00401', '00400', '00402'].includes(isaVersion)) {
+        issues.push({
+            severity: 'info',
+            segment: 'ISA',
+            message: `Unusual ISA version: "${isaVersion}". Common versions: 00401, 00501`
+        });
+    }
+
+    // GS version responsibility designator should match ST implementation
+    if (gsVersion && stVersion && !stVersion.startsWith(gsVersion.slice(0, 5))) {
+        issues.push({
+            severity: 'info',
+            segment: 'GS/ST',
+            message: `GS version "${gsVersion}" and ST implementation "${stVersion}" may be inconsistent`
+        });
+    }
+
+    // Expected standard mismatch
+    if (expectedStandard && expectedStandard !== detectedStandard) {
+        issues.push({
+            severity: 'warning',
+            segment: 'ISA',
+            message: `Expected standard "${expectedStandard}" but detected "${detectedStandard}"`
+        });
+    }
+
+    // Test indicator check
+    const testIndicator = isaSegment?.fields[14]?.value?.trim() || '';
+    if (testIndicator === 'T') {
+        issues.push({
+            severity: 'info',
+            segment: 'ISA',
+            message: 'Interchange is flagged as TEST (ISA15=T). Not suitable for production processing.'
+        });
+    }
+
+    return {
+        compliant: issues.filter(i => i.severity === 'error').length === 0,
+        standard,
+        detectedStandard,
+        subset,
+        detectedVersion,
+        messageType,
+        functionalIdCode,
+        isaVersion,
+        requiredSegments,
+        missingSegments: missingRequired,
+        presentSegments: uniqueTags,
+        issueCount: issues.length,
+        issues
+    };
+}
+
+/**
  * Tool: detectAnomalies
  * Find unusual patterns or data quality issues
  */
 export const detectAnomalies = {
     name: 'detectAnomalies',
-    description: 'Detect anomalies and data quality issues in an EDIFACT message: duplicate references, unusual values, missing data, inconsistencies. Pass the raw EDIFACT message string.',
+    description: 'Detect anomalies and data quality issues in an EDI message (EDIFACT or X12): duplicate references, unusual values, missing data, inconsistencies. Pass the raw EDI message string.',
     category: 'validation',
     module: 'edifact',
-    version: '2.0',
+    version: '2.1',
     inputSchema: {
         type: 'object',
         properties: {
             raw: {
                 type: 'string',
-                description: 'Complete raw EDIFACT message string'
+                description: 'Complete raw EDI message string (EDIFACT or X12)'
             }
         },
         required: ['raw']
     },
     execute: async (args) => {
         const { raw } = args;
-        const { segments } = parseRawEdifact(raw);
+        const { segments, format } = _parseEDI(raw);
 
         if (segments.length === 0) {
             return { anomalyCount: 0, anomalies: [], error: 'No segments found' };
+        }
+
+        // Dispatch to X12 anomaly detection
+        if (format === 'x12') {
+            return _detectAnomaliesX12(segments);
         }
 
         const anomalies = [];
@@ -568,31 +968,208 @@ export const detectAnomalies = {
 };
 
 /**
+ * X12-specific anomaly detection.
+ * @param {Array} segments - Parsed X12 segments
+ * @returns {object} Anomaly detection result
+ * @private
+ */
+function _detectAnomaliesX12(segments) {
+    const anomalies = [];
+
+    // 1. Duplicate TRN trace numbers
+    const traceNumbers = [];
+    for (const seg of segments) {
+        if (seg.tag === 'TRN') {
+            const traceType = seg.fields[0]?.value || '';
+            const traceNum = seg.fields[1]?.value || '';
+            if (traceNum) {
+                traceNumbers.push({ traceType, traceNum, position: seg.position });
+            }
+        }
+    }
+
+    const trnCounts = {};
+    for (const trn of traceNumbers) {
+        const key = `${trn.traceType}:${trn.traceNum}`;
+        if (!trnCounts[key]) trnCounts[key] = [];
+        trnCounts[key].push(trn.position);
+    }
+
+    for (const [key, positions] of Object.entries(trnCounts)) {
+        if (positions.length > 1) {
+            anomalies.push({
+                type: 'DUPLICATE_TRACE',
+                severity: 'warning',
+                message: `Duplicate TRN trace number "${key}" appears ${positions.length} times`,
+                positions
+            });
+        }
+    }
+
+    // 2. Duplicate REF references
+    const references = [];
+    for (const seg of segments) {
+        if (seg.tag === 'REF') {
+            const qualifier = seg.fields[0]?.value || '';
+            const value = seg.fields[1]?.value || '';
+            if (value) references.push({ qualifier, value, position: seg.position });
+        }
+    }
+
+    const refCounts = {};
+    for (const ref of references) {
+        const key = `${ref.qualifier}:${ref.value}`;
+        if (!refCounts[key]) refCounts[key] = [];
+        refCounts[key].push(ref.position);
+    }
+
+    for (const [key, positions] of Object.entries(refCounts)) {
+        if (positions.length > 1) {
+            const [qual, val] = key.split(':');
+            anomalies.push({
+                type: 'DUPLICATE_REFERENCE',
+                severity: 'warning',
+                message: `Duplicate REF ${qual}: "${val}" appears ${positions.length} times`,
+                positions,
+                qualifier: qual,
+                value: val
+            });
+        }
+    }
+
+    // 3. AMT value anomalies (very high amounts)
+    const amounts = [];
+    for (const seg of segments) {
+        if (seg.tag === 'AMT') {
+            const qualifier = seg.fields[0]?.value || '';
+            const amount = parseFloat(seg.fields[1]?.value);
+            if (!isNaN(amount)) {
+                amounts.push({ qualifier, amount, position: seg.position });
+            }
+        }
+    }
+
+    if (amounts.length > 1) {
+        const avgAmount = amounts.reduce((sum, a) => sum + a.amount, 0) / amounts.length;
+        const stdDev = Math.sqrt(amounts.reduce((sum, a) => sum + Math.pow(a.amount - avgAmount, 2), 0) / amounts.length);
+        for (const a of amounts) {
+            if (stdDev > 0 && Math.abs(a.amount - avgAmount) > 2 * stdDev) {
+                anomalies.push({
+                    type: 'UNUSUAL_AMOUNT',
+                    severity: 'warning',
+                    message: `Amount ${a.amount} (${a.qualifier}) at position ${a.position} is unusual (avg: ${avgAmount.toFixed(2)})`,
+                    position: a.position,
+                    amount: a.amount
+                });
+            }
+        }
+    }
+
+    // 4. QTY anomalies (very high quantities)
+    for (const seg of segments) {
+        if (seg.tag === 'QTY') {
+            const qty = parseFloat(seg.fields[1]?.value);
+            if (!isNaN(qty) && qty > 10000) {
+                anomalies.push({
+                    type: 'HIGH_QUANTITY',
+                    severity: 'info',
+                    message: `High quantity detected: ${qty} at position ${seg.position}`,
+                    position: seg.position,
+                    quantity: qty
+                });
+            }
+        }
+    }
+
+    // 5. DTP date consistency (dates should be in reasonable range)
+    for (const seg of segments) {
+        if (seg.tag === 'DTP') {
+            const dateVal = seg.fields[2]?.value || '';
+            const format = seg.fields[1]?.value || '';
+            if (format === 'D8' && dateVal.length === 8) {
+                const year = parseInt(dateVal.slice(0, 4), 10);
+                if (year < 2000 || year > 2030) {
+                    anomalies.push({
+                        type: 'DATE_RANGE',
+                        severity: 'warning',
+                        message: `Date ${dateVal} at position ${seg.position} has unusual year ${year}`,
+                        position: seg.position
+                    });
+                }
+            }
+        }
+    }
+
+    // 6. Missing NM1 parties (no payer or subscriber in healthcare)
+    const nm1Qualifiers = segments.filter(s => s.tag === 'NM1').map(s => s.fields[0]?.value || '');
+    if (nm1Qualifiers.length > 0 && !nm1Qualifiers.includes('PR') && !nm1Qualifiers.includes('40')) {
+        anomalies.push({
+            type: 'MISSING_PARTY',
+            severity: 'info',
+            message: 'No Payer party (NM1*PR) found in X12 message'
+        });
+    }
+
+    // 7. HL hierarchy gaps
+    const hlSegments = segments.filter(s => s.tag === 'HL');
+    if (hlSegments.length > 0) {
+        const hlIds = hlSegments.map(s => parseInt(s.fields[0]?.value, 10)).filter(n => !isNaN(n));
+        for (let i = 0; i < hlIds.length - 1; i++) {
+            if (hlIds[i + 1] !== hlIds[i] + 1) {
+                anomalies.push({
+                    type: 'HL_ID_GAP',
+                    severity: 'info',
+                    message: `HL hierarchy ID gap: ${hlIds[i]} → ${hlIds[i + 1]} (expected sequential)`,
+                    position: hlSegments[i + 1]?.position
+                });
+            }
+        }
+    }
+
+    return {
+        anomalyCount: anomalies.length,
+        hasAnomalies: anomalies.length > 0,
+        standard: 'ANSI X12',
+        anomalies,
+        summary: {
+            errors: anomalies.filter(a => a.severity === 'error').length,
+            warnings: anomalies.filter(a => a.severity === 'warning').length,
+            info: anomalies.filter(a => a.severity === 'info').length
+        }
+    };
+}
+
+/**
  * Tool: validateDataTypes
  * Validate field types, formats, and value ranges
  */
 export const validateDataTypes = {
     name: 'validateDataTypes',
-    description: 'Validate EDIFACT message fields for correct data types, date formats, numeric ranges, and identifier formats. Pass the raw EDIFACT message string.',
+    description: 'Validate EDI message fields for correct data types, date formats, numeric ranges, and identifier formats. Pass the raw EDI message string (EDIFACT or X12).',
     category: 'validation',
     module: 'edifact',
-    version: '2.0',
+    version: '2.1',
     inputSchema: {
         type: 'object',
         properties: {
             raw: {
                 type: 'string',
-                description: 'Complete raw EDIFACT message string'
+                description: 'Complete raw EDI message string (EDIFACT or X12)'
             }
         },
         required: ['raw']
     },
     execute: async (args) => {
         const { raw } = args;
-        const { segments } = parseRawEdifact(raw);
+        const { segments, format } = _parseEDI(raw);
 
         if (segments.length === 0) {
             return { valid: false, error: 'No segments found', errors: [] };
+        }
+
+        // X12 data type validation
+        if (format === 'x12') {
+            return _validateDataTypesX12(segments);
         }
 
         const errors = [];
@@ -796,6 +1373,138 @@ export const validateDataTypes = {
         };
     }
 };
+
+/**
+ * X12-specific data type validation.
+ * @param {Array} segments - Parsed X12 segments
+ * @returns {object} Validation result
+ * @private
+ */
+function _validateDataTypesX12(segments) {
+    const errors = [];
+
+    for (const seg of segments) {
+        switch (seg.tag) {
+            case 'DTP': {
+                // Validate X12 date formats
+                const format = seg.fields[1]?.value || '';
+                const dateValue = seg.fields[2]?.value || '';
+                if (dateValue) {
+                    if (format === 'D8' && !/^\d{8}$/.test(dateValue)) {
+                        errors.push({
+                            segment: 'DTP',
+                            position: seg.position,
+                            field: 'DTP03',
+                            expected: '8-digit date (CCYYMMDD)',
+                            actual: dateValue,
+                            message: `Date "${dateValue}" should be 8 digits for format D8`
+                        });
+                    }
+                    if (format === 'RD8' && !/^\d{8}-\d{8}$/.test(dateValue)) {
+                        errors.push({
+                            segment: 'DTP',
+                            position: seg.position,
+                            field: 'DTP03',
+                            expected: 'Date range (CCYYMMDD-CCYYMMDD)',
+                            actual: dateValue,
+                            message: `Date range "${dateValue}" should be CCYYMMDD-CCYYMMDD for format RD8`
+                        });
+                    }
+                }
+                break;
+            }
+            case 'AMT': {
+                const amount = seg.fields[1]?.value || '';
+                if (amount && isNaN(parseFloat(amount))) {
+                    errors.push({
+                        segment: 'AMT',
+                        position: seg.position,
+                        field: 'AMT02',
+                        expected: 'Numeric value',
+                        actual: amount,
+                        message: `Amount "${amount}" is not a valid number`
+                    });
+                }
+                break;
+            }
+            case 'QTY': {
+                const qty = seg.fields[1]?.value || '';
+                if (qty && isNaN(parseFloat(qty))) {
+                    errors.push({
+                        segment: 'QTY',
+                        position: seg.position,
+                        field: 'QTY02',
+                        expected: 'Numeric value',
+                        actual: qty,
+                        message: `Quantity "${qty}" is not a valid number`
+                    });
+                }
+                if (qty && parseFloat(qty) < 0) {
+                    errors.push({
+                        segment: 'QTY',
+                        position: seg.position,
+                        field: 'QTY02',
+                        expected: 'Non-negative quantity',
+                        actual: qty,
+                        message: `Quantity "${qty}" is negative`
+                    });
+                }
+                break;
+            }
+            case 'NM1': {
+                // Entity type qualifier should be 1 (person) or 2 (non-person entity)
+                const entityType = seg.fields[1]?.value || '';
+                if (entityType && !['1', '2'].includes(entityType)) {
+                    errors.push({
+                        segment: 'NM1',
+                        position: seg.position,
+                        field: 'NM102',
+                        expected: '1 (Person) or 2 (Non-Person Entity)',
+                        actual: entityType,
+                        message: `Entity type qualifier "${entityType}" should be 1 or 2`
+                    });
+                }
+                break;
+            }
+            case 'SE': {
+                const segCount = seg.fields[0]?.value || '';
+                if (segCount && isNaN(parseInt(segCount, 10))) {
+                    errors.push({
+                        segment: 'SE',
+                        position: seg.position,
+                        field: 'SE01',
+                        expected: 'Integer (segment count)',
+                        actual: segCount,
+                        message: `Segment count "${segCount}" is not a valid integer`
+                    });
+                }
+                break;
+            }
+            case 'IEA': {
+                const groupCount = seg.fields[0]?.value || '';
+                if (groupCount && isNaN(parseInt(groupCount, 10))) {
+                    errors.push({
+                        segment: 'IEA',
+                        position: seg.position,
+                        field: 'IEA01',
+                        expected: 'Integer (group count)',
+                        actual: groupCount,
+                        message: `Group count "${groupCount}" is not a valid integer`
+                    });
+                }
+                break;
+            }
+        }
+    }
+
+    return {
+        valid: errors.length === 0,
+        standard: 'ANSI X12',
+        errorCount: errors.length,
+        errors,
+        segmentsChecked: segments.length
+    };
+}
 
 /**
  * Tool: suggestFixes

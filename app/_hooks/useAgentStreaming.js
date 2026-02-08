@@ -198,6 +198,32 @@ export function useAgentStreaming(sessionId, onMessageUpdate, onAnalysisReceived
             if (data.step === 'task_incomplete') {
                 pushSnackbarMessage(`Task unvollstaendig: ${data.taskName} (${data.uncalledTools?.join(', ')})`, 'warning');
             }
+
+            // Handle task_replan_requested - zeige Info in UI
+            if (data.step === 'task_replan_requested') {
+                pushSnackbarMessage(`Replanning: ${data.reason || 'Alternative approach needed'}`, 'info');
+            }
+        };
+
+        // Agent Replanning (Orchestrator triggered replan)
+        const handleAgentReplanning = (data) => {
+            console.log('[Agent] Replanning:', data);
+            // Clear old steps so new plan starts fresh
+            setCurrentAgentState(prev => ({
+                ...prev,
+                steps: [],
+                toolCalls: [],
+                taskReasoning: {},
+                reasoning: ''
+            }));
+
+            if (currentMessageRef.current) {
+                currentMessageRef.current.content.agentSteps = [];
+                currentMessageRef.current.content.taskReasoning = {};
+                if (onMessageUpdate) {
+                    onMessageUpdate(currentMessageRef.current);
+                }
+            }
         };
 
         // Tool Call
@@ -233,8 +259,8 @@ export function useAgentStreaming(sessionId, onMessageUpdate, onAnalysisReceived
                 return newState;
             });
 
-            // Detect analyzeEdifact tool result → trigger analysis panel
-            if (data.tool === 'analyzeEdifact' && data.result?._type === 'edifact_analysis' && onAnalysisReceived) {
+            // Detect EDI analysis tool results → trigger analysis panel
+            if (data.tool === 'createEdiAnalysis' && data.result?._type === 'edifact_analysis' && onAnalysisReceived) {
                 onAnalysisReceived(data.result.analysis);
             }
 
@@ -349,6 +375,7 @@ export function useAgentStreaming(sessionId, onMessageUpdate, onAnalysisReceived
         // Register event listeners
         socket.on('agent:started', handleAgentStarted);
         socket.on('agent:plan', handleAgentPlan);
+        socket.on('agent:replanning', handleAgentReplanning);
         socket.on('agent:reasoning', handleAgentReasoning);
         socket.on('agent:step', handleAgentStep);
         socket.on('agent:tool_call', handleToolCall);
@@ -363,6 +390,7 @@ export function useAgentStreaming(sessionId, onMessageUpdate, onAnalysisReceived
             // Cleanup listeners
             socket.off('agent:started', handleAgentStarted);
             socket.off('agent:plan', handleAgentPlan);
+            socket.off('agent:replanning', handleAgentReplanning);
             socket.off('agent:reasoning', handleAgentReasoning);
             socket.off('agent:step', handleAgentStep);
             socket.off('agent:tool_call', handleToolCall);

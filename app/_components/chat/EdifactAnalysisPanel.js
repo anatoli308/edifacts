@@ -197,21 +197,26 @@ function _OverviewTab({ analysis }) {
             </Box>
 
             {/* Parties */}
-            {parties && parties.length > 0 && (
+            {parties && parties.filter(p => p.qualifier || p.id || p.name || p.role).length > 0 && (
                 <Box>
                     <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', fontWeight: 600 }}>
                         Parties
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {parties.map((party, index) => (
-                            <Chip
-                                key={index}
-                                size="small"
-                                variant="outlined"
-                                icon={<Iconify icon="mdi:domain" width={14} />}
-                                label={`${party.qualifier}: ${party.id}${party.name ? ` (${party.name})` : ''}`}
-                            />
-                        ))}
+                        {parties.filter(p => p.qualifier || p.id || p.name || p.role).map((party, index) => {
+                            const label = party.role
+                                ? `${party.role}${party.name ? `: ${party.name}` : ''}${party.id ? ` (${party.id})` : ''}`
+                                : `${party.qualifier || '?'}: ${party.id || party.name || '—'}${party.name && party.id ? ` (${party.name})` : ''}`;
+                            return (
+                                <Chip
+                                    key={index}
+                                    size="small"
+                                    variant="outlined"
+                                    icon={<Iconify icon="mdi:domain" width={14} />}
+                                    label={label}
+                                />
+                            );
+                        })}
                     </Box>
                 </Box>
             )}

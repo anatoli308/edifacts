@@ -53,19 +53,24 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
     // Build task status map from steps
     const taskStatusMap = new Map();
     steps.forEach(step => {
-        if (step.step === 'task_started' || step.step === 'task_completed' || step.step === 'task_validation_failed' || step.step === 'task_incomplete') {
+        if (step.step === 'task_started' || step.step === 'task_completed' || step.step === 'task_validation_failed' || step.step === 'task_incomplete' || step.step === 'task_replan_requested') {
             const taskId = step.taskId;
             if (taskId) {
                 const existing = taskStatusMap.get(taskId);
-                // Priority: failed > incomplete > completed > running
+                // Priority: failed > replanning > incomplete > warned > completed > running
                 const getStepStatus = () => {
                     if (step.step === 'task_validation_failed') return 'failed';
+                    if (step.step === 'task_replan_requested') return 'replanning';
                     if (step.step === 'task_incomplete') return 'incomplete';
-                    if (step.step === 'task_completed') return step.partial ? 'incomplete' : 'completed';
+                    if (step.step === 'task_completed') {
+                        if (step.partial) return 'incomplete';
+                        if (step.validationWarnings?.length > 0) return 'warned';
+                        return 'completed';
+                    }
                     return 'running';
                 };
                 const stepStatus = getStepStatus();
-                const statusPriority = { failed: 3, incomplete: 2, completed: 1, running: 0 };
+                const statusPriority = { failed: 4, replanning: 3, incomplete: 3, warned: 2, completed: 1, running: 0 };
                 const existingPriority = statusPriority[existing?.status] || -1;
                 const newPriority = statusPriority[stepStatus] || 0;
                 if (!existing || newPriority > existingPriority) {
@@ -75,6 +80,7 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
                         progress: step.progress,
                         timestamp: step.timestamp,
                         error: step.step === 'task_validation_failed' ? step.message : undefined,
+                        validationWarnings: step.validationWarnings,
                         uncalledTools: step.uncalledTools
                     });
                 }
@@ -102,6 +108,10 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
         switch (status) {
             case 'completed':
                 return { icon: 'mdi:check-circle', color: 'success.main', label: 'Completed' };
+            case 'warned':
+                return { icon: 'mdi:check-circle-outline', color: 'success.main', label: 'Completed (Warnings)' };
+            case 'replanning':
+                return { icon: 'mdi:refresh', color: 'info.main', label: 'Replanning' };
             case 'incomplete':
                 return { icon: 'mdi:alert-circle-outline', color: 'warning.main', label: 'Incomplete' };
             case 'failed':
@@ -153,7 +163,7 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
                         )}
                         {taskStatusMap.size > 0 && (
                             <Chip
-                                label={`${Array.from(taskStatusMap.values()).filter(t => t.status === 'completed').length}/${taskStatusMap.size} completed`}
+                                label={`${Array.from(taskStatusMap.values()).filter(t => t.status === 'completed' || t.status === 'warned').length}/${taskStatusMap.size} completed`}
                                 size="small"
                                 color="success"
                                 variant="outlined"
@@ -167,22 +177,12 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
                         {/* Goal & Rationale */}
                         {plan && (
                             <Box>
-                                {plan.goal && (
+                                {plan.rationale && (
                                     <Box sx={{ mb: 1 }}>
                                         <Typography variant="caption" color="text.secondary" fontWeight={600}>
                                             Goal:
                                         </Typography>
                                         <Typography variant="body2" sx={{ mt: 0.5 }}>
-                                            {plan.goal}
-                                        </Typography>
-                                    </Box>
-                                )}
-                                {plan.rationale && (
-                                    <Box>
-                                        <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                                            Rationale:
-                                        </Typography>
-                                        <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
                                             {plan.rationale}
                                         </Typography>
                                     </Box>
@@ -209,9 +209,10 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
                                                 sx={{ 
                                                     p: 1.5, 
                                                     backgroundColor: 
-                                                        taskStatus.status === 'completed' ? 'success.lighter' : 
+                                                        (taskStatus.status === 'completed' || taskStatus.status === 'warned') ? 'success.lighter' : 
                                                         taskStatus.status === 'running' ? 'primary.lighter' :
                                                         taskStatus.status === 'failed' ? 'error.lighter' :
+                                                        taskStatus.status === 'replanning' ? 'info.lighter' :
                                                         'background.default',
                                                     borderLeftWidth: 3,
                                                     borderLeftColor: statusDisplay.color,
@@ -330,7 +331,7 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
                                                 )}
 
                                                 {/* Reasoning Section */}
-                                                {(taskStatus.status === 'running' || taskStatus.status === 'completed') && getTaskReasoning(task.id) && (
+                                                {(taskStatus.status === 'running' || taskStatus.status === 'completed' || taskStatus.status === 'warned' || taskStatus.status === 'replanning') && getTaskReasoning(task.id) && (
                                                     <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
                                                         <Box 
                                                             sx={{ 

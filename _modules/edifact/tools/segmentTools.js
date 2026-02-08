@@ -300,7 +300,7 @@ function _interpretSegment(tag, fields) {
  */
 export const segmentAnalyze = {
     name: 'segmentAnalyze',
-    description: 'Analyze EDIFACT segments: parse structure, extract semantic meaning, and identify issues. Pass either a full raw EDIFACT message (via "raw") to analyze all segments, or a single segment via "tag" and "data".',
+    description: 'Analyze UN/EDIFACT segments only (NOT X12). Parse structure, extract semantic meaning, and identify issues. For X12 data use validateRules or checkCompliance instead. Pass a full raw UN/EDIFACT message via "raw" or a single segment via "tag" and "data".',
     category: 'analysis',
     module: 'edifact',
     version: '2.0',
@@ -325,6 +325,15 @@ export const segmentAnalyze = {
     execute: async (args) => {
         // Mode 1: Full raw EDIFACT message
         if (args.raw) {
+            // Detect X12 format and reject early with clear message
+            const trimmed = args.raw.trim();
+            if (trimmed.startsWith('ISA*') || trimmed.startsWith('ISA|') || /^ISA[*|~]/.test(trimmed)) {
+                return {
+                    success: false,
+                    error: 'This is X12 data, not UN/EDIFACT. Use validateRules, checkCompliance, or detectAnomalies for X12 analysis.'
+                };
+            }
+
             const { segments, delimiters } = parseRawEdifact(args.raw);
 
             if (segments.length === 0) {
@@ -499,7 +508,7 @@ export const compareSegments = {
  */
 export const groupSegmentsByType = {
     name: 'groupSegmentsByType',
-    description: 'Parse a raw EDIFACT message and group all segments by their tag (UNB, UNH, DTM, NAD, LIN, etc.)',
+    description: 'Parse a raw UN/EDIFACT message (NOT X12) and group all segments by their tag (UNB, UNH, DTM, NAD, LIN, etc.)',
     category: 'analysis',
     module: 'edifact',
     version: '2.0',
@@ -515,6 +524,16 @@ export const groupSegmentsByType = {
     },
     execute: async (args) => {
         const { raw } = args;
+
+        // Detect X12 format and reject early
+        const trimmed = raw.trim();
+        if (trimmed.startsWith('ISA*') || trimmed.startsWith('ISA|') || /^ISA[*|~]/.test(trimmed)) {
+            return {
+                success: false,
+                error: 'This is X12 data, not UN/EDIFACT. Use validateRules, checkCompliance, or detectAnomalies for X12 analysis.'
+            };
+        }
+
         const { segments } = parseRawEdifact(raw);
 
         if (segments.length === 0) {

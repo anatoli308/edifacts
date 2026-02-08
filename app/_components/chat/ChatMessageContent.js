@@ -43,6 +43,46 @@ function _CodeBlock({ children, className, ...props }) {
     const language = match ? match[1] : '';
     const codeString = String(children).replace(/\n$/, '');
 
+    // Intercept code blocks that contain only [[...]] patterns — render as components
+    if (!language || language === 'text' || language === 'plaintext') {
+        const lines = codeString.split('\n').map(l => l.trim()).filter(Boolean);
+        const allPatterns = lines.length > 0 && lines.every(line => /^\[\[.+\]\]$/.test(line));
+        if (allPatterns) {
+            const parsed = lines.map((line) => _parseSinglePattern(line)).filter(Boolean);
+            if (parsed.length === lines.length) {
+                return (
+                    <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', my: 0.5, gap: 0.5 }}>
+                        {parsed.map((el, index) => <React.Fragment key={index}>{el}</React.Fragment>)}
+                    </Stack>
+                );
+            }
+        }
+        // Also handle lines with multiple [[...]] patterns separated by spaces
+        const allLinesHavePatterns = lines.length > 0 && lines.every(line => line.includes('[['));
+        if (allLinesHavePatterns) {
+            const allParts = [];
+            let allValid = true;
+            for (const line of lines) {
+                const parts = line.split(/(\[\[[^\]]+\]\])/g).filter(Boolean);
+                for (const part of parts) {
+                    if (/^\[\[.+\]\]$/.test(part)) {
+                        const component = _parseSinglePattern(part);
+                        if (component) { allParts.push(component); continue; }
+                    }
+                    if (part.trim()) { allValid = false; break; }
+                }
+                if (!allValid) break;
+            }
+            if (allValid && allParts.length > 0) {
+                return (
+                    <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', my: 0.5, gap: 0.5 }}>
+                        {allParts.map((el, index) => <React.Fragment key={index}>{el}</React.Fragment>)}
+                    </Stack>
+                );
+            }
+        }
+    }
+
     const handleCopyCode = () => {
         navigator.clipboard.writeText(codeString);
         setCopied(true);
@@ -254,7 +294,7 @@ function _parseSinglePattern(raw) {
 
 /**
  * Parse custom component patterns from paragraph children
- * Handles single and multiple [[...]] patterns, and mixed text + patterns
+ * Handles single patterns, multiple patterns, and mixed text + patterns inline
  * @private
  */
 function _CustomComponent({ children }) {
@@ -267,14 +307,29 @@ function _CustomComponent({ children }) {
 
     // Multiple patterns on separate lines (LLM may group them in one paragraph)
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    const parsed = lines.map((line, index) => _parseSinglePattern(line) || null);
+    const parsed = lines.map((line) => _parseSinglePattern(line) || null);
 
-    // Only render if ALL lines are valid patterns (avoid partial matches with normal text)
+    // All lines are valid patterns — render as row of components
     if (parsed.every(Boolean)) {
         return (
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', my: 0.5, gap: 0.5 }}>
                 {parsed.map((el, index) => <React.Fragment key={index}>{el}</React.Fragment>)}
             </Stack>
+        );
+    }
+
+    // Mixed text + [[...]] patterns inline — split on pattern boundaries and render each part
+    const mixedParts = text.split(/(\[\[[^\]]+\]\])/g).filter(Boolean);
+    const hasPattern = mixedParts.some(part => /^\[\[.+\]\]$/.test(part));
+    if (hasPattern) {
+        return (
+            <Typography variant="body1" component="div" sx={{ mb: 1, lineHeight: 1.7, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
+                {mixedParts.map((part, index) => {
+                    const component = _parseSinglePattern(part);
+                    if (component) return <React.Fragment key={index}>{component}</React.Fragment>;
+                    return <span key={index}>{part}</span>;
+                })}
+            </Typography>
         );
     }
 
@@ -298,24 +353,72 @@ const _markdownComponents = {
     thead: ({ children }) => <TableHead>{children}</TableHead>,
     tbody: ({ children }) => <TableBody>{children}</TableBody>,
     tr: ({ children }) => <TableRow>{children}</TableRow>,
-    th: ({ children }) => (
-        <TableCell
-            sx={{
-                fontWeight: 'bold',
-                bgcolor: 'action.hover',
-                whiteSpace: 'nowrap',
-                borderBottom: 2,
-                borderColor: 'divider',
-            }}
-        >
-            {children}
-        </TableCell>
-    ),
-    td: ({ children }) => (
-        <TableCell sx={{ borderColor: 'divider' }}>
-            {children}
-        </TableCell>
-    ),
+    th: ({ children }) => {
+        const text = _extractText(children).trim();
+        if (text.includes('[[')) {
+            const mixedParts = text.split(/(\[\[[^\]]+\]\])/g).filter(Boolean);
+            const hasPattern = mixedParts.some(part => /^\[\[.+\]\]$/.test(part));
+            if (hasPattern) {
+                return (
+                    <TableCell
+                        sx={{
+                            fontWeight: 'bold',
+                            bgcolor: 'action.hover',
+                            whiteSpace: 'nowrap',
+                            borderBottom: 2,
+                            borderColor: 'divider',
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
+                            {mixedParts.map((part, index) => {
+                                const component = _parseSinglePattern(part);
+                                if (component) return <React.Fragment key={index}>{component}</React.Fragment>;
+                                return part.trim() ? <span key={index}>{part}</span> : null;
+                            })}
+                        </Box>
+                    </TableCell>
+                );
+            }
+        }
+        return (
+            <TableCell
+                sx={{
+                    fontWeight: 'bold',
+                    bgcolor: 'action.hover',
+                    whiteSpace: 'nowrap',
+                    borderBottom: 2,
+                    borderColor: 'divider',
+                }}
+            >
+                {children}
+            </TableCell>
+        );
+    },
+    td: ({ children }) => {
+        const text = _extractText(children).trim();
+        if (text.includes('[[')) {
+            const mixedParts = text.split(/(\[\[[^\]]+\]\])/g).filter(Boolean);
+            const hasPattern = mixedParts.some(part => /^\[\[.+\]\]$/.test(part));
+            if (hasPattern) {
+                return (
+                    <TableCell sx={{ borderColor: 'divider' }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
+                            {mixedParts.map((part, index) => {
+                                const component = _parseSinglePattern(part);
+                                if (component) return <React.Fragment key={index}>{component}</React.Fragment>;
+                                return part.trim() ? <span key={index}>{part}</span> : null;
+                            })}
+                        </Box>
+                    </TableCell>
+                );
+            }
+        }
+        return (
+            <TableCell sx={{ borderColor: 'divider' }}>
+                {children}
+            </TableCell>
+        );
+    },
 
     // Typography (with custom component pattern detection)
     p: ({ children }) => {
@@ -403,11 +506,29 @@ const _markdownComponents = {
     ol: ({ children }) => (
         <Box component="ol" sx={{ pl: 2.5, mb: 1 }}>{children}</Box>
     ),
-    li: ({ children }) => (
-        <Typography component="li" variant="body1" sx={{ mb: 0.3, lineHeight: 1.7 }}>
-            {children}
-        </Typography>
-    ),
+    li: ({ children }) => {
+        const text = _extractText(children).trim();
+        if (text.includes('[[')) {
+            const mixedParts = text.split(/(\[\[[^\]]+\]\])/g).filter(Boolean);
+            const hasPattern = mixedParts.some(part => /^\[\[.+\]\]$/.test(part));
+            if (hasPattern) {
+                return (
+                    <Box component="li" sx={{ mb: 0.3, lineHeight: 1.7, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
+                        {mixedParts.map((part, index) => {
+                            const component = _parseSinglePattern(part);
+                            if (component) return <React.Fragment key={index}>{component}</React.Fragment>;
+                            return <span key={index}>{part}</span>;
+                        })}
+                    </Box>
+                );
+            }
+        }
+        return (
+            <Typography component="li" variant="body1" sx={{ mb: 0.3, lineHeight: 1.7 }}>
+                {children}
+            </Typography>
+        );
+    },
 
     // Blockquote with Callout detection
     blockquote: ({ children }) => {

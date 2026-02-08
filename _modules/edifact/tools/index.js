@@ -18,7 +18,7 @@
  * registry.register(edifactTools.tools, 'edifact');
  *
  * Tool Categories:
- * 1. Analysis tools: segmentAnalyze, parseSegmentField, compareSegments, groupSegmentsByType
+ * 1. Analysis tools: segmentAnalyze, parseSegmentField, compareSegments, groupSegmentsByType, createEdiAnalysis
  * 2. Validation tools: validateRules, checkCompliance, detectAnomalies, validateDataTypes, suggestFixes
  * 3. Utility tools: (future)
  *
@@ -31,12 +31,12 @@
 
 export * from './segmentTools.js';
 export * from './validationTools.js';
-export * from './analysisTools.js';
+export * from './llmAnalysisTools.js';
 
 // Import all tools for convenient bundling
 import * as segmentTools from './segmentTools.js';
 import * as validationTools from './validationTools.js';
-import * as analysisTools from './analysisTools.js';
+import * as llmAnalysisTools from './llmAnalysisTools.js';
 
 /**
  * All EDIFACT tools as object (for registry registration)
@@ -47,7 +47,7 @@ export const tools = {
   parseSegmentField: segmentTools.parseSegmentField,
   compareSegments: segmentTools.compareSegments,
   groupSegmentsByType: segmentTools.groupSegmentsByType,
-  analyzeEdifact: analysisTools.analyzeEdifact,
+  createEdiAnalysis: llmAnalysisTools.createEdiAnalysis,
 
   // Validation tools
   validateRules: validationTools.validateRules,

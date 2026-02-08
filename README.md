@@ -1,532 +1,248 @@
 <div align="center">
 
-# 🤖 EDIFACTS
+<img src="./public/logo/logo-color-no-bg.png" alt="EDIFACTS Logo" width="120" />
 
-### Event-Driven Agentic Workflow Platform for Intelligent EDIFACT Analysis
+# EDIFACTS
+
+### AI-Powered EDI/EDIFACT Analysis Platform
+### Transform Supply Chain Data into Actionable Insights
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org/)
-[![Socket.IO](https://img.shields.io/badge/Socket.IO-4.x-blue)](https://socket.io/)
+[![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js-black)](https://nextjs.org/)
+[![Open Source](https://img.shields.io/badge/Open-Source-green)](https://github.com/anatoli308/edifacts)
 
-**Transform complex EDI data into actionable insights with AI-powered sequential agent orchestration**
+**For Supply Chain Teams, EDI Specialists, and Integration Architects**
 
-[Features](#key-features) • [Quick Start](#docker-setup-development) • [Architecture](#development-features) • [Roadmap](#️-roadmap) • [Documentation](#project-structure)
+[The Problem](#-the-edi-challenge) • [Features](#-key-features) • [Quick Start](#-quick-start) • [Use Cases](#-use-cases) • [Roadmap](#-roadmap) • [Contact](#-contact--support)
 
 ---
 
 </div>
 
+## 📊 The EDI Challenge
+
+Your supply chain runs on EDI. But EDI is complex:
+
+- ❌ **Parsing errors go undetected** until downstream failures
+- ❌ **Manual analysis wastes hours** on each EDIFACT file  
+- ❌ **Enterprise EDI tools are expensive** ($10K+/year licensing)
+- ❌ **No transparency** into what's actually in your messages
+- ❌ **Integration bottlenecks** when validating B2B data
+
+**EDIFACTS solves this.**
+
+---
+
 ## 🚀 What is EDIFACTS?
 
-EDIFACTS is an **intelligent AgentOS platform** that revolutionizes EDIFACT analysis through **event-driven agentic workflow orchestration**. Built on Next.js and powered by real-time WebSocket streaming, it combines:
+EDIFACTS is an **open-source, AI-powered platform** that makes EDI analysis intelligent and transparent. Upload an EDIFACT file (INVOIC, ORDERS, DESADV, etc.) and get:
 
-- 🧠 **Sequential Agent Pipeline**: Planner → Scheduler → Executor → Critic agents working in coordinated workflow
-- ⚡ **Event-Driven Architecture**: EventEmitter-based communication for decoupled, observable agent coordination
-- 🔄 **Real-Time Streaming**: Live reasoning, tool calls, and progress tracking with WebSocket integration
-- 🔒 **BYOK (Bring Your Own Key)**: Use your own OpenAI or Anthropic API key—full control, zero vendor lock-in
-- 🎯 **Deterministic Core**: Open-source EDIFACT parser/validator as single source of truth
-- 🏢 **Enterprise-Ready**: JWT auth, multi-user support, audit trails, GDPR compliance
+- 🧠 **AI-Powered Insights**: Instant analysis using OpenAI, Anthropic, or your own LLM
+- ⚡ **Real-Time Validation**: Detect errors, warnings, and compliance issues instantly
+- 🔍 **Smart Data Extraction**: Automatically identify parties, dates, amounts, key business data
+- 📊 **Clear Visualizations**: Understand complex message structures at a glance
+- 🔒 **Your Data, Your Control**: BYOK (Bring Your Own Key) — no vendor lock-in
 
-> **🚀 Future Vision:** Evolving toward true multi-agent architecture with parallel execution, autonomous recovery, and competitive reasoning (see [Roadmap](#roadmap)).
-
-**For developers, analysts, and enterprises who demand both transparency and automation.**
 
 ## ✨ Key Features
 
-🤖 **Agentic Workflow System (EventEmitter-Based)**
-- **Current:** Sequential agent pipeline (Planner → Scheduler → Executor → Critic)
-- **Future:** Hybrid multi-agent with parallel execution, specialized agent pools, autonomous recovery
-- Hierarchical task planning with dependency injection
-- DAG-based task scheduling (with future State Machine support. preparing for parallel execution)
-- ReAct loops with tool calling (11+ domain tools)
-- Validation & hallucination detection
+🎯 **EDIFACT Intelligence**
+- Automatic subset detection (EANCOM, ODETTE, HIPAA, UNECEGen, etc.)
+- Segment-by-segment analysis with AI explanations
+- Data extraction (parties, dates, amounts, items)
+- Error detection and compliance checking
+- Multi-file batch processing (upcoming)
 
-⚡ **Real-Time Streaming**
-- Live reasoning and progress updates (`agent:reasoning`, `agent:plan`, `agent:tool_call`)
-- SessionContext pattern for memory-leak-free event relay
-- Automatic agent state reset before execution
+🔐 **Your Data, Your Control (BYOK)**
+- Bring your own OpenAI/Anthropic API keys
+- Optional Ollama/vLLM for fully self-hosted analysis
+- No vendor lock-in, no data sharing with 3rd parties
+- Your encryption, your security
 
-🔐 **Bring Your Own Key (BYOK)**
-- OpenAI & Anthropic support (BYOK)
-- Universal tool contract (provider-agnostic)
-- Your API keys, your data, your control
+⚡ **Enterprise-Ready**
+- Multi-user workspace with role-based access
+- Audit trails for compliance (GDPR-ready)
+- JWT authentication with secure session management
+- REST API for programmatic access (upcoming)
+- Docker deployment for easy on-prem setup
 
-🎨 **Developer Experience**
-- Clean Code Standards (SOLID, DRY, SRP)
-- Dependency Injection pattern throughout
-- EventEmitter architecture for testability
-- Comprehensive TypeScript support
+🌍 **Integrations & Extensibility**
+- REST API endpoints for your automation workflows
+- Tool registry for custom EDI validations
+- Event-driven architecture for real-time updates
+- Open source core for customization
 
-📊 **EDIFACT Processing**
-- Deterministic parsing & validation
-- Subset detection (EANCOM, ODETTE, HIPAA, etc.)
-- File upload with drag-and-drop
-- Custom text input support
+## 🚀 Quick Start
 
-## Requirements
-- Node.js (version 18 or higher) ideally latest stable version
-- npm (version 8 or higher) ideally latest stable version
-- MongoDB instance (local or cloud-based) ideally latest stable version.
-- Ollama (local LLM hosting) as system default: https://ollama.com/
+### Option 1: Local 
 
-## Docker Setup (Development)
-1. Make sure Docker and Docker Compose are installed on your machine.
-2. Clone the repository:
-   ```bash
-      git clone https://github.com/anatoli308/edifacts
-      cd edifacts
-    ```
-3. Create a `.env.docker` file in the root directory (look at `.env.example` for reference)
-4. Start the services using Docker Compose:
-   ```bash
-      docker-compose up --build -d
-   ```
-5. Sign in to ollama:
-   ```bash
-      docker exec -it edifacts-ollama-1 ollama signin
-   ```
-6. You will get a link to authenticate your ollama account. Follow the link and complete the sign-in process.
-    - ollama running on `gpt-oss:120b-cloud` model by default!
-    - you can change to a local model in `ollama_entrypoint.sh` without signin but this require alot of disk space and setup.
-7. Open your browser and navigate to `http://localhost:3010` to access the application.
+**Requirements:** Node.js 18+, MongoDB, Ollama (default System LLM)
 
-
-## Technology Stack
-- Next / React 
-- Material-UI (MUI) 
-- MongoDB / Mongoose
-- Node.js / Express.js
-- WebSocket / Socket.IO
-
-## Installation
-1. Clone the repository:
-   ```bash
-      git clone https://github.com/anatoli308/edifacts
-      cd edifacts
-      npm install
-   ```
-
-4. Set up environment variables:
-   Create a `.env` file in the root directory (look at `.env.example` for reference)
-
-5. Run the development server:
-   ```bash
-     npm run dev
-   ```
-
-6. Build and run for production:
-  - Make sure `NODE_ENV=production` is set in your `.env` file.
-   ```bash
-     npm run build
-     npm start
-   ```
-
-7. Open your browser and navigate to `http://localhost:3010` to access the application.
-
-8. Use inside pm2: (easy optional way for production deployments)
-   ```bash
-      npm install -g pm2
-      pm2 start npm --name edifacts -- run start
-   ```
-
-## Project Structure
-```
-app/                       # Next.js App Router structure
-├── _components/           # Reusable UI components
-│   ├── chat/              # Chat components (messages, typing indicator, etc)
-│   ├── dialogs/           # Settings and data control dialogs
-│   ├── layout/            # AppBar, Drawer, Navigation
-│   └── utils/             # Icons, constants
-├── _contexts/             # React Context providers
-│   ├── UserContext.js     # User authentication & profile
-│   ├── SocketContext.js   # WebSocket connection management
-│   ├── ThemeContext.js    # MUI theme preferences
-│   └── SnackbarContext.js # Global notifications
-├── _containers/           # Page containers/layouts
-│   ├── AnalysisChatPage.js # EDIFACT analysis chat
-│   ├── StartContainer.js  # File upload & input
-│   └── AccountContainer.js # User settings
-├── _hooks/                # Custom client hooks
-│   ├── useAgentStreaming.js # Agent event streaming
-│   ├── useProtectedRoute.js # Auth guards
-│   └── useAlreadyAuthenticatedRoute.js
-├── api/                   # Next.js API routes
-│   ├── auth/              # Login, register, logout
-│   ├── generate/session/  # EDIFACT session creation
-│   └── user/              # User management
-├── auth/                  # Auth pages (login, register, account)
-├── a/[sessionId]/         # EDIFACT analysis chat pages
-├── layout.js              # Root layout with Providers wrapper
-└── page.js                # Root Home page
-
-lib/                       # Library utilities & helpers
-├── dbConnect.js           # MongoDB connection utility
-├── auth.js                # JWT authentication utilities
-├── ai/                    # Agentic AI Core (domain-agnostic, EventEmitter-based)
-│   ├── agents/            # Agent implementations (ALL EventEmitters)
-│   │   ├── planner.js     # HTN task decomposition (EventEmitter)
-│   │   ├── executor.js    # ReAct loop with tool calling (EventEmitter)
-│   │   ├── critic.js      # Validation & consistency checks (EventEmitter)
-│   │   ├── memory.js      # Context management (EventEmitter, planned)
-│   │   ├── recovery.js    # Failure handling (EventEmitter, planned)
-│   │   └── index.js       # Agent registry (loadAgent factory)
-│   ├── providers/         # LLM provider adapters (NO agent logic)
-│   │   ├── openai.js      # OpenAI adapter
-│   │   ├── anthropic.js   # Anthropic adapter
-│   │   └── index.js       # Provider factory
-│   ├── orchestration/     # Task coordination
-│   │   ├── agentOrchestrator.js # Planner → Scheduler coordinator (EventEmitter)
-│   │   ├── scheduler.js   # DAG task execution (EventEmitter, future FSM)
-│   │   └── index.js
-│   ├── tools/             # Tool management
-│   │   ├── registry.js    # Central tool registry
-│   │   ├── validateToolContract.js # Tool validation
-│   │   └── index.js
-│   ├── prompts/           # Agent system prompts
-│   │   ├── planner.md     # Planner decomposition prompt
-│   │   ├── executor.md    # Executor ReAct prompt
-│   │   ├── critic.md      # Critic validation prompt
-│   │   └── index.js       # Prompt loader
-│   └── config/            # Agent configuration
-│       ├── providers.config.js # Provider capabilities
-│       └── index.js
-├── socket/                # WebSocket layer (EventEmitter integration)
-│   ├── handlers/
-│   │   └── agentHandlers.js # Agent invocation handlers
-│   ├── sessionContext.js  # SessionContext (DI + event relay)
-│   └── utils/
-│       └── messageUtils.js # Message preparation utilities
-
-_modules/                  # Domain-specific modules
-├── edifact/               # EDIFACT domain module
-│   ├── index.js           # Module entry point
-│   ├── context.js         # LLM context builder
-│   ├── tools/             # EDIFACT-specific tools
-│   │   ├── segmentTools.js     # Segment analysis
-│   │   ├── validationTools.js  # Rule validation
-│   │   └── index.js
-│   └── validators/        # EDIFACT validators
-│       ├── edifactValidator.js # Validation pipeline
-│       ├── rules.js       # Rule engine
-│       └── index.js
-└── utility/               # Utility tools (weather, etc)
-    └── tools/
-        ├── webTools.js    # Web-based tools
-        └── index.js
-
-_workers/                  # Backend workers
-└── edifactParser.worker.js # EDIFACT parsing (deterministic)
-
-models/                    # Mongoose ODM models
-├── shared/                # Shared models (recommended structure)
-│   ├── User.js            # User authentication & profile
-│   ├── ApiKey.js          # BYOK API keys (encrypted)
-│   └── File.js            # File uploads
-└── edifact/               # EDIFACT-specific models
-    ├── AnalysisChat.js    # Chat sessions (with agentPlan)
-    ├── AnalysisMessage.js # Messages (with toolCalls[], toolResults[])
-    └── AnalysisMessageChunk.js # Streaming chunks
-
-theme/                     # MUI theme configurations
-├── colors.js              # Font color definitions
-├── backgroundModes.js     # Theme background mode definitions
-├── palette.js             # MUI palette theme
-├── shadows.js             # MUI shadow definitions
-├── typography.js          # Typography definitions
-├── index.js               # Theme provider wrapper
-└── overrides/             # MUI component overrides
-
-public/                    # Static assets
-uploads/                   # Directory for runtime uploads
-
-server.js                  # Express server with Socket.IO & Next.js integration
-.env.example               # Example environment variables
-docker-compose.yml         # Docker compose for development
-jsconfig.json              # Module path aliases
-package.json               # Project dependencies & scripts
-proxy.js                   # Next.js Route middleware for authentication
-socketproxy.js             # Socket.IO middleware for authentication
+```bash
+git clone https://github.com/anatoli308/edifacts
+cd edifacts
+# Install dependencies
+npm install
+# Create environment file
+cp .env.example .env
+# Start MongoDB (if not running)
+# Start platform
+npm run dev
+# Sign in to Ollama (gpt-oss is the default model)
+ollama signin
+# Open in browser
+# http://localhost:3010
 ```
 
-## Development Features
-- **Authentication & Authorization**
-   - User registration and login with JWT-based authentication
-   - Secure password hashing with bcryptjs
-   - HTTP-only cookies for secure token storage (SameSite=Strict)
-   - Server-side route protection with Next.js middleware (proxy.js)
-   - Client-side navigation guards with custom hooks
-   - Token verification in middleware (jose) and API routes
-   - Multi-device token management (max 2 devices configured)
-  
-- **User Management**
-  - User profiles with customizable settings
-  - Theme preferences (font color, background mode, font size)
-  - Persistent theme storage (localStorage for guests, MongoDB for users)
-  - Account ban capability
-  - Email validation with validator.js
-  - Terms of Service acceptance tracking
+### Option 2: Docker
 
-- **State Management**
-  - React Context API for global state (UserContext, ThemeContext, SocketContext)
-  - Custom hooks for reusable logic
-  - Session persistence across page reloads
-  - Automatic theme synchronization with user settings
+**Requirements:** Docker & Docker Compose
 
-- **Theming & UI**
-  - Light, Dim, and Dark theme support
-  - Customizable font colors and font sizes
-  - MUI component overrides with theme customization
-  - Material-UI v7 with responsive design
-  - Splash screen with minimum loading time for improved UX
-  - Dynamic theme synchronization with user preferences
+```bash
+git clone https://github.com/anatoli308/edifacts
+cd edifacts
 
-- **Routing & Navigation**
-  - Next.js App Router for modern file-based routing
-  - Client-side Link navigation with next/link for faster transitions
-  - Module path aliases for cleaner imports (configured in jsconfig.json)
-  - Protected routes with automatic redirection (clientside hooks and serverside middleware)
+# Create environment file
+cp .env.example .env.docker
 
-- **API & Backend**
-  - Next.js API routes with App Router
-  - JWT token validation in middleware(proxy.js) and secured routes
-  - User session management
-  - RESTful API design
-  - Error handling and validation
-  - Settings update endpoints (background mode, etc.)
-  - EDIFACT file parsing and analyze API endpoint
-  - WebSocket support with Socket.IO for real-time status updates
+# Start platform
+docker-compose up --build -d
 
-- **EDIFACT Processing & analyze**
-  - File upload with drag-and-drop support (Upload Tab)
-  - Custom text input with a character limit (Custom Tab)
-  - Optional standard EDIFACT subset selection (EANCOM, ODETTE, HIPAA, etc.)
-  - File metadata detection (message type, line count, file size)
-  - Preview generation from parsed EDIFACT data
-  - Backend worker support for heavy parsing operations
+# Sign in to Ollama (gpt-oss is the default model)
+docker exec -it <container-name> ollama signin
 
-- **Agentic AI Layer (EventEmitter Architecture)**
-  - **Multi-Agent System:** All agents extend EventEmitter for decoupled communication
-  - **Planner Agent:** Hierarchical task decomposition (HTN) - emits `agent_planner:started/completed`
-  - **Scheduler:** DAG-based task orchestration with dependency resolution (future State Machine)
-  - **Executor Agent:** ReAct loop (Thought → Action → Observation) - emits `agent_executor:tool_call/tool_result/reasoning`
-  - **Critic Agent:** Validates task results, checks consistency, detects hallucinations
-  - **AgentOrchestrator:** Coordinates Planner → Scheduler flow with dependency injection
-  - **SessionContext Pattern:** 
-    - Manages all agent instances per socket connection (DI container)
-    - Event relay: Agent → SessionContext → Socket.IO
-    - Memory leak prevention (listeners registered once in constructor)
-    - Lifecycle management (reset before execution, cleanup on disconnect)
-  - **Tool System:** Universal tool registry with 11+ tools (getWeather, EDIFACT segment analysis, validation, etc)
-  - **Provider Adapters:** OpenAI, Anthropic support with streaming (BYOK - Bring Your Own Key)
-  - **Event-Driven Architecture:**
-    - Internal events: `agent_{agentName}:{eventType}` (e.g., `agent_planner:started`)
-    - Socket events: `agent:{eventType}` (e.g., `agent:plan`, `agent:tool_call`)
-    - Declarative event map (EventEmitter Integration)**
-  - WebSocket (Socket.IO) integration for live status updates
-  - Automatic socket connection on app startup
-  - Token-based WebSocket authentication via `authToken` cookie
-  - Socket context provider for global access
-  - Real-time worker status indication (Connected/Connecting/Disconnected)
-  - Status badge in AppBar showing WebSocket connection state
-  - Auto-reconnection with exponential backoff
-  - **SessionContext Pattern:**
-    - One SessionContext instance per socket connection
-    - All agents (planner, scheduler, executor, critic) instantiated per session
-    - Event relay from agents to socket (declarative mappings)
-    - Memory leak prevention (listeners registered once, cleaned up on disconnect)
-  - **Agent Event Streaming:**
-    - `agent:started` - Agent execution begins
-    - `agent:plan` - Task tree emitted after planning (2 events: started/completed)
-    - `agent:reasoning` - Internal thoughts streamed during execution
-    - `agent:step` - Task progress (
-  - Token-based WebSocket authentication via `authToken` cookie
-  - Socket context provider for global access
-  - Real-time worker status indication (Connected/Connecting/Disconnected)
-  - Status badge in AppBar showing WebSocket connection state
-  - Auto-reconnection with exponential backoff
-  - **Agent Event Streaming:**
-    - `agent:started` - Agent execution begins
-    - `agent:plan` - Task tree emitted after planning
-    - `agent:reasoning` - Internal thoughts streamed during execution
-    - `agent:step` - Pipeline progress (planner_started, scheduler_started, task_started, task_completed)
-    - `agent:tool_call` - Tool invocation with arguments
-    - `agent:tool_result` - Tool execution result with success flag
-    - `response:chunk` - Final answer streamed chunk-by-chunk
-    - `agent:completed` - Execution finished successfully
-    - `agent:failed` - Execution failed with error details
-  - **Custom Hooks:**
-    - `useAgentStreaming` - Handles all agent events, accumulates reasoning and response chunks
-    - `useSocket` - Manages WebSocket connection state
-  - **UI Components:**
-    - `ChatMessageAssistantTyping` - Shows live reasoning during "thinking"
-    - `ChatMessage` - Displays final streamed responses
+# Open in browser
+# http://localhost:3010
+```
 
-- **Database**
-  - MongoDB with Mongoose ODM
-  - User schema with authentication and theme preferences
-  - API key storage (encrypted) for BYOK (Bring Your Own Key)
-  - Token management with device tracking
-  - Chat sessions with agent plans, tool calls, and results persistence
-  - Timestamp tracking
+**First Run:**
+- Upload your EDIFACT file or paste text
+- Select your AI provider (Ollama included by default)
+- Get instant analysis
 
-- **Provider System & BYOK**
-  - **Bring Your Own Key (BYOK):** Users supply their own OpenAI/Anthropic API keys
-  - **Universal Tool Contract:** Provider-agnostic tool format `{name, description, inputSchema}`
-  - **Provider Adapters:**
-    - OpenAI adapter: Parallel tool execution, streaming with `tool_calls[]`
-    - Anthropic adapter: Sequential tool execution, `tool_use` blocks
-  - **Streaming-Only Architecture:** All agents use `provider.streamComplete()` for real-time responses
-  - **Error Handling:** Automatic retries with exponential backoff (3 attempts)
-  - **Tool Injection:** Tools passed as structured API parameters (not text in prompts)
-  - **Future Support:** Azure OpenAI, Gemini
+---
 
-- **Performance & Security**
-  - Edge Runtime compatible middleware for fast authentication checks
-  - Secure HTTP-only cookies (SameSite=Strict)
-  - Password hashing and validation (8 salt rounds)
-  - Server-side JWT verification
-  - Environment-based configuration
-  - Token expiration (7 days)
-  - CSRF protection with SameSite cookies
+## 📋 Use Cases
 
-- **Developer Experience**
-  - Next.js 16 with Turbopack (dev) / SWC (production)
-  - ESLint for code quality
-  - Responsive design patterns
-  - Module path aliases (@/app/*)
-  - Hot Module Replacement (HMR) for faster development
-  - Clean component structure with containers and components
-  - Modular and reusable code organization
+### For Supply Chain Teams
+**Validate incoming B2B EDI messages in seconds**
+- Upload INVOIC/ORDERS/DESADV files
+- Instant validation against EDI standards
+- Identify missing fields or errors before they break downstream systems
+- Export compliance reports
 
-## 🗺️ Roadmap
+### For Integration Architects
+**Debug complex EDI workflows**
+- Understand message structure without manual parsing
+- Detect which segments are causing integration failures
+- Plan migrations or upgrades with confidence
+- Document B2B partner requirements
 
-### v1.x (Early - Implemented) ✅
-**Core Sequential Pipeline:**
-- EventEmitter-based agent architecture
-- Sequential orchestration (Planner → Scheduler → Executor → Critic)
-- Real-time streaming with SessionContext pattern
-- Dependency Injection for testability
-- BYOK (Bring Your Own Key) for OpenAI/Anthropic
+### For Compliance Officers
+**Audit EDI communications for compliance**
+- GDPR-ready audit trails
+- Track all EDI processing with timestamps
+- Export reports for regulatory requirements
+- HIPAA-compliant message handling
 
-### v1.x (Late - In Progress) 🚧
+### For Business Analysts
+**Extract actionable business data from EDI**
+- Who are the trading partners? (Parties)
+- What was ordered/invoiced? (Line items, amounts)
+- When are deliveries? (Dates)
+- What are the payment terms? (Conditions)
 
-**Foundational Agent Features**
+---
 
-🧠 **Enhanced Memory Agent** ✅ Documented
-- Importance Weighting (semantic relevance scoring)
-- Semantic Compression (cluster + summarize similar messages)
-- Adaptive Context Window (simple/medium/complex → 2K/8K/16K tokens)
-- Memory Pruning (importance-based retention)
-- Long-term Knowledge Base (entity tracking)
+## 🏗️ Architecture (For Developers)
 
-🛡️ **Enhanced Recovery Agent** ✅ Documented
-- Error Classification (transient, permanent, rate-limited, unknown)
-- Adaptive Backoff Learning (learns best strategy per error type)
-- Circuit Breaker Pattern (prevents cascade failures)
-- Fallback Chain Execution (primary → secondary → cache → degradation)
-- Error Pattern Detection (identifies systemic issues)
+**Tech Stack:**
+- Next.js 16 + React 19 (Modern Web UI)
+- Material-UI v7 (Enterprise-grade components)
+- Node.js + Express (Lightweight backend)
+- MongoDB + Mongoose (Data persistence)
+- Socket.IO (Real-time updates)
+- OpenAI / Anthropic SDKs (LLM providers)
+- Ollama (Optional: Self-hosted LLM)
 
-⚖️ **Ethics Agent** ✅ Documented
-- PII Detection & Auto-Redaction (email, phone, SSN, credit card)
-- Rate Limiting (configurable requests per hour)
-- Content Moderation (permissive/standard/strict modes)
-- GDPR Compliance (retention, right to be forgotten, consent)
-- Audit Trail (comprehensive logging for compliance)
+**Core Design:**
+- Event-driven agentic workflow (Planner → Scheduler → Executor → Critic)
+- EventEmitter-based agent communication
+- Real-time streaming with WebSocket
+- Dependency injection for testability
+- BYOK (Bring Your Own Key) for provider flexibility
 
-📊 **Enhanced Critic** (Documented)
-- Improved validation rules
-- Hallucination detection
-- Confidence scoring
-- Cross-check with deterministic core
 
-🔄 **Enhanced Executor** (Documented)
-- Working Memory (goal tracking, discoveries, progress)
-- Smart Loop Detection (prevents infinite tool call patterns)
-- Periodic Reflection (metacognitive self-assessment every N iterations)
-- Early Stop (goal achievement detection)
-- Iteration State Tracking (completed/pending tasks)
+## 🗺️ Product Roadmap
 
-🧩 **Enhanced Planner** (Documented)
-- Dynamic Replanning (Critic-triggered plan updates)
-- Complexity-Based Planning (adaptive task decomposition)
-- Context-Aware Planning (leverage previous results, user expertise)
-- Plan Optimization (merge redundant tasks, improve parallelization)
-- Plan Validation (check dependencies, tool availability)
-- Adaptive Temperature (complexity-based LLM creativity)
+### v1.0 - Core Platform ✅ (Current)
+- Web UI for EDIFACT analysis
+- Docker deployment
+- Multi-user workspaces
+- OpenAI/Anthropic/Ollama support
+- Basic validation & error detection
+- Sequential agent pipeline (Planner → Scheduler → Executor → Critic)
 
-⏱️ **Enhanced Scheduler** (Documented)
-- State Machine (IDLE→PLANNING→EXECUTING→VALIDATING→COMPLETED)
-- Checkpoint/Resume Support (for Cancel & Resume workflows)
-- Dynamic Priority Adjustment (error tasks prioritized)
-- Resource Management (token budget, rate limits)
-- Parallel Execution Preparation (v2.x ready)
+### v1.1 - API & Automation 🚧 (Q1 2026)
+- REST API for programmatic access
+- Batch processing (process multiple files)
+- Custom validation rules
+- Export reports (PDF, CSV, JSON)
 
-🎮 **User Interaction** (Planned)
-- Human-in-the-loop for ambiguous queries
-- Clarification requests
-- Approval workflows for system changes
-- Interactive debugging
+### v1.2 - Enterprise & Agent Intelligence 🚧 (Q2-Q3 2026)
+**Enterprise Features:**
+- Role-based access control (RBAC)
+- Advanced audit logging
+- On-premise deployment guide
+- API rate limiting & metering
 
-🛑 **Cancel Logic** (Planned)
-- Graceful execution termination
-- Rollback support
-- State cleanup on abort
-- Real-time cancellation feedback
+**Agent Enhancements:**
+- Enhanced Memory (context optimization, semantic compression)
+- Enhanced Recovery (circuit breaker, adaptive backoff)
+- Ethics Agent (PII detection, GDPR compliance)
+- Enhanced Critic (hallucination detection, confidence scoring)
+- Smart Loop Detection & Dynamic Replanning
+- State Machine Scheduler (checkpoint/resume)
 
-🎯 **Enhanced Orchestrator** (Planned)
-- Adaptive Replanning Loop (Executor/Critic → Planner)
-- Max Replan Attempts with graceful degradation
-- Replanning History tracking
-- Closed-loop intelligence (mid-execution plan adjustments)
+### v2.0 - Multi-Agent Parallel Processing 🚀 (Q3-Q4 2026)
+- Parallel EDI validation (3-5x faster)
+- Competitive AI reasoning (best-of-N selection)
+- ExecutorPool with specialized agents
+- Agent Bus for peer-to-peer communication
+- Real-time collaboration features
+- Advanced anomaly detection
+- Predictive compliance warnings
 
-**Polish & Optimization**
-- State Machine for Scheduler (conditional replanning)
-- Provider adapter for Azure OpenAI
-- Enhanced audit logging
-- Performance profiling & optimization
+---
 
-### v2.x: Hybrid Multi-Agent Architecture 🚀
+## 📞 Contact & Support
 
-**Phase 1: Parallel Execution** ⚡
-- ExecutorPool with specialized agents (Syntax, Semantic, Compliance)
-- DAG-based parallel task execution
-- 3-5x speed improvement for complex analyses
-- Backward compatible with sequential mode
+**Have Questions?**
+- 📧 Email: [anatolireznik@web.de](mailto:anatolireznik@web.de)
+- 🐛 Report Issues: [edifacts/issues](https://github.com/anatoli308/edifacts/issues)
 
-**Phase 2: Competitive Execution** 🏆
-- Best-of-N reasoning (multiple executors, Critic selects best)
-- Cross-validation for hallucination detection
-- Consensus-based confidence scoring
-- Higher accuracy on complex queries
+**Support this Project**
 
-**Phase 3: Agent Bus** 🔄
-- Peer-to-peer agent communication
-- Dynamic replanning (Critic → Planner loops)
-- Full multi-agent coordination
-- Event-driven agent discovery
+If EDIFACTS helps your supply chain, consider supporting the project:
 
-**Phase 4: Meta-Learning** 🧠
-- Router Agent for intelligent task routing
-- Adaptive complexity detection
-- Performance optimization via learning
-- Enterprise-grade observability
+- 🌟 **Star on GitHub** — helps discoverability
+- 💼 **Enterprise Support** — contact us for commercial agreements
+- 🤝 **Partner with us** — let's build together
 
-**Migration Strategy:**
-- ✅ Feature flags (gradual rollout)
-- ✅ Backward compatible (sequential as fallback)
-- ✅ A/B testing for performance validation
-- ✅ No breaking changes for existing integrations
+---
 
-## Usage
-1. start chat session
-2. chat with the agent about your EDIFACT file
-3. get real-time analysis and explanations
+## 📋 Known Issues
 
-## Known Issues
-- [Windows]: Start vscode with admin rights to avoid issues with turbopack on Windows.
-- [Development]: Ollama local LLM hosting requires signin for cloud models. Local models need to be setup separately.
-- [Docker]: serverside/node code changes require container restart at the moment.
+- **[Windows]** Start VS Code with admin rights to avoid Turbopack issues
+- **[Development]** Ollama cloud models require sign-in. Local models need additional disk space
+- **[Docker]** Backend code changes require container restart
 
-### License
-MIT
+---
+
+## 📜 License
+
+MIT — Use EDIFACTS freely in your projects, commercial or otherwise.
+
+---
+
+**Built for supply chains that demand transparency, control, and intelligence.** 🚀

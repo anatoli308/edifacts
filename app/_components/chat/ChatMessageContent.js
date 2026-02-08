@@ -171,6 +171,44 @@ const _markdownComponents = {
     h1: ({ children }) => <Typography variant="h5" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>{children}</Typography>,
     h2: ({ children }) => <Typography variant="h6" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>{children}</Typography>,
     h3: ({ children }) => <Typography variant="subtitle1" sx={{ mt: 1.5, mb: 0.5, fontWeight: 'bold' }}>{children}</Typography>,
+    h4: ({ children }) => <Typography variant="subtitle2" sx={{ mt: 1.5, mb: 0.5, fontWeight: 'bold' }}>{children}</Typography>,
+    h5: ({ children }) => <Typography variant="body2" sx={{ mt: 1.5, mb: 0.5, fontWeight: 'bold' }}>{children}</Typography>,
+    h6: ({ children }) => <Typography variant="body2" sx={{ mt: 1.5, mb: 0.5, fontWeight: 'bold', fontSize: '0.9rem' }}>{children}</Typography>,
+
+    // Text styling
+    strong: ({ children }) => <Typography component="strong" sx={{ fontWeight: 'bold' }}>{children}</Typography>,
+    em: ({ children }) => <Typography component="em" sx={{ fontStyle: 'italic' }}>{children}</Typography>,
+    del: ({ children }) => <Typography component="del" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>{children}</Typography>,
+
+    // Images
+    img: ({ src, alt }) => (
+        <Box
+            component="img"
+            src={src}
+            alt={alt}
+            sx={{
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: 1,
+                my: 1.5,
+                boxShadow: 1,
+            }}
+        />
+    ),
+
+    // Pre (wrapper für Code-Blöcke)
+    pre: ({ children }) => <Box sx={{ my: 1.5 }}>{children}</Box>,
+
+    // Task List Checkboxes (GFM)
+    input: ({ checked, ...props }) => (
+        <input
+            type="checkbox"
+            checked={checked}
+            disabled
+            style={{ marginRight: 8, cursor: 'pointer' }}
+            {...props}
+        />
+    ),
 
     // Links
     a: ({ href, children }) => (

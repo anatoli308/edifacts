@@ -19,31 +19,63 @@ import Iconify from '@/app/_components/utils/Iconify';
 // ===== Segment color + icon mapping =====
 
 const SEGMENT_META = {
+    // Envelope & Service
+    UNA: { color: '#7C3AED', icon: 'mdi:cog-outline', label: 'Service String Advice' },
     UNB: { color: '#7C3AED', icon: 'mdi:email-seal-outline', label: 'Interchange Header' },
     UNZ: { color: '#7C3AED', icon: 'mdi:email-check-outline', label: 'Interchange Trailer' },
+    UNG: { color: '#7C3AED', icon: 'mdi:folder-outline', label: 'Group Header' },
+    UNE: { color: '#7C3AED', icon: 'mdi:folder-check-outline', label: 'Group Trailer' },
     UNH: { color: '#2563EB', icon: 'mdi:file-document-outline', label: 'Message Header' },
     UNT: { color: '#2563EB', icon: 'mdi:file-check-outline', label: 'Message Trailer' },
+    UNS: { color: '#64748B', icon: 'mdi:swap-horizontal', label: 'Section Control' },
+    // Document
     BGM: { color: '#0891B2', icon: 'mdi:identifier', label: 'Beginning of Message' },
     DTM: { color: '#059669', icon: 'mdi:calendar-clock', label: 'Date/Time' },
+    DOC: { color: '#0891B2', icon: 'mdi:file-document-edit-outline', label: 'Document Details' },
+    STS: { color: '#64748B', icon: 'mdi:list-status', label: 'Status' },
+    // Parties
     NAD: { color: '#D97706', icon: 'mdi:domain', label: 'Party' },
+    CTA: { color: '#F97316', icon: 'mdi:card-account-phone-outline', label: 'Contact' },
+    COM: { color: '#F97316', icon: 'mdi:phone-outline', label: 'Communication' },
+    // References & Finance
     RFF: { color: '#9333EA', icon: 'mdi:link-variant', label: 'Reference' },
     CUX: { color: '#0D9488', icon: 'mdi:currency-eur', label: 'Currency' },
     PAT: { color: '#6366F1', icon: 'mdi:cash-clock', label: 'Payment Terms' },
+    FII: { color: '#6366F1', icon: 'mdi:bank-outline', label: 'Financial Institution' },
+    MOA: { color: '#BE185D', icon: 'mdi:cash', label: 'Monetary Amount' },
+    TAX: { color: '#7C2D12', icon: 'mdi:percent-outline', label: 'Tax' },
+    PCD: { color: '#7C2D12', icon: 'mdi:percent-box-outline', label: 'Percentage Details' },
+    ALC: { color: '#F59E0B', icon: 'mdi:sale', label: 'Allowance/Charge' },
+    AJT: { color: '#F59E0B', icon: 'mdi:tune-variant', label: 'Adjustment Details' },
+    CNT: { color: '#64748B', icon: 'mdi:sigma', label: 'Control Total' },
+    // Line Items
     LIN: { color: '#DC2626', icon: 'mdi:package-variant', label: 'Line Item' },
     PIA: { color: '#EA580C', icon: 'mdi:barcode', label: 'Product ID' },
     IMD: { color: '#CA8A04', icon: 'mdi:text-box-outline', label: 'Description' },
     QTY: { color: '#16A34A', icon: 'mdi:counter', label: 'Quantity' },
     PRI: { color: '#E11D48', icon: 'mdi:tag-outline', label: 'Price' },
-    MOA: { color: '#BE185D', icon: 'mdi:cash', label: 'Monetary Amount' },
-    TAX: { color: '#7C2D12', icon: 'mdi:percent-outline', label: 'Tax' },
-    UNS: { color: '#64748B', icon: 'mdi:swap-horizontal', label: 'Section Control' },
-    CNT: { color: '#64748B', icon: 'mdi:sigma', label: 'Control Total' },
+    ALI: { color: '#D97706', icon: 'mdi:information-outline', label: 'Additional Info' },
+    GIN: { color: '#EA580C', icon: 'mdi:numeric', label: 'Goods Identity Number' },
+    GIR: { color: '#EA580C', icon: 'mdi:link-box-variant-outline', label: 'Related ID Numbers' },
+    MEA: { color: '#16A34A', icon: 'mdi:ruler', label: 'Measurements' },
     FTX: { color: '#8B5CF6', icon: 'mdi:note-text-outline', label: 'Free Text' },
-    ALC: { color: '#F59E0B', icon: 'mdi:sale', label: 'Allowance/Charge' },
+    // Logistics
     TDT: { color: '#0EA5E9', icon: 'mdi:truck-outline', label: 'Transport' },
+    TSR: { color: '#0EA5E9', icon: 'mdi:clipboard-list-outline', label: 'Transport Service Req.' },
     LOC: { color: '#10B981', icon: 'mdi:map-marker-outline', label: 'Location' },
-    CTA: { color: '#F97316', icon: 'mdi:card-account-phone-outline', label: 'Contact' },
-    COM: { color: '#F97316', icon: 'mdi:phone-outline', label: 'Communication' },
+    TOD: { color: '#10B981', icon: 'mdi:handshake-outline', label: 'Terms of Delivery' },
+    SCC: { color: '#0EA5E9', icon: 'mdi:calendar-sync-outline', label: 'Scheduling Conditions' },
+    // Packaging & Goods
+    PAC: { color: '#78716C', icon: 'mdi:package-variant-closed', label: 'Package' },
+    PCI: { color: '#78716C', icon: 'mdi:package-variant-closed-check', label: 'Package ID' },
+    EQD: { color: '#78716C', icon: 'mdi:train-car-container', label: 'Equipment Details' },
+    SEL: { color: '#78716C', icon: 'mdi:lock-outline', label: 'Seal Number' },
+    DGS: { color: '#EF4444', icon: 'mdi:alert-octagon-outline', label: 'Dangerous Goods' },
+    RNG: { color: '#64748B', icon: 'mdi:arrow-expand-horizontal', label: 'Range Details' },
+    IDE: { color: '#64748B', icon: 'mdi:card-bulleted-outline', label: 'Identity' },
+    // Error & Conditions
+    ERP: { color: '#EF4444', icon: 'mdi:alert-circle-outline', label: 'Error Point Details' },
+    RCS: { color: '#64748B', icon: 'mdi:clipboard-check-outline', label: 'Requirements & Conditions' },
 };
 
 const DEFAULT_SEGMENT_META = { color: '#94A3B8', icon: 'mdi:code-tags', label: 'Segment' };
@@ -184,6 +216,95 @@ function _OverviewTab({ analysis }) {
                 </Box>
             )}
 
+            {/* Interchange */}
+            {interchange && (interchange.sender || interchange.receiver) && (
+                <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', fontWeight: 600 }}>
+                        Interchange
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {interchange.sender && (
+                            <Chip size="small" variant="outlined" icon={<Iconify icon="mdi:arrow-right-bold" width={14} />} label={`Sender: ${interchange.sender}`} />
+                        )}
+                        {interchange.receiver && (
+                            <Chip size="small" variant="outlined" icon={<Iconify icon="mdi:arrow-left-bold" width={14} />} label={`Receiver: ${interchange.receiver}`} />
+                        )}
+                        {interchange.controlReference && (
+                            <Chip size="small" variant="outlined" label={`Ref: ${interchange.controlReference}`} />
+                        )}
+                        {interchange.testIndicator && (
+                            <Chip size="small" color="warning" label="TEST" />
+                        )}
+                    </Box>
+                </Box>
+            )}
+
+            {/* Business Data — Amounts */}
+            {businessData && (businessData.totalAmount || businessData.currency || businessData.documentNumber) && (
+                <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', fontWeight: 600 }}>
+                        Business Data
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {businessData.documentNumber && (
+                            <_MetricCard icon="mdi:file-document-outline" label="Doc No." value={businessData.documentNumber} color="info.main" />
+                        )}
+                        {businessData.documentType && (
+                            <_MetricCard icon="mdi:file-cog-outline" label="Doc Type" value={businessData.documentType} color="info.main" />
+                        )}
+                        {businessData.totalAmount !== undefined && businessData.totalAmount !== null && (
+                            <_MetricCard icon="mdi:cash" label="Total" value={`${businessData.totalAmount}${businessData.currency ? ` ${businessData.currency}` : ''}`} color="success.main" />
+                        )}
+                        {businessData.netAmount !== undefined && businessData.netAmount !== null && (
+                            <_MetricCard icon="mdi:cash-minus" label="Net" value={`${businessData.netAmount}${businessData.currency ? ` ${businessData.currency}` : ''}`} color="info.main" />
+                        )}
+                        {businessData.taxAmount !== undefined && businessData.taxAmount !== null && (
+                            <_MetricCard icon="mdi:percent-outline" label="Tax" value={`${businessData.taxAmount}${businessData.currency ? ` ${businessData.currency}` : ''}`} color="warning.main" />
+                        )}
+                    </Box>
+                </Box>
+            )}
+
+            {/* Dates */}
+            {businessData?.dates?.length > 0 && (
+                <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', fontWeight: 600 }}>
+                        Dates
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {businessData.dates.map((d, index) => (
+                            <Chip
+                                key={index}
+                                size="small"
+                                variant="outlined"
+                                icon={<Iconify icon="mdi:calendar" width={14} />}
+                                label={`${d.qualifier}: ${d.date ? new Date(d.date).toLocaleDateString() : '—'}`}
+                            />
+                        ))}
+                    </Box>
+                </Box>
+            )}
+
+            {/* References */}
+            {businessData?.references?.length > 0 && (
+                <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', fontWeight: 600 }}>
+                        References
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {businessData.references.map((ref, index) => (
+                            <Chip
+                                key={index}
+                                size="small"
+                                variant="outlined"
+                                icon={<Iconify icon="mdi:link-variant" width={14} />}
+                                label={`${ref.qualifier}: ${ref.value}`}
+                            />
+                        ))}
+                    </Box>
+                </Box>
+            )}
+
             {/* Validation */}
             {validation && (
                 <Box>
@@ -214,6 +335,7 @@ function _OverviewTab({ analysis }) {
                 <Typography variant="caption" color="text.disabled">
                     Parsed in {processing.parsingDuration || processing.totalDuration || 0}ms
                     {processing.tokenCount ? ` | ~${processing.tokenCount} tokens` : ''}
+                    {processing.fileSize ? ` | ${(processing.fileSize / 1024).toFixed(1)} KB` : ''}
                 </Typography>
             )}
         </Box>
@@ -230,8 +352,8 @@ function _OverviewTab({ analysis }) {
 function _buildSegmentTree(segmentDetails, segments) {
     // Use segmentDetails if available, otherwise fall back to tag array
     const items = segmentDetails?.length > 0
-        ? segmentDetails.map((sd, i) => ({ tag: sd.tag, position: sd.position || i + 1, content: sd.content }))
-        : (segments || []).map((tag, i) => ({ tag, position: i + 1, content: '' }));
+        ? segmentDetails.map((sd, i) => ({ tag: sd.tag, position: sd.position || i + 1, content: sd.content, fields: sd.fields }))
+        : (segments || []).map((tag, i) => ({ tag, position: i + 1, content: '', fields: [] }));
 
     if (items.length === 0) return [];
 
@@ -341,12 +463,17 @@ function _SegmentNode({ item, depth = 0 }) {
                     </Typography>
                 </Box>
 
-                {/* Label */}
+                {/* Label + value preview */}
                 <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1 }}>
                     {meta.label}
                     {hasChildren && (
                         <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 0.5 }}>
                             ({item.children.length})
+                        </Typography>
+                    )}
+                    {!hasChildren && item.fields?.length > 0 && (
+                        <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 0.5, fontFamily: 'monospace', fontSize: '0.65rem' }}>
+                            ({item.fields.filter(Boolean).join(', ')})
                         </Typography>
                     )}
                 </Typography>
@@ -368,6 +495,123 @@ function _SegmentNode({ item, depth = 0 }) {
         </Box>
     );
 }
+
+// ===== Details Tab (Validation + Compliance) =====
+
+function _ValidationRow({ detail }) {
+    const severityConfig = {
+        error: { color: 'error.main', icon: 'mdi:alert-circle', bgcolor: 'error' },
+        warning: { color: 'warning.main', icon: 'mdi:alert', bgcolor: 'warning' },
+        info: { color: 'info.main', icon: 'mdi:information', bgcolor: 'info' },
+    };
+    const config = severityConfig[detail.severity] || severityConfig.info;
+
+    return (
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75, py: 0.5, px: 0.5, '&:hover': { bgcolor: 'action.hover' }, borderRadius: 0.5 }}>
+            <Iconify icon={config.icon} sx={{ fontSize: 16, color: config.color, mt: 0.2, flexShrink: 0 }} />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {detail.segment && (
+                        <Chip size="small" label={detail.segment} sx={{ height: 18, fontSize: '0.65rem', fontFamily: 'monospace' }} />
+                    )}
+                    {detail.code && (
+                        <Typography variant="caption" color="text.disabled" sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}>
+                            {detail.code}
+                        </Typography>
+                    )}
+                </Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.2 }}>
+                    {detail.error || detail.warning || '—'}
+                </Typography>
+                {detail.suggestion && (
+                    <Typography variant="caption" color="success.main" sx={{ display: 'block', fontStyle: 'italic', fontSize: '0.65rem' }}>
+                        {detail.suggestion}
+                    </Typography>
+                )}
+            </Box>
+        </Box>
+    );
+}
+
+function _DetailsTab({ analysis }) {
+    const { validation, compliance } = analysis;
+    const details = validation?.details || [];
+    const hasMissingSegments = compliance?.missingSegments?.length > 0;
+    const hasUnexpectedSegments = compliance?.unexpectedSegments?.length > 0;
+    const hasMandatoryMissing = compliance?.mandatoryFieldsMissing?.length > 0;
+    const hasDetails = details.length > 0 || hasMissingSegments || hasUnexpectedSegments || hasMandatoryMissing;
+
+    if (!hasDetails) {
+        return (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, py: 2 }}>
+                <Iconify icon="mdi:check-circle" sx={{ color: 'success.main', fontSize: 20 }} />
+                <Typography variant="body2" color="text.secondary">
+                    No issues found.
+                </Typography>
+            </Box>
+        );
+    }
+
+    return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            {/* Validation details */}
+            {details.length > 0 && (
+                <Box sx={{ maxHeight: 250, overflowY: 'auto', border: 1, borderColor: 'divider', borderRadius: 1, py: 0.5 }}>
+                    {details.map((detail, index) => (
+                        <_ValidationRow key={index} detail={detail} />
+                    ))}
+                </Box>
+            )}
+
+            {/* Compliance issues */}
+            {hasMissingSegments && (
+                <Box>
+                    <Typography variant="caption" color="error.main" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                        Missing Required Segments
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {compliance.missingSegments.map((seg, index) => (
+                            <Chip key={index} size="small" color="error" variant="outlined" label={seg} sx={{ fontFamily: 'monospace', fontSize: '0.7rem' }} />
+                        ))}
+                    </Box>
+                </Box>
+            )}
+
+            {hasUnexpectedSegments && (
+                <Box>
+                    <Typography variant="caption" color="warning.main" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                        Unexpected Segments
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {compliance.unexpectedSegments.map((seg, index) => (
+                            <Chip key={index} size="small" color="warning" variant="outlined" label={seg} sx={{ fontFamily: 'monospace', fontSize: '0.7rem' }} />
+                        ))}
+                    </Box>
+                </Box>
+            )}
+
+            {hasMandatoryMissing && (
+                <Box>
+                    <Typography variant="caption" color="error.main" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                        Missing Mandatory Fields
+                    </Typography>
+                    <Box sx={{ maxHeight: 150, overflowY: 'auto', border: 1, borderColor: 'divider', borderRadius: 1, py: 0.5 }}>
+                        {compliance.mandatoryFieldsMissing.map((m, index) => (
+                            <Box key={index} sx={{ display: 'flex', gap: 0.5, px: 0.5, py: 0.25 }}>
+                                <Chip size="small" label={m.segment} sx={{ height: 18, fontFamily: 'monospace', fontSize: '0.65rem' }} />
+                                <Typography variant="caption" color="text.secondary">
+                                    {m.field} — {m.requirement}
+                                </Typography>
+                            </Box>
+                        ))}
+                    </Box>
+                </Box>
+            )}
+        </Box>
+    );
+}
+
+// ===== Segment Tree Tab =====
 
 function _SegmentTreeTab({ analysis }) {
     const tree = _buildSegmentTree(analysis.segmentDetails, analysis.segments);
@@ -484,6 +728,11 @@ function EdifactAnalysisPanel({ analysis }) {
                             icon={<Iconify icon="mdi:file-tree-outline" width={16} />}
                             iconPosition="start"
                         />
+                        <Tab
+                            label="Details"
+                            icon={<Iconify icon="mdi:clipboard-text-search-outline" width={16} />}
+                            iconPosition="start"
+                        />
                     </Tabs>
 
                     <_TabPanel value={activeTab} index={0}>
@@ -492,6 +741,10 @@ function EdifactAnalysisPanel({ analysis }) {
 
                     <_TabPanel value={activeTab} index={1}>
                         <_SegmentTreeTab analysis={analysis} />
+                    </_TabPanel>
+
+                    <_TabPanel value={activeTab} index={2}>
+                        <_DetailsTab analysis={analysis} />
                     </_TabPanel>
                 </Box>
             </Collapse>

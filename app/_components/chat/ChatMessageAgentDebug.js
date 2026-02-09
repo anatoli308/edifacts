@@ -163,7 +163,7 @@ function ChatMessageAgentDebug({ currentAgentState, message }) {
                         )}
                         {taskStatusMap.size > 0 && (
                             <Chip
-                                label={`${Array.from(taskStatusMap.values()).filter(t => t.status === 'completed' || t.status === 'warned').length}/${taskStatusMap.size} completed`}
+                                label={`${Array.from(taskStatusMap.values()).filter(t => t.status === 'completed' || t.status === 'warned').length}/${plan.subtasks.length} completed`}
                                 size="small"
                                 color="success"
                                 variant="outlined"

@@ -198,6 +198,40 @@ function _resolveColor(color) {
  * Recursively extract plain text from React children
  * @private
  */
+/**
+ * Strip [[badge:...]], [[metric:...]], [[status:...]], [[progress:...]] patterns
+ * from markdown table rows, converting them to plain text.
+ * The | inside [[metric:N|Label]] conflicts with markdown table column separators,
+ * so patterns must be flattened before the markdown parser sees them.
+ * @private
+ */
+function _stripPatternsFromTableRows(text) {
+    return text.split('\n').map(line => {
+        // Only process lines that look like markdown table rows
+        if (!line.trimStart().startsWith('|')) return line;
+
+        // [[badge:Label:color]] → Label  (strip color suffix)
+        line = line.replace(/\[\[badge:(.+?)\]\]/g, (_match, inner) => {
+            const parts = inner.split(':');
+            if (parts.length > 1) parts.pop(); // remove color
+            return parts.join(':');
+        });
+
+        // [[metric:Value|Label:color]] → Value (Label)
+        line = line.replace(/\[\[metric:(.+?)\|(.+?)(?::(.+?))?\]\]/g, (_match, value, label) => {
+            return `${value} (${label})`;
+        });
+
+        // [[status:Label:color]] → Label
+        line = line.replace(/\[\[status:(.+?):(.+?)\]\]/g, (_match, label) => label);
+
+        // [[progress:N:color]] → N%
+        line = line.replace(/\[\[progress:(\d+)(?::(.+?))?\]\]/g, (_match, value) => `${value}%`);
+
+        return line;
+    }).join('\n');
+}
+
 function _extractText(children) {
     if (typeof children === 'string') return children;
     if (typeof children === 'number') return String(children);
@@ -353,72 +387,24 @@ const _markdownComponents = {
     thead: ({ children }) => <TableHead>{children}</TableHead>,
     tbody: ({ children }) => <TableBody>{children}</TableBody>,
     tr: ({ children }) => <TableRow>{children}</TableRow>,
-    th: ({ children }) => {
-        const text = _extractText(children).trim();
-        if (text.includes('[[')) {
-            const mixedParts = text.split(/(\[\[[^\]]+\]\])/g).filter(Boolean);
-            const hasPattern = mixedParts.some(part => /^\[\[.+\]\]$/.test(part));
-            if (hasPattern) {
-                return (
-                    <TableCell
-                        sx={{
-                            fontWeight: 'bold',
-                            bgcolor: 'action.hover',
-                            whiteSpace: 'nowrap',
-                            borderBottom: 2,
-                            borderColor: 'divider',
-                        }}
-                    >
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
-                            {mixedParts.map((part, index) => {
-                                const component = _parseSinglePattern(part);
-                                if (component) return <React.Fragment key={index}>{component}</React.Fragment>;
-                                return part.trim() ? <span key={index}>{part}</span> : null;
-                            })}
-                        </Box>
-                    </TableCell>
-                );
-            }
-        }
-        return (
-            <TableCell
-                sx={{
-                    fontWeight: 'bold',
-                    bgcolor: 'action.hover',
-                    whiteSpace: 'nowrap',
-                    borderBottom: 2,
-                    borderColor: 'divider',
-                }}
-            >
-                {children}
-            </TableCell>
-        );
-    },
-    td: ({ children }) => {
-        const text = _extractText(children).trim();
-        if (text.includes('[[')) {
-            const mixedParts = text.split(/(\[\[[^\]]+\]\])/g).filter(Boolean);
-            const hasPattern = mixedParts.some(part => /^\[\[.+\]\]$/.test(part));
-            if (hasPattern) {
-                return (
-                    <TableCell sx={{ borderColor: 'divider' }}>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
-                            {mixedParts.map((part, index) => {
-                                const component = _parseSinglePattern(part);
-                                if (component) return <React.Fragment key={index}>{component}</React.Fragment>;
-                                return part.trim() ? <span key={index}>{part}</span> : null;
-                            })}
-                        </Box>
-                    </TableCell>
-                );
-            }
-        }
-        return (
-            <TableCell sx={{ borderColor: 'divider' }}>
-                {children}
-            </TableCell>
-        );
-    },
+    th: ({ children }) => (
+        <TableCell
+            sx={{
+                fontWeight: 'bold',
+                bgcolor: 'action.hover',
+                whiteSpace: 'nowrap',
+                borderBottom: 2,
+                borderColor: 'divider',
+            }}
+        >
+            {children}
+        </TableCell>
+    ),
+    td: ({ children }) => (
+        <TableCell sx={{ borderColor: 'divider' }}>
+            {children}
+        </TableCell>
+    ),
 
     // Typography (with custom component pattern detection)
     p: ({ children }) => {
@@ -616,10 +602,12 @@ function ChatMessageContent({ content }) {
     const [copied, setCopied] = React.useState(false);
 
     // Normalize Unicode dashes/hyphens that break KaTeX
-    const normalizedText = content.text
-        .replace(/[\u2010-\u2015]/g, '-')
-        .replace(/\u00AD/g, '')
-        .replace(/\u2011/g, '-');
+    const normalizedText = _stripPatternsFromTableRows(
+        content.text
+            .replace(/[\u2010-\u2015]/g, '-')
+            .replace(/\u00AD/g, '')
+            .replace(/\u2011/g, '-')
+    );
 
     const handleCopy = () => {
         navigator.clipboard.writeText(normalizedText);

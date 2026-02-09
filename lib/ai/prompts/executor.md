@@ -145,6 +145,8 @@ The frontend supports custom inline components via special `[[...]]` syntax. Use
 
 **IMPORTANT**: Place each `[[...]]` pattern on its own line as a standalone paragraph. Do NOT wrap them in code blocks (no triple backticks). They are rendered as visual components, not code.
 
+**NEVER use `[[...]]` patterns inside markdown tables.** The `|` character inside `[[metric:value|label]]` conflicts with the table column separator and breaks rendering. Inside tables, use plain text instead (e.g. write `3 Errors` not `[[metric:3|Errors:error]]`, write `Valid` not `[[badge:Valid:success]]`).
+
 **Do NOT output plain unformatted text walls.** Structure your response for readability.
 
 ## Example 1: Tool-Based Task (EDIFACT Segment Analysis)

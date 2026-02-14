@@ -62,9 +62,9 @@ function AnalysisChatPage({ analysisChat }) {
     const { sendAgentMessage, getCurrentMessage, currentAgentState, isStreaming } = useAgentStreaming(sessionId, handleMessageUpdate, handleAnalysisReceived);
 
     // Auto-scroll to latest message
-    useEffect(() => {
+    /*useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages]);*/
 
     // Scroll to bottom function
     const scrollToBottom = () => {

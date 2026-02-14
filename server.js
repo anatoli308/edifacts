@@ -77,5 +77,5 @@ async function handleDisconnect(socket) {
 
 function handleError(socket, error) {
     console.error(`[Socket ${socket.id}] Error:`, error);
-    //socket.sessionContext?.cleanup(); //dont cleanup listeners on error
+    //socket.sessionContext?.cleanup(); //dont cleanup listeners on error?!
 }

@@ -78,7 +78,7 @@ When assigning tools to subtasks, match the task requirements to the available t
 ## Task Decomposition Requirements
 
 **CRITICAL RULES:**
-- Break down the goal into **1-6 concrete, executable subtasks**
+- Break down the goal into **2-8 concrete, executable subtasks**
 - **AVOID duplicate or redundant tasks** (each task should do something unique)
 - **For simple queries, 1-2 tasks are often enough**
 - **ALWAYS include a final task** that synthesizes/formats the answer for the user

@@ -122,7 +122,7 @@ function StartContainer() {
                     Upload a file or enter custom EDIFACT data below.
                 </Typography>
 
-                <Box sx={{ my: 1, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                <Box sx={{ my: 1, display: 'none', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
                     <StandardFamilySelector
                         value={selectedStandardFamily}
                         onChange={(newValue) => {

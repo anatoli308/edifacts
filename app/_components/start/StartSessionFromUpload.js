@@ -12,7 +12,7 @@ function StartSessionFromUpload({ onChange }) {
             dropzoneInstance.current = new Dropzone(dropzoneRef.current, {
                 url: '/',
                 autoProcessQueue: false,
-                acceptedFiles: '.edi,.edifact,.txt',
+                acceptedFiles: '*',
                 maxFiles: 1,
                 dictDefaultMessage: '',
                 previewsContainer: false,
@@ -61,7 +61,7 @@ function StartSessionFromUpload({ onChange }) {
                         📁 Drag & Drop EDIFACT File
                     </Typography>
                     <Typography variant="body2" color="textSecondary">
-                        Supported formats: .edi, .edifact, .txt
+                        Make sure your file is in the correct format.
                     </Typography>
                     {uploadedFile && (
                         <Typography variant="body2" color="primary" sx={{ mt: 2 }}>

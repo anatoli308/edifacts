@@ -93,7 +93,7 @@ function SettingsDialogDataControl() {
                 }
                 await reconnectUser(data.token);
                 // Add to saved providers list
-                setSavedProviders([...savedProviders, { ...draftProvider, _id: data._id }]);
+                setSavedProviders([...savedProviders, { ...draftProvider, id: data.id }]);
                 setDraftProvider(null);
             } catch (error) {
                 console.error('Error saving provider:', error);
@@ -130,7 +130,7 @@ function SettingsDialogDataControl() {
                 return;
             }
             await reconnectUser(data.token);
-            setSavedProviders(savedProviders.filter(p => p._id !== id));
+            setSavedProviders(savedProviders.filter(p => p.id !== id));
         } catch (error) {
             console.error('Error removing provider:', error);
         } finally {
@@ -157,11 +157,11 @@ function SettingsDialogDataControl() {
     };
 
     const handleEditProvider = (provider) => {
-        if (editingProviderId === provider._id) {
+        if (editingProviderId === provider.id) {
             setEditingProviderId(null);
             setEditProvider(null);
         } else {
-            setEditingProviderId(provider._id);
+            setEditingProviderId(provider.id);
             setEditProvider({ ...provider });
         }
     };
@@ -176,7 +176,7 @@ function SettingsDialogDataControl() {
         e.preventDefault();
         if (editProvider && editProvider.encryptedKey.trim()) {
             setSavedProviders(savedProviders.map(p =>
-                p._id === editProvider._id ? editProvider : p
+                p.id === editProvider.id ? editProvider : p
             ));
             setEditingProviderId(null);
             setEditProvider(null);
@@ -358,7 +358,7 @@ function SettingsDialogDataControl() {
                                         disabled={isLoading}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            handleRemoveProvider(provider._id);
+                                            handleRemoveProvider(provider.id);
                                         }}
                                     >
                                         <Iconify icon="eva:trash-2-outline" />
@@ -366,7 +366,7 @@ function SettingsDialogDataControl() {
                                 </Box>
                             </Card>
 
-                            <Collapse in={editingProviderId === provider._id}>
+                            <Collapse in={editingProviderId === provider.id}>
                                 <Box sx={{ p: 2, bgcolor: 'background.neutral', borderLeft: '3px solid', borderColor: 'primary.main' }}>
                                     <Box component="form" onSubmit={handleSaveEdit}>
                                         <Typography variant="subtitle2" sx={{ mb: 2 }}>

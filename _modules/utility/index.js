@@ -8,20 +8,21 @@
  * - This file serves as a future aggregator when the module grows
  *
  * Future Exports (when needed):
- * - tools: { getWeather, webSearch, ... }
+ * - tools: { webSearch, currencyConvert, ... }
  * - Additional utility categories as they're added
  *
  * Usage (future):
  * import utilityModule from '_modules/utility';
  * 
  * // Use utility tools in Executor
- * const weather = await utilityModule.tools.getWeather({ city: 'Tokyo' });
+ * const hits = await utilityModule.tools.webSearch({ query: 'EDIFACT D24A directory' });
  *
  * Module Structure:
  * utility/
  *   ├── index.js (this file - aggregator)
  *   └── tools/
- *       ├── webTools.js (getWeather, webSearch)
+ *       ├── webTools.js (webSearch)
+ *       ├── financeTools.js (currencyConvert)
  *       └── index.js (export all tools)
  *
  * Implementation Notes:

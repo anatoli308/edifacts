@@ -1,0 +1,92 @@
+[
+  {
+    "id": "rag-exact-mode-dtm-137",
+    "type": "rag",
+    "description": "Supplying exact code should short-circuit to exact mode (no embedding round-trip)",
+    "code": "137",
+    "category": "DTM_QUALIFIER",
+    "topK": 5,
+    "expect": {
+      "mode": "exact",
+      "minResults": 1,
+      "topResultCode": "137"
+    }
+  },
+  {
+    "id": "rag-semantic-unb-concept",
+    "type": "rag",
+    "description": "Natural-language question about the interchange envelope should retrieve the UNB concept chunk",
+    "query": "what does the UNB segment contain at the start of an interchange",
+    "topK": 5,
+    "expect": {
+      "mode": "semantic",
+      "minResults": 1,
+      "minSimilarityTop": 0.35,
+      "pathContains": { "results.0.content": "UNB" }
+    }
+  },
+  {
+    "id": "rag-semantic-currency-declaration",
+    "type": "rag",
+    "description": "Asking how currency is declared should hit the CUX concept chunk",
+    "query": "how is the invoice currency declared in EDIFACT",
+    "topK": 5,
+    "expect": {
+      "mode": "semantic",
+      "minResults": 1,
+      "minSimilarityTop": 0.3,
+      "pathContains": { "results.0.content": "currenc" }
+    }
+  },
+  {
+    "id": "rag-semantic-delivery-date",
+    "type": "rag",
+    "description": "Filtered semantic search for a DTM qualifier matching a natural phrase",
+    "query": "actual delivery date qualifier",
+    "category": "DTM_QUALIFIER",
+    "topK": 5,
+    "expect": {
+      "mode": "semantic",
+      "minResults": 1,
+      "minSimilarityTop": 0.4
+    }
+  },
+  {
+    "id": "rag-semantic-buyer-party",
+    "type": "rag",
+    "description": "Filtered semantic search for a NAD qualifier identifying the buyer",
+    "query": "party that orders and pays for goods",
+    "category": "NAD_QUALIFIER",
+    "topK": 5,
+    "expect": {
+      "mode": "semantic",
+      "minResults": 1,
+      "minSimilarityTop": 0.3,
+      "containsCode": "BY"
+    }
+  },
+  {
+    "id": "rag-semantic-invoice-profile",
+    "type": "rag",
+    "description": "Question about INVOIC structure should retrieve a GS1 profile or invoice concept",
+    "query": "what segments are required in a GS1 EANCOM invoice",
+    "source": "GS1_PROFILE",
+    "topK": 5,
+    "expect": {
+      "mode": "semantic",
+      "minResults": 1,
+      "minSimilarityTop": 0.3,
+      "pathContains": { "results.0.source": "GS1_PROFILE" }
+    }
+  },
+  {
+    "id": "rag-empty-input",
+    "type": "rag",
+    "description": "No query and no code should resolve to empty (defensive)",
+    "topK": 5,
+    "expect": {
+      "mode": "empty",
+      "maxResults": 0
+    }
+  }
+]

@@ -24,7 +24,7 @@ function AnalysisChatPage({ analysisChat }) {
     //redirect if not authorized to access this chat
     const { isAuthorized, loading } = useChatAuthenticatedRoute(analysisChat);
 
-    const sessionId = analysisChat?._id || 'invalid-session'; //TODO: remove demo-session fallback
+    const sessionId = analysisChat?.id || 'invalid-session'; //TODO: remove demo-session fallback
 
     const [messages, setMessages] = useState([]);
     const messagesEndRef = useRef(null);
@@ -120,7 +120,7 @@ function AnalysisChatPage({ analysisChat }) {
                             <EdifactAnalysisPanel analysis={analysisChat?.domainContext?.edifact?._analysis} />
 
                             {messages.map((message, index) => (
-                                <ChatMessage key={index} message={message} />
+                                <ChatMessage key={index} message={message} sessionId={sessionId} />
                             ))}
 
                             {isStreaming && (

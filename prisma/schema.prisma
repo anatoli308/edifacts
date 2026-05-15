@@ -1,0 +1,255 @@
+// Prisma schema for EDIFACTS
+// Database: PostgreSQL with JSONB support
+// Migration from Mongoose: 7 collections → 8 tables (User.tokens normalized into UserToken)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// ============================================================================
+// User & Auth
+// ============================================================================
+
+model User {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String    @unique
+  displayName     String    @default("")
+  email           String    @unique
+  emailVerified   Boolean   @default(false)
+  password        String
+  role            String    @default("GUEST")
+  isOnline        Boolean   @default(false)
+  location        String    @default("")
+  banned          DateTime?
+  tosAccepted     Boolean   @default(false)
+
+  // JSONB fields (whole-object read/write only)
+  theme           Json      @default("{\"fontColor\":\"#2065D1\",\"backgroundMode\":\"white\",\"fontSize\":3}")
+  geoData         Json      @default("{}")
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  tokens          UserToken[]
+  apiKeys         ApiKey[]
+  chats           AnalysisChat[]
+  files           File[]
+  feedback        MessageFeedback[]
+
+  @@map("users")
+}
+
+model UserToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
+  token     String   @unique
+  device    String   @default("unknown")
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_tokens")
+}
+
+// ============================================================================
+// API Keys (BYOK + system defaults)
+// ============================================================================
+
+enum AiProvider {
+  ollama
+  openai
+  anthropic
+  custom
+}
+
+model ApiKey {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId       String?    @db.Uuid
+  provider      AiProvider
+  name          String
+  encryptedKey  String
+  baseUrl       String?
+  models        String[]   @default([])
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  owner         User?      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  chats         AnalysisChat[]
+
+  @@index([ownerId])
+  @@map("api_keys")
+}
+
+// ============================================================================
+// Files
+// ============================================================================
+
+enum FileStorage {
+  local
+  s3
+  gcs
+  azure
+}
+
+enum FileStatus {
+  uploaded
+  processing
+  complete
+  error
+}
+
+model File {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId       String      @db.Uuid
+  chatId        String      @db.Uuid
+  originalName  String
+  mimeType      String
+  size          Int         @default(0)
+  storage       FileStorage @default(local)
+  path          String
+  status        FileStatus  @default(uploaded)
+  metadata      Json        @default("{}")
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  owner         User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  chat          AnalysisChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([chatId])
+  @@index([storage])
+  @@map("files")
+}
+
+// ============================================================================
+// Analysis Chats (one per EDIFACT analysis session)
+// ============================================================================
+
+model AnalysisChat {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  creatorId       String   @db.Uuid
+  apiKeyRef       String   @db.Uuid
+  selectedModel   String
+
+  // JSONB: settings (~80 fields), domainContext (deeply nested EDIFACT analysis)
+  settings        Json     @default("{}")
+  domainContext   Json     @default("{}")
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  creator         User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  apiKey          ApiKey   @relation(fields: [apiKeyRef], references: [id], onDelete: Restrict)
+  messages        AnalysisMessage[]
+  files           File[]
+
+  @@index([creatorId])
+  @@map("analysis_chats")
+}
+
+// ============================================================================
+// Analysis Messages (separate table for performance with large histories)
+// ============================================================================
+
+enum MessageRole {
+  user
+  assistant
+  system
+  tool
+}
+
+model AnalysisMessage {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chatId        String      @db.Uuid
+  role          MessageRole
+  content       String      @default("")
+
+  // File references via separate join table-like field — store as Uuid[] since
+  // these are loose references (no FK constraint, files may live independently)
+  fileIds       String[]    @default([]) @db.Uuid
+
+  // JSONB fields (always read/written as a whole)
+  domainContext Json        @default("{}")
+  metadata      Json        @default("{}")
+  agentPlan     Json?
+  toolCalls     Json        @default("[]")
+  toolResults   Json        @default("[]")
+  usage         Json        @default("{}")
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  chat          AnalysisChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  feedback      MessageFeedback[]
+
+  @@index([chatId])
+  @@index([role])
+  @@index([chatId, createdAt])
+  @@map("analysis_messages")
+}
+
+// ============================================================================
+// Message Feedback (per-message thumbs up/down for like/dislike UI)
+// ============================================================================
+// Likes feed Memory.remember() to grow the RAG knowledge base over time.
+// Dislikes power eval cases and chunk-health analytics (which chunks correlate
+// with bad answers?). Stored separately from AnalysisMessage to keep messages
+// lean and to enable future multi-rater scenarios (team review).
+
+model MessageFeedback {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  messageId         String   @map("message_id") @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+
+  // +1 = like, -1 = dislike. CHECK constraint enforced at DB level.
+  rating            Int      @db.SmallInt
+  comment           String   @default("")
+
+  // Snapshot of RAG chunk IDs that were retrieved for the rated assistant
+  // turn. Lets us correlate dislikes with specific chunks for cleanup.
+  retrievedChunkIds String[] @default([]) @map("retrieved_chunk_ids") @db.Uuid
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt      @map("updated_at")
+
+  message AnalysisMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId],    references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@index([rating])
+  @@map("message_feedback")
+}
+
+// ============================================================================
+// Prompt Presets (system-wide library, not per-user)
+// ============================================================================
+
+enum PromptPresetKind {
+  default
+  manager
+  business
+  tech
+  analyst
+}
+
+model PromptPreset {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  promptPreset  PromptPresetKind @default(default)
+  content       String
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@map("prompt_presets")
+}

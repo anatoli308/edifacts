@@ -14,7 +14,7 @@ export function useChatAuthenticatedRoute(chat) {
         if (loading) return; // Wait for user load
 
         // 1. Not authenticated
-        if (!user || !chat || chat.creatorId !== user._id) {
+        if (!user || !chat || chat.creatorId !== user.id) {
             pushSnackbarMessage('Session does not exist.', 'error');
             router.push('/');
             return;
@@ -23,5 +23,5 @@ export function useChatAuthenticatedRoute(chat) {
         // All good
     }, [user, chat, loading, router]);
 
-    return { isAuthorized: !!user && !!chat && chat.creatorId === user._id, loading };
+    return { isAuthorized: !!user && !!chat && chat.creatorId === user.id, loading };
 }

@@ -1,191 +1,242 @@
 /**
  * Utility Web Tools
  * =================
- * General-purpose tools (Weather, Web Search) used across domains.
- * Deterministic, sandboxed, with explicit JSON schemas.
+ * Real-world web search backed by Tavily (primary) or Brave Search (fallback).
+ *
+ * Why these two:
+ *   - Tavily is the de-facto LLM-agent search provider (clean text snippets +
+ *     optional `answer` summary, 1k req/month free, used as default in
+ *     LangChain/LangGraph). https://docs.tavily.com
+ *   - Brave Search API runs an independent index (not Google-derived) and is
+ *     a robust fallback when Tavily is rate-limited or unreachable.
+ *     https://api-dashboard.search.brave.com/app/documentation/web-search
+ *
+ * Configuration (env):
+ *   WEBSEARCH_PROVIDER    "tavily" | "brave"   (default: auto — Tavily if key set, else Brave)
+ *   TAVILY_API_KEY        Tavily key
+ *   BRAVE_SEARCH_API_KEY  Brave key
+ *
+ * Fails loud with a structured error if no provider is configured — no mocks.
  */
+
+const TAVILY_ENDPOINT = 'https://api.tavily.com/search';
+const BRAVE_ENDPOINT = 'https://api.search.brave.com/res/v1/web/search';
+const DEFAULT_TIMEOUT_MS = 15_000;
+const MAX_RESULTS_CAP = 10;
+
+// ---------------------------------------------------------------------------
+// Private helpers
+// ---------------------------------------------------------------------------
+
+const _pickProvider = () => {
+	const forced = (process.env.WEBSEARCH_PROVIDER || '').toLowerCase().trim();
+	if (forced === 'tavily' || forced === 'brave') return forced;
+	if (process.env.TAVILY_API_KEY) return 'tavily';
+	if (process.env.BRAVE_SEARCH_API_KEY) return 'brave';
+	return null;
+};
+
+const _withTimeout = (promise, ms) =>
+	Promise.race([
+		promise,
+		new Promise((_, reject) =>
+			setTimeout(() => reject(new Error(`Web search timed out after ${ms}ms`)), ms),
+		),
+	]);
 
 /**
- * getWeather: Current weather information for a city from an external API
+ * Tavily — single REST call. Returns ranked results with cleaned content
+ * snippets ready to feed back to the LLM.
+ * https://docs.tavily.com/docs/rest-api/api-reference
  */
-export const getWeather = {
-	name: 'getWeather',
-	description: 'Get current weather information for a city',
-	category: 'utility',
-	module: 'utility',
-	version: '1.0',
-	inputSchema: {
-		type: 'object',
-		properties: {
-			city: {
-				type: 'string',
-				description: 'City name (e.g., "Tokyo", "Berlin")'
-			},
-			country: {
-				type: 'string',
-				description: 'Optional: Country code or name (e.g., "JP", "Japan")'
-			},
-			units: {
-				type: 'string',
-				enum: ['celsius', 'fahrenheit'],
-				description: 'Temperature units (default: celsius)'
-			}
-		},
-		required: ['city']
-	},
-	async execute(args, context) {
-		const { city, country = '', units = 'celsius' } = args;
+const _searchTavily = async ({ query, maxResults, language }) => {
+	const apiKey = process.env.TAVILY_API_KEY;
+	if (!apiKey) throw new Error('TAVILY_API_KEY is not set');
 
-		try {
-			// Mock weather data (replace with real API call when available)
-			const weatherData = {
-				Tokyo: { temp: 12, condition: 'Cloudy', humidity: 65, wind_speed: 8 },
-				Berlin: { temp: 5, condition: 'Rainy', humidity: 78, wind_speed: 12 },
-				'New York': { temp: 8, condition: 'Clear', humidity: 55, wind_speed: 6 },
-				London: { temp: 4, condition: 'Overcast', humidity: 72, wind_speed: 10 },
-				Paris: { temp: 6, condition: 'Rainy', humidity: 80, wind_speed: 9 }
-			};
+	const body = {
+		api_key: apiKey,
+		query,
+		max_results: Math.min(maxResults, MAX_RESULTS_CAP),
+		search_depth: 'basic',
+		include_answer: true,
+		include_raw_content: false,
+		include_images: false,
+	};
 
-			const cityKey = Object.keys(weatherData).find(
-				(c) => c.toLowerCase() === String(city).toLowerCase()
-			);
+	const res = await _withTimeout(
+		fetch(TAVILY_ENDPOINT, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(body),
+		}),
+		DEFAULT_TIMEOUT_MS,
+	);
 
-			if (!cityKey) {
-				return {
-					success: false,
-					error: `Weather data not available for ${city}. Available cities: ${Object.keys(weatherData).join(', ')}`
-				};
-			}
-
-			const data = weatherData[cityKey];
-			const tempUnit = units === 'fahrenheit' ? '°F' : '°C';
-
-			return {
-				success: true,
-				city: cityKey,
-				country: country || 'Unknown',
-				temperature: `${data.temp}${tempUnit}`,
-				condition: data.condition,
-				humidity: `${data.humidity}%`,
-				wind_speed: `${data.wind_speed} km/h`,
-				timestamp: new Date().toISOString()
-			};
-		} catch (error) {
-			return {
-				success: false,
-				error: `Failed to fetch weather: ${error.message}`
-			};
-		}
+	if (!res.ok) {
+		const text = await res.text().catch(() => '');
+		throw new Error(`Tavily error ${res.status}: ${text.slice(0, 300)}`);
 	}
+
+	const data = await res.json();
+	const results = (data.results || []).map((r) => ({
+		title: r.title,
+		url: r.url,
+		snippet: r.content,
+		score: r.score,
+		publishedDate: r.published_date || null,
+	}));
+
+	return {
+		provider: 'tavily',
+		answer: data.answer || null,
+		results,
+		requestedLanguage: language,
+	};
 };
 
 /**
- * webSearch: Simple web search results for a query with playwright (TODO: in a worker with python maybe)
+ * Brave Search — GET with key header.
+ * https://api-dashboard.search.brave.com/app/documentation/web-search
+ */
+const _searchBrave = async ({ query, maxResults, language }) => {
+	const apiKey = process.env.BRAVE_SEARCH_API_KEY;
+	if (!apiKey) throw new Error('BRAVE_SEARCH_API_KEY is not set');
+
+	const params = new URLSearchParams({
+		q: query,
+		count: String(Math.min(maxResults, MAX_RESULTS_CAP)),
+		safesearch: 'moderate',
+	});
+	if (language) params.set('search_lang', language);
+
+	const res = await _withTimeout(
+		fetch(`${BRAVE_ENDPOINT}?${params.toString()}`, {
+			method: 'GET',
+			headers: {
+				Accept: 'application/json',
+				'Accept-Encoding': 'gzip',
+				'X-Subscription-Token': apiKey,
+			},
+		}),
+		DEFAULT_TIMEOUT_MS,
+	);
+
+	if (!res.ok) {
+		const text = await res.text().catch(() => '');
+		throw new Error(`Brave error ${res.status}: ${text.slice(0, 300)}`);
+	}
+
+	const data = await res.json();
+	const items = data?.web?.results || [];
+	const results = items.map((r) => ({
+		title: r.title,
+		url: r.url,
+		snippet: r.description,
+		score: null,
+		publishedDate: r.age || null,
+	}));
+
+	return {
+		provider: 'brave',
+		answer: null,
+		results,
+		requestedLanguage: language,
+	};
+};
+
+// ---------------------------------------------------------------------------
+// Public tool
+// ---------------------------------------------------------------------------
+
+/**
+ * webSearch: real web search via Tavily or Brave.
+ * Includes a per-context guard against runaway re-searching of the same query.
  */
 export const webSearch = {
 	name: 'webSearch',
-	description: 'Search the web for information about a topic',
+	description:
+		'Search the public web for current information. Backed by an industry-standard search API (Tavily / Brave). Returns ranked results with title, URL, and snippet. Tavily additionally returns a short `answer` summary when available. Use this for questions about news, recent events, library/spec versions, or any fact that may have changed since the model was trained. Do NOT use for EDIFACT code lookups — prefer `searchEdifactKnowledge` for that.',
 	category: 'utility',
 	module: 'utility',
-	version: '1.0',
+	version: '2.0',
 	inputSchema: {
 		type: 'object',
 		properties: {
 			query: {
 				type: 'string',
-				description: 'Search query (e.g., "EDIFACT standards", "Tokyo weather")'
+				description:
+					'Search query in natural language (e.g. "current UN/EDIFACT directory version 2024", "EANCOM INVOIC 2002 changes").',
 			},
 			maxResults: {
 				type: 'number',
-				description: 'Maximum number of results (default: 3)',
-				default: 3
+				description: `Maximum number of results to return (1-${MAX_RESULTS_CAP}, default 5).`,
+				default: 5,
 			},
 			language: {
 				type: 'string',
-				description: 'Language code (e.g., "en", "de", "fr")',
-				default: 'en'
-			}
+				description: 'ISO language code for result preference (e.g. "en", "de", "fr"). Default "en".',
+				default: 'en',
+			},
 		},
-		required: ['query']
+		required: ['query'],
 	},
-	async execute(args, context) {
-		const { query, maxResults = 3, language = 'en' } = args;
 
-		// Track search count to prevent infinite loops (stored in context)
-		if (!context._searchCount) {
-			context._searchCount = {};
+	async execute(args, context = {}) {
+		const { query, maxResults = 5, language = 'en' } = args || {};
+
+		if (typeof query !== 'string' || query.trim().length === 0) {
+			return { success: false, error: 'query must be a non-empty string' };
 		}
-		const searchKey = String(query).toLowerCase().substring(0, 30);
+
+		// Anti-loop: prevent the agent from re-searching the same query repeatedly
+		const searchKey = query.toLowerCase().trim().slice(0, 64);
+		context._searchCount = context._searchCount || {};
 		context._searchCount[searchKey] = (context._searchCount[searchKey] || 0) + 1;
-		
-		// Hard limit: max 2 searches for similar queries
 		if (context._searchCount[searchKey] > 2) {
 			return {
 				success: false,
-				error: `You have already searched for "${query}" ${context._searchCount[searchKey]} times. Please use the existing results instead of searching again.`,
-				previousSearchCount: context._searchCount[searchKey],
-				hint: 'Analyze the previous search results and provide your answer.'
+				error: `Already searched "${query}" ${context._searchCount[searchKey]} times — use the previous results instead of re-querying.`,
+				hint: 'Analyse prior tool output and answer the user.',
 			};
 		}
 
-		try {
-			// Enhanced mock search results with more detailed content
-			const mockResults = {
-				EDIFACT: [
-					{
-						title: 'UN/EDIFACT - Electronic Data Interchange für Administration, Commerce and Transport',
-						url: 'https://de.wikipedia.org/wiki/EDIFACT',
-						snippet:
-							'UN/EDIFACT ist ein internationaler Standard der Vereinten Nationen für den elektronischen Datenaustausch (EDI). Entwickelt in den 1980er Jahren, wird EDIFACT weltweit für B2B-Transaktionen verwendet, besonders in Logistik, Handel und Verwaltung. Der Standard definiert Nachrichtentypen wie ORDERS (Bestellung), INVOIC (Rechnung) und DESADV (Lieferavis).'
-					},
-					{
-						title: 'EDIFACT Nachrichtenstruktur und Segmente',
-						url: 'https://www.edifact.de/standard',
-						snippet:
-							'EDIFACT-Nachrichten bestehen aus Segmenten, die jeweils mit einem 3-stelligen Tag beginnen (z.B. UNH für Header, DTM für Datum/Zeit, NAD für Adressen). Jedes Segment enthält Datenelemente, getrennt durch + und :. Die Syntax ist hierarchisch und ermöglicht standardisierte Geschäftsdokumente zwischen verschiedenen Systemen.'
-					},
-					{
-						title: 'EDIFACT vs. XML/JSON - Moderne Alternativen',
-						url: 'https://www.unece.org/trade/untdid',
-						snippet:
-							'Während EDIFACT als Legacy-Standard gilt, wird er noch immer in vielen Branchen eingesetzt. Moderne Alternativen wie XML (ebXML) oder JSON-basierte APIs bieten bessere Lesbarkeit, sind aber nicht immer kompatibel mit bestehenden EDIFACT-Systemen. Die UN/CEFACT pflegt EDIFACT-Verzeichnisse und publiziert Updates.'
-					}
-				],
-				default: [
-					{
-						title: `Suchergebnisse für "${query}"`,
-						url: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
-						snippet: `Dies ist ein Mock-Ergebnis für "${query}". In der Produktion würde hier eine echte Web-Suche (Google/Bing API) durchgeführt. Die Ergebnisse würden relevante Websites, Artikel und Dokumente zum Thema enthalten.`
-					}
-				]
+		const provider = _pickProvider();
+		if (!provider) {
+			return {
+				success: false,
+				error:
+					'No web search provider configured. Set TAVILY_API_KEY (preferred) or BRAVE_SEARCH_API_KEY in the environment.',
+				hint: 'Get a free Tavily key at https://tavily.com — 1000 free searches per month.',
 			};
+		}
 
-			const matchedKey = Object.keys(mockResults).find((key) =>
-				String(query).toLowerCase().includes(key.toLowerCase())
-			);
-			const results = mockResults[matchedKey || 'default'];
-			
-			// Add more context to help LLM understand the results
-			const resultSummary = results.map((r, i) => `${i+1}. ${r.title}: ${r.snippet.substring(0, 100)}...`).join('\n');
+		const cappedMax = Math.max(1, Math.min(Number(maxResults) || 5, MAX_RESULTS_CAP));
+
+		try {
+			const payload =
+				provider === 'tavily'
+					? await _searchTavily({ query, maxResults: cappedMax, language })
+					: await _searchBrave({ query, maxResults: cappedMax, language });
 
 			return {
 				success: true,
+				provider: payload.provider,
 				query,
-				language,
-				resultCount: results.length,
-				results: results.slice(0, maxResults),
-				summary: `Found ${results.length} results for "${query}". Key findings:\n${resultSummary}`,
+				language: payload.requestedLanguage,
+				answer: payload.answer,
+				resultCount: payload.results.length,
+				results: payload.results,
 				timestamp: new Date().toISOString(),
-				note: 'Mock search results for testing. You have enough information to answer - do NOT search again!'
 			};
 		} catch (error) {
 			return {
 				success: false,
-				error: `Search failed: ${error.message}`
+				provider,
+				error: `Web search failed: ${error?.message || String(error)}`,
 			};
 		}
-	}
+	},
 };
 
-export default { getWeather, webSearch };
+export default { webSearch };
 

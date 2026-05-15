@@ -1,0 +1,179 @@
+﻿<TSNEWRX xmlns="http://schemas.datacontract.org/2004/07/EdiFabric.Templates.Script106" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+  <ErrorContext xmlns="http://schemas.datacontract.org/2004/07/EdiFabric.Core.Model.Edi" xmlns:a="http://schemas.datacontract.org/2004/07/EdiFabric.Core.Model.Edi.ErrorContexts">
+    <a:Message i:nil="true" />
+    <a:Codes xmlns:b="http://schemas.datacontract.org/2004/07/EdiFabric.Core.ErrorCodes" />
+    <a:ControlNumber>110072</a:ControlNumber>
+    <a:Edition>010</a:Edition>
+    <a:Errors />
+    <a:HasErrors>false</a:HasErrors>
+    <a:Index>2</a:Index>
+    <a:Name>NEWRX</a:Name>
+    <a:Release>006</a:Release>
+    <a:ValidatedSegmentsCount>0</a:ValidatedSegmentsCount>
+  </ErrorContext>
+  <COO i:nil="true" />
+  <DRULoop>
+    <DRU>
+      <DoNotFillProfileFlag_13 i:nil="true" />
+      <DrugCoverageStatusCode_11 i:nil="true" xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
+      <E034_15 i:nil="true" />
+      <FreeText_09 i:nil="true" xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
+      <I001_08 i:nil="true" />
+      <I006_04>
+        <I006>
+          <DateTimePeriodFormatqualifier_03>102</DateTimePeriodFormatqualifier_03>
+          <DateTimePeriodQualifier_01>85</DateTimePeriodQualifier_01>
+          <DateTimePeriod_02>19971001</DateTimePeriod_02>
+        </I006>
+        <I006>
+          <DateTimePeriodFormatqualifier_03>804</DateTimePeriodFormatqualifier_03>
+          <DateTimePeriodQualifier_01>ZDS</DateTimePeriodQualifier_01>
+          <DateTimePeriod_02>30</DateTimePeriod_02>
+        </I006>
+      </I006_04>
+      <I006_14 i:nil="true" />
+      <I009_02>
+        <I009>
+          <CodeListQualifier_03>38</CodeListQualifier_03>
+          <PotencyUnitCode_05>C48542</PotencyUnitCode_05>
+          <QuantityQualifier_01 i:nil="true" />
+          <Quantity_02>60</Quantity_02>
+          <SourceCodeList_04>AC</SourceCodeList_04>
+        </I009>
+      </I009_02>
+      <I009_06>
+        <I009>
+          <CodeListQualifier_03 i:nil="true" />
+          <PotencyUnitCode_05 i:nil="true" />
+          <QuantityQualifier_01>R</QuantityQualifier_01>
+          <Quantity_02>1</Quantity_02>
+          <SourceCodeList_04 i:nil="true" />
+        </I009>
+      </I009_06>
+      <I013_01>
+        <CodeListQualifier_05 i:nil="true" />
+        <CodeListQualifier_07 i:nil="true" />
+        <CodeListResponsibleAgency_04 i:nil="true" />
+        <DEASchedule_17 i:nil="true" />
+        <FreeText_06>240</FreeText_06>
+        <ItemDescriptionIdentification_01>P</ItemDescriptionIdentification_01>
+        <ItemDescription_02>CALAN SR 240MG</ItemDescription_02>
+        <ItemDescription_10 i:nil="true" />
+        <ItemDescription_11 i:nil="true" />
+        <ItemDescription_12 i:nil="true" />
+        <ItemFormCode_14>C42998</ItemFormCode_14>
+        <ItemNumber_03 i:nil="true" />
+        <ItemStrengthCode_16>C28253</ItemStrengthCode_16>
+        <ReferenceNumber_08 i:nil="true" />
+        <ReferenceQualifier_09 i:nil="true" />
+        <SourceCodeList_13>AA</SourceCodeList_13>
+        <SourceCodeList_15>AB</SourceCodeList_15>
+      </I013_01>
+      <I014_03>
+        <DosageIdentification_01 i:nil="true" />
+        <Dosage_02>1 TID -TAKE ONE TABLET TWO TIMES A DAY UNTILGONE</Dosage_02>
+        <Dosage_03 i:nil="true" />
+      </I014_03>
+      <I015_07 i:nil="true" />
+      <NeededNoLaterThanReason_16 i:nil="true" />
+      <PriorAuthorizationStatus_12 i:nil="true" />
+      <ProductServiceSubstitution_05>0</ProductServiceSubstitution_05>
+      <S018_10 i:nil="true" />
+    </DRU>
+    <SIG i:nil="true" />
+  </DRULoop>
+  <OBS i:nil="true" />
+  <PTT>
+    <CenturyDate_02>19541225</CenturyDate_02>
+    <Gender_04>F</Gender_04>
+    <I001_05>
+      <I001>
+        <ReferenceNumber_01>333445555</ReferenceNumber_01>
+        <ReferenceQualifier_02>SY</ReferenceQualifier_02>
+      </I001>
+    </I001_05>
+    <I002_03>
+      <FirstName_02>MARY</FirstName_02>
+      <MiddleName_03 i:nil="true" />
+      <NamePrefix_05 i:nil="true" />
+      <NameSuffix_04 i:nil="true" />
+      <PartyName_01>SMITH</PartyName_01>
+    </I002_03>
+    <I004_06 i:nil="true" />
+    <I016_07 i:nil="true" />
+    <IndividivualRelationship_01 i:nil="true" />
+    <S020_08 i:nil="true" />
+  </PTT>
+  <PVD>
+    <PVD>
+      <I001_02>
+        <I001>
+          <ReferenceNumber_01>7701630</ReferenceNumber_01>
+          <ReferenceQualifier_02>D3</ReferenceQualifier_02>
+        </I001>
+      </I001_02>
+      <I002_05 i:nil="true" />
+      <I002_10 i:nil="true" />
+      <I004_08 i:nil="true" />
+      <I007_04 i:nil="true" />
+      <I012_03 i:nil="true" />
+      <I016_09>
+        <CodeListQualifier_02>TE</CodeListQualifier_02>
+        <CommunicationNumber_01>6152205656</CommunicationNumber_01>
+      </I016_09>
+      <PartyName_07>MAIN STREET PHARMACY</PartyName_07>
+      <PostcodeIdentification_06 i:nil="true" />
+      <ProviderCoded_01>P1</ProviderCoded_01>
+    </PVD>
+    <PVD>
+      <I001_02>
+        <I001>
+          <ReferenceNumber_01>6666666</ReferenceNumber_01>
+          <ReferenceQualifier_02>0B</ReferenceQualifier_02>
+        </I001>
+      </I001_02>
+      <I002_05>
+        <FirstName_02>MARK</FirstName_02>
+        <MiddleName_03 i:nil="true" />
+        <NamePrefix_05 i:nil="true" />
+        <NameSuffix_04 i:nil="true" />
+        <PartyName_01>JONES</PartyName_01>
+      </I002_05>
+      <I002_10 i:nil="true" />
+      <I004_08 i:nil="true" />
+      <I007_04 i:nil="true" />
+      <I012_03 i:nil="true" />
+      <I016_09>
+        <CodeListQualifier_02>TE</CodeListQualifier_02>
+        <CommunicationNumber_01>6152219800</CommunicationNumber_01>
+      </I016_09>
+      <PartyName_07 i:nil="true" />
+      <PostcodeIdentification_06 i:nil="true" />
+      <ProviderCoded_01>PC</ProviderCoded_01>
+    </PVD>
+  </PVD>
+  <REQ i:nil="true" />
+  <UIH xmlns:a="http://schemas.datacontract.org/2004/07/EdiFabric.Core.Model.Edi.Ncpdp">
+    <a:DATEANDTIME_05>
+      <a:Date_01>19971001</a:Date_01>
+      <a:TimeOffset_03 i:nil="true" />
+      <a:Time_02>081322</a:Time_02>
+    </a:DATEANDTIME_05>
+    <a:DIALOGUEREFERENCE_03 i:nil="true" />
+    <a:MESSAGEIDENTIFIER_01>
+      <a:AssociationAssignedCode_06 i:nil="true" />
+      <a:ControllingAgency_05 i:nil="true" />
+      <a:MessageFunction_04>NEWRX</a:MessageFunction_04>
+      <a:MessageReleaseNumber_03>006</a:MessageReleaseNumber_03>
+      <a:MessageType_01>SCRIPT</a:MessageType_01>
+      <a:MessageVersionNumber_02>010</a:MessageVersionNumber_02>
+    </a:MESSAGEIDENTIFIER_01>
+    <a:MessageReferenceNumber_02>110072</a:MessageReferenceNumber_02>
+    <a:STATUSOFTRANSFER_04 i:nil="true" />
+    <a:TestIndicator_06 i:nil="true" />
+  </UIH>
+  <UIT xmlns:a="http://schemas.datacontract.org/2004/07/EdiFabric.Core.Model.Edi.Ncpdp">
+    <a:MessageReferenceNumber_01>110072</a:MessageReferenceNumber_01>
+    <a:NumberOfSegmentsInMessage_02>6</a:NumberOfSegmentsInMessage_02>
+  </UIT>
+</TSNEWRX>

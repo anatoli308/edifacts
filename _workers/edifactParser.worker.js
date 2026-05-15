@@ -4,14 +4,14 @@ import { buildAnalysis } from './edifactAnalysisBuilder.js';
 
 parentPort.on('message', async ({ chat, file, user }) => {
   try {
-    console.log(`[Worker ${chat._id}] Starting EDIFACT analysis from: '${file.path}' for user: ${user._id}`);
+    console.log(`[Worker ${chat.id}] Starting EDIFACT analysis from: '${file.path}' for user: ${user.id}`);
 
     const fileSize = statSync(file.path).size;
 
     // Progress: File reading
     parentPort.postMessage({
       type: 'progress',
-      chatId: chat._id,
+      chatId: chat.id,
       percent: 10,
       message: `Reading file (${(fileSize / 1024).toFixed(1)} KB)...`,
     });
@@ -21,7 +21,7 @@ parentPort.on('message', async ({ chat, file, user }) => {
 
     parentPort.postMessage({
       type: 'progress',
-      chatId: chat._id,
+      chatId: chat.id,
       percent: 30,
       message: 'Parsing EDIFACT segments...',
     });
@@ -44,16 +44,16 @@ parentPort.on('message', async ({ chat, file, user }) => {
 
     parentPort.postMessage({
       type: 'progress',
-      chatId: chat._id,
+      chatId: chat.id,
       percent: 80,
       message: `Validated ${analysis.segmentCount} segments (${analysis.validation.errorCount} errors, ${analysis.validation.warningCount} warnings)`,
     });
 
-    console.log(`[Worker ${chat._id}] Analysis complete: ${analysis.segmentCount} segments, ${analysis.parties.length} parties, status: ${analysis.status}`);
+    console.log(`[Worker ${chat.id}] Analysis complete: ${analysis.segmentCount} segments, ${analysis.parties.length} parties, status: ${analysis.status}`);
 
     parentPort.postMessage({
       type: 'progress',
-      chatId: chat._id,
+      chatId: chat.id,
       percent: 99,
       message: 'Building analysis result...',
     });
@@ -61,7 +61,7 @@ parentPort.on('message', async ({ chat, file, user }) => {
     // Send complete result with full analysis
     parentPort.postMessage({
       type: 'complete',
-      chatId: chat._id,
+      chatId: chat.id,
       analysis, // Full EdifactAnalysis schema-compatible object
       result: {
         // Backward-compatible result for UI
@@ -86,10 +86,10 @@ parentPort.on('message', async ({ chat, file, user }) => {
       },
     });
   } catch (error) {
-    console.error(`[Worker ${chat._id}] Error:`, error);
+    console.error(`[Worker ${chat.id}] Error:`, error);
     parentPort.postMessage({
       type: 'error',
-      chatId: chat._id,
+      chatId: chat.id,
       error: error.message,
     });
   }

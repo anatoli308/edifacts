@@ -60,7 +60,7 @@ function DrawerSessionItem({ session }) {
                     color="inherit" 
                     as={Link}
                     sx={{ width: "100%" }}
-                    href={`/a/${session._id}`} 
+                    href={`/a/${session.id}`} 
                     underline="none"
                 >
                     <ListItemButton as={Button} color='inherit'>

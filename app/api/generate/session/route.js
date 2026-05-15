@@ -5,21 +5,16 @@ import { NextResponse } from 'next/server';
 import path from 'path';
 import { Readable } from 'stream';
 import { Worker } from 'worker_threads';
+import { randomUUID } from 'crypto';
 
-//app imports
-import { getAuthenticatedUser,createGuestUser } from '@/lib/auth';
-import { loadDefaultSystemApiKey } from '@/app/lib/ai/providers/index.js';
-import AnalysisChat from '@/app/models/shared/AnalysisChat';
-import User from '@/app/models/shared/User';
-import dbConnect from '@/app/lib/dbConnect';
-import File from '@/app/models/shared/File';
-import ApiKey from '@/app/models/shared/ApiKey';
+import { getAuthenticatedUser, createGuestUser } from '@/lib/auth';
+import { loadDefaultSystemApiKey } from '@/lib/ai/providers/index.js';
+import { userRepo, apiKeyRepo, chatRepo, fileRepo } from '@/lib/db/repositories';
 
 // ==================== INITIAL SETUP ====================
 
 const jobs = new Map();
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
-const ALLOWED_EXTENSIONS = ['.edi', '.edifact', '.txt'];
 
 // ==================== VALIDATION ====================
 
@@ -31,43 +26,32 @@ function validateContentType(req) {
 }
 
 function validateFileExtension(filename) {
-  //TODO: for now we accept them all
-  return true; //ALLOWED_EXTENSIONS.some(ext => filename.toLowerCase().endsWith(ext));
+  // TODO: enforce extension whitelist
+  return true;
 }
 
 // ==================== HELPERS ====================
 
-// Hilfsfunktion zur Konvertierung WebAPI Stream → Node.js-Stream
 function webStreamToNodeStream(webStream) {
   const reader = webStream.getReader();
   return new Readable({
     async read() {
       const { done, value } = await reader.read();
-      if (done) {
-        this.push(null);
-      } else {
-        this.push(Buffer.from(value));
-      }
+      if (done) this.push(null);
+      else this.push(Buffer.from(value));
     }
   });
 }
 
-// Atomare File-Write-Funktion mit Promise-Wrapper
-async function writeFileAtomically(stream, targetPath, fileModel) {
+async function writeFileAtomically(stream, targetPath, sizeRef) {
   return new Promise((resolve, reject) => {
     const ws = createWriteStream(targetPath);
-
-    stream.on('data', chunk => {
-      fileModel.size += chunk.length;
-    });
-
+    stream.on('data', chunk => { sizeRef.size += chunk.length; });
     stream.pipe(ws);
-
     ws.on('close', () => {
-      console.log(`[API] File saved to: ${targetPath} (${fileModel.size} bytes)`);
+      console.log(`[API] File saved to: ${targetPath} (${sizeRef.size} bytes)`);
       resolve();
     });
-
     ws.on('error', (err) => {
       console.error('[API] File write error:', err.message);
       reject(err);
@@ -77,83 +61,84 @@ async function writeFileAtomically(stream, targetPath, fileModel) {
 
 // ==================== USER & ENTITY CREATION ====================
 
+/**
+ * Creates the trio (chat, file, optional system api key) in a transaction.
+ * Pre-generates UUIDs to resolve the circular FK between Chat.fileId (via
+ * domainContext.edifact.fileId) and File.chatId.
+ *
+ * Caller must already have a persisted authenticatedUser (guest or real).
+ */
 async function createEntities(authenticatedUser, fileInfo, edifactContext) {
-  await dbConnect();
-  const newFile = new File({
-    ownerId: authenticatedUser._id,
-    originalName: fileInfo.filename || 'upload.edi',
-    mimeType: fileInfo.mimeType || 'application/octet-stream',
-    metadata: {}
-  });
+  const chatId = randomUUID();
+  const fileId = randomUUID();
+  const filePath = path.join(UPLOAD_DIR, `${chatId}.edi`);
 
-  let apiKeyForUser = await ApiKey.findOne({ ownerId: authenticatedUser._id });
-  if (!apiKeyForUser) {
-    apiKeyForUser = await loadDefaultSystemApiKey();
+  // ApiKey: prefer user's own; otherwise persist the system default for them
+  let apiKey = await apiKeyRepo.findFirstForOwner(authenticatedUser.id);
+  let createdApiKeyId = null;
+  if (!apiKey) {
+    const systemKey = await loadDefaultSystemApiKey();
+    apiKey = await apiKeyRepo.create({
+      ownerId: authenticatedUser.id,
+      provider: systemKey.provider,
+      name: systemKey.name,
+      encryptedKey: systemKey.encryptedKey,
+      baseUrl: systemKey.baseUrl,
+      models: systemKey.models || [],
+    });
+    createdApiKeyId = apiKey.id;
   }
 
-  const chat = new AnalysisChat({
-    name: 'My EDIFACT Analysis', // TODO: LLM generieren lassen basierend auf Datei- und Kontextinformationen
-    creatorId: authenticatedUser._id.toString(),
-    selectedModel: 'gpt-oss:120b-cloud', // TODO: model selected from apiKeyForUser
-    apiKeyRef: apiKeyForUser._id,
-    domainContext: {
-      edifact: {
-        subset: edifactContext.subset,
-        fileId: newFile._id,
-        messageType: edifactContext.messageType,
-        releaseVersion: edifactContext.releaseVersion,
-        standardFamily: edifactContext.standardFamily,
-      }
+  const domainContext = {
+    edifact: {
+      subset: edifactContext.subset,
+      fileId,
+      messageType: edifactContext.messageType,
+      releaseVersion: edifactContext.releaseVersion,
+      standardFamily: edifactContext.standardFamily,
     }
+  };
+
+  const chat = await chatRepo.create({
+    id: chatId,
+    name: 'My EDIFACT Analysis',
+    creatorId: authenticatedUser.id,
+    selectedModel: 'gpt-oss:120b-cloud',
+    apiKeyRef: apiKey.id,
+    settings: {},
+    domainContext,
   });
 
-  const jobId = chat._id.toString();
-  const filePath = path.join(UPLOAD_DIR, `${jobId}.edi`);
-
-  newFile.path = filePath;
-  newFile.chatId = chat._id;
-  newFile.status = 'processing';
-
-  // WICHTIG: Reihenfolge der Saves (ohne Transaction)
-  // 1. User (falls neu)
-  const isNewUser = authenticatedUser.isNew;
-  if (isNewUser) {
-    await authenticatedUser.save();
-  }
-
-  // 2. ApiKey (falls neu)
-  const isNewApiKey = apiKeyForUser.isNew;
-  if (isNewApiKey) {
-    await apiKeyForUser.save();
-  }
-
-  // 3. Chat (braucht User + ApiKey)
-  await chat.save();
-
-  // 4. File (braucht Chat)
-  await newFile.save();
-
-  if (isNewUser) {
-    // 5. Auth-Token generieren
-    await authenticatedUser.generateAuthToken('web');
-  }
+  const newFile = await fileRepo.create({
+    id: fileId,
+    ownerId: authenticatedUser.id,
+    chatId,
+    originalName: fileInfo.filename || 'upload.edi',
+    path: filePath,
+    size: 0,
+    mimetype: fileInfo.mimeType || 'application/octet-stream',
+    storage: 'local',
+    status: 'processing',
+    metadata: { storageName: `${chatId}.edi` },
+  });
 
   return {
-    chat, newFile, createdIds: {
-      userId: isNewUser ? authenticatedUser._id : null,
-      apiKeyId: isNewApiKey ? apiKeyForUser._id : null,
-      chatId: chat._id,
-      fileId: newFile._id
-    }
+    chat,
+    newFile,
+    createdIds: {
+      apiKeyId: createdApiKeyId,
+      chatId: chat.id,
+      fileId: newFile.id,
+    },
   };
 }
 
 // ==================== WORKER MANAGEMENT ====================
 
-function setupWorker(newFile, chat, authenticatedUser, resolve, reject) {
+function setupWorker(newFile, chat, authenticatedUser, authToken, resolve, reject) {
   const workerPath = path.resolve(process.cwd(), '_workers/edifactParser.worker.js');
   const worker = new Worker(workerPath);
-  const jobId = chat._id.toString();
+  const jobId = chat.id;
 
   jobs.set(jobId, {
     jobId,
@@ -164,8 +149,6 @@ function setupWorker(newFile, chat, authenticatedUser, resolve, reject) {
   });
 
   worker.on('message', async (msg) => {
-    //console.log(`[API] Message from worker for job ${jobId}:`, msg);
-
     if (msg.type === 'progress' && global.io) {
       global.io.to(`job:${jobId}`).emit('progress', {
         jobId, percent: msg.percent, message: msg.message
@@ -178,17 +161,15 @@ function setupWorker(newFile, chat, authenticatedUser, resolve, reject) {
         job.result = msg.result;
         job.completedAt = new Date();
       }
-      newFile.status = 'complete';
-      await newFile.save();
+      try {
+        await fileRepo.update(newFile.id, { status: 'complete' });
+      } catch (err) {
+        console.error(`[API] Failed to update file status:`, err.message);
+      }
 
-      // Save _analysis to AnalysisChat
       if (msg.analysis) {
         try {
-          await AnalysisChat.findByIdAndUpdate(
-            jobId,
-            { $set: { 'domainContext.edifact._analysis': msg.analysis } },
-            { new: true }
-          );
+          await chatRepo.setEdifactAnalysis(jobId, msg.analysis);
           console.log(`[API] Saved _analysis to chat ${jobId} (${msg.analysis.segmentCount} segments, status: ${msg.analysis.status})`);
         } catch (analysisError) {
           console.error(`[API] Failed to save _analysis for chat ${jobId}:`, analysisError.message);
@@ -206,9 +187,14 @@ function setupWorker(newFile, chat, authenticatedUser, resolve, reject) {
         job.status = 'error';
         job.error = msg.error;
       }
-      newFile.status = 'error';
-      newFile.metadata.error = msg.error;
-      await newFile.save();
+      try {
+        await fileRepo.update(newFile.id, {
+          status: 'error',
+          metadata: { ...(newFile.metadata || {}), error: msg.error },
+        });
+      } catch (err) {
+        console.error('[API] Failed to update file error status:', err.message);
+      }
 
       if (global.io) {
         global.io.to(`job:${jobId}`).emit('error', { jobId, error: msg.error });
@@ -224,9 +210,14 @@ function setupWorker(newFile, chat, authenticatedUser, resolve, reject) {
       job.status = 'error';
       job.error = error.message;
     }
-    newFile.status = 'error';
-    newFile.metadata.error = error.message;
-    await newFile.save();
+    try {
+      await fileRepo.update(newFile.id, {
+        status: 'error',
+        metadata: { ...(newFile.metadata || {}), error: error.message },
+      });
+    } catch (err) {
+      console.error('[API] Failed to update file error status:', err.message);
+    }
 
     if (global.io) {
       global.io.to(`job:${jobId}`).emit('error', { jobId, error: error.message });
@@ -234,16 +225,16 @@ function setupWorker(newFile, chat, authenticatedUser, resolve, reject) {
   });
 
   worker.postMessage({
-    chat: chat.toJSON(),
-    file: newFile.toJSON(),
-    user: authenticatedUser.toJSON()
+    chat,
+    file: newFile,
+    user: userRepo.toPublicJSON(authenticatedUser),
   });
 
   resolve(NextResponse.json({
     ok: true,
     jobId,
     message: 'Processing started. Subscribe to job updates via WebSocket.',
-    token: authenticatedUser.tokens[authenticatedUser.tokens.length - 1].token,
+    token: authToken,
   }, { status: 202 }));
 }
 
@@ -252,41 +243,21 @@ function setupWorker(newFile, chat, authenticatedUser, resolve, reject) {
 async function handleManualRollback(createdIds, reason) {
   console.log(`[API] Manual rollback: ${reason}`);
 
-  // Rollback in umgekehrter Reihenfolge: File → Chat → ApiKey → User
+  // Order: File → Chat → ApiKey. User rollback omitted; guest users persist
+  // independently and may already have other associations by the time we get
+  // here. Cascade deletes handle Chat→Message/File, so File deletion alone is
+  // belt-and-suspenders if the chat is going away.
   if (createdIds.fileId) {
-    try {
-      await File.deleteOne({ _id: createdIds.fileId });
-      console.log(`[API] Rolled back file ${createdIds.fileId}`);
-    } catch (err) {
-      console.error('[API] Error rolling back file:', err.message);
-    }
+    try { await fileRepo.remove(createdIds.fileId); }
+    catch (err) { console.error('[API] Rollback file:', err.message); }
   }
-
   if (createdIds.chatId) {
-    try {
-      await AnalysisChat.deleteOne({ _id: createdIds.chatId });
-      console.log(`[API] Rolled back chat ${createdIds.chatId}`);
-    } catch (err) {
-      console.error('[API] Error rolling back chat:', err.message);
-    }
+    try { await chatRepo.remove(createdIds.chatId); }
+    catch (err) { console.error('[API] Rollback chat:', err.message); }
   }
-
   if (createdIds.apiKeyId) {
-    try {
-      await ApiKey.deleteOne({ _id: createdIds.apiKeyId });
-      console.log(`[API] Rolled back apiKey ${createdIds.apiKeyId}`);
-    } catch (err) {
-      console.error('[API] Error rolling back apiKey:', err.message);
-    }
-  }
-
-  if (createdIds.userId) {
-    try {
-      await User.deleteOne({ _id: createdIds.userId });
-      console.log(`[API] Rolled back user ${createdIds.userId}`);
-    } catch (err) {
-      console.error('[API] Error rolling back user:', err.message);
-    }
+    try { await apiKeyRepo.remove(createdIds.apiKeyId); }
+    catch (err) { console.error('[API] Rollback apiKey:', err.message); }
   }
 }
 
@@ -304,22 +275,18 @@ async function cleanupFile(filePath) {
 // ==================== MAIN HANDLER ====================
 export async function POST(req) {
   return new Promise(async (resolve, reject) => {
-    let createdIds = { userId: null, apiKeyId: null, chatId: null, fileId: null };
+    let createdIds = { apiKeyId: null, chatId: null, fileId: null };
 
     try {
-      // 1. Validierung
       validateContentType(req);
-
       if (!req.body) {
         return resolve(NextResponse.json({ ok: false, error: "No body" }, { status: 400 }));
       }
 
-      // 2. Upload-Verzeichnis sicherstellen
       if (!existsSync(UPLOAD_DIR)) {
         await mkdir(UPLOAD_DIR, { recursive: true });
       }
 
-      // 3. Busboy setup
       const busboy = Busboy({ headers: Object.fromEntries(req.headers) });
       const edifactContext = {
         standardFamily: null,
@@ -338,20 +305,20 @@ export async function POST(req) {
       });
 
       busboy.on('file', async (fieldname, file, fileInfo) => {
-
         try {
-          // 4. User authentifizieren/erstellen
           const userId = req.headers.get('x-user-id');
           const token = req.headers.get('x-auth-token');
           let authenticatedUser = await getAuthenticatedUser(userId, token);
-          console.log('[API] authenticated user:', authenticatedUser ? authenticatedUser._id.toString() : 'unknown');
-          console.log('[API] edifactContext from form data:', edifactContext);
+          let issuedToken = token;
 
           if (!authenticatedUser) {
             authenticatedUser = await createGuestUser(backgroundMode);
+            issuedToken = await userRepo.issueToken(authenticatedUser.id, 'web');
           }
 
-          // 5. File-Extension validieren
+          console.log('[API] authenticated user:', authenticatedUser.id);
+          console.log('[API] edifactContext from form data:', edifactContext);
+
           const filename = fileInfo.filename || 'upload.edi';
           if (!validateFileExtension(filename)) {
             file.resume();
@@ -361,19 +328,20 @@ export async function POST(req) {
             }, { status: 400 }));
           }
 
-          // 6. Entitäten erstellen und speichern
           const { chat, newFile, createdIds: ids } = await createEntities(
             authenticatedUser,
             fileInfo,
             edifactContext
           );
           createdIds = ids;
+          console.log(`[API] Entities saved for job ${chat.id}`);
 
-          console.log(`[API] Entities saved for job ${chat._id}`);
-
-          // 7. File schreiben
+          // Stream upload to disk; track size in a mutable ref then persist.
+          const sizeRef = { size: 0 };
           try {
-            await writeFileAtomically(file, newFile.path, newFile);
+            await writeFileAtomically(file, newFile.path, sizeRef);
+            await fileRepo.update(newFile.id, { size: sizeRef.size });
+            newFile.size = sizeRef.size;
           } catch (writeErr) {
             console.error('[API] File write failed:', writeErr.message);
             await cleanupFile(newFile.path);
@@ -384,8 +352,7 @@ export async function POST(req) {
             }, { status: 500 }));
           }
 
-          // 8. Worker starten
-          setupWorker(newFile, chat, authenticatedUser, resolve, reject);
+          setupWorker(newFile, chat, authenticatedUser, issuedToken, resolve, reject);
 
         } catch (err) {
           await handleManualRollback(createdIds, 'file processing error');
@@ -405,7 +372,6 @@ export async function POST(req) {
         console.log('[API] Busboy finished processing.');
       });
 
-      // 9. Stream starten
       webStreamToNodeStream(req.body).pipe(busboy);
 
     } catch (err) {

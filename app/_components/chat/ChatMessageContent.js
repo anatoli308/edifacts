@@ -598,8 +598,10 @@ const _markdownComponents = {
     },
 };
 
-function ChatMessageContent({ content }) {
+function ChatMessageContent({ content, sessionId, messageId }) {
     const [copied, setCopied] = React.useState(false);
+    const [rating, setRating] = React.useState(content?.feedback?.rating ?? null);
+    const [feedbackBusy, setFeedbackBusy] = React.useState(false);
 
     // Normalize Unicode dashes/hyphens that break KaTeX
     const normalizedText = _stripPatternsFromTableRows(
@@ -614,6 +616,55 @@ function ChatMessageContent({ content }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 5000);
     };
+
+    const _canRate = Boolean(sessionId && messageId);
+
+    /**
+     * Toggle thumbs up / down. The server handles set / switch / clear in one POST,
+     * but we mirror that locally for an optimistic UI and roll back on error.
+     */
+    const _submitRating = async (nextRating) => {
+        if (!_canRate || feedbackBusy) return;
+        const previous = rating;
+        // Optimistic: clicking the same rating clears it; otherwise apply new one.
+        const optimistic = previous === nextRating ? null : nextRating;
+        setRating(optimistic);
+        setFeedbackBusy(true);
+        try {
+            const url = `/api/chats/${sessionId}/messages/${messageId}/feedback`;
+            const res = await fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    rating: nextRating,
+                    retrievedChunkIds: Array.isArray(content?.retrievedChunkIds)
+                        ? content.retrievedChunkIds
+                        : [],
+                }),
+            });
+            if (!res.ok) throw new Error(`Feedback failed (${res.status})`);
+            const data = await res.json();
+            setRating(data?.rating ?? null);
+        } catch (err) {
+            console.error('[Feedback] submit failed:', err);
+            setRating(previous);
+        } finally {
+            setFeedbackBusy(false);
+        }
+    };
+
+    const handleLike = () => _submitRating(1);
+    const handleDislike = () => _submitRating(-1);
+
+    const likeColor = rating === 1 ? 'success.main' : 'text.primary';
+    const dislikeColor = rating === -1 ? 'error.main' : 'text.primary';
+    const likeTooltip = !_canRate
+        ? 'Rating wird nach Abschluss verfügbar'
+        : rating === 1 ? 'Like entfernen' : 'Good response';
+    const dislikeTooltip = !_canRate
+        ? 'Rating wird nach Abschluss verfügbar'
+        : rating === -1 ? 'Dislike entfernen' : 'Bad response';
 
     return (
         <>
@@ -638,15 +689,35 @@ function ChatMessageContent({ content }) {
                             )}
                         </Button>
                     </Tooltip>
-                    <Tooltip title="Good Response">
-                        <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
-                            <Iconify icon="bi:hand-thumbs-up" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
-                        </Button>
+                    <Tooltip title={likeTooltip}>
+                        <span>
+                            <Button
+                                sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }}
+                                size="small"
+                                disabled={!_canRate || feedbackBusy}
+                                onClick={handleLike}
+                            >
+                                <Iconify
+                                    icon={rating === 1 ? 'bi:hand-thumbs-up-fill' : 'bi:hand-thumbs-up'}
+                                    sx={{ fontSize: ICON_SIZE, color: likeColor }}
+                                />
+                            </Button>
+                        </span>
                     </Tooltip>
-                    <Tooltip title="Bad Response">
-                        <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">
-                            <Iconify icon="bi:hand-thumbs-down" sx={{ fontSize: ICON_SIZE, color: "text.primary" }} />
-                        </Button>
+                    <Tooltip title={dislikeTooltip}>
+                        <span>
+                            <Button
+                                sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }}
+                                size="small"
+                                disabled={!_canRate || feedbackBusy}
+                                onClick={handleDislike}
+                            >
+                                <Iconify
+                                    icon={rating === -1 ? 'bi:hand-thumbs-down-fill' : 'bi:hand-thumbs-down'}
+                                    sx={{ fontSize: ICON_SIZE, color: dislikeColor }}
+                                />
+                            </Button>
+                        </span>
                     </Tooltip>
                     <Tooltip title="Share Session">
                         <Button sx={{ width: ICON_WIDTH, minWidth: ICON_MIN_WIDTH }} size="small">

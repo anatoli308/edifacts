@@ -3,6 +3,17 @@
 ## Project Overview
 EDIFACTS is a Next.js/React web app for analyzing, explaining, and managing EDIFACT data with an AI chat assistant. It combines an open-source EDIFACT core (parsing, validation, normalization) with an optional LLM-based explanation layer, supporting both a system default (Ollama) and "bring your own key" (BYOK) for OpenAI/Anthropic. The platform is SaaS-ready, modular, and designed for extensibility and enterprise use.
 
+## Prinzipien (nicht verhandelbar)
+
+**KISS** — einfachste Lösung die funktioniert. Kein Over-Engineering.
+**DRY** — Logik einmal, wiederverwenden. Aber erst beim **dritten** Vorkommen abstrahieren, nicht beim zweiten.
+**YAGNI** — keine Features auf Verdacht. Nur was jetzt gebraucht wird.
+**SoC** — eine Datei = eine Verantwortung. Routes ≠ Business-Logik ≠ Daten-Zugriff.
+**ACID** für DB — alle Schreibvorgänge in Transactions, kein Auto-Commit-Spaghetti.
+**Immutability** — neue Objekte zurückgeben, nicht mutieren.
+**Fail loud** — keine stillen Fehler. Errors werden geloggt + propagiert.
+**Latest & Greatest** — immer aktuellste stabile Versionen + neueste Best Practices der jeweiligen Lib/Framework verwenden. Bei Unsicherheit: offizielle Doku der aktuellen Major-Version konsultieren, **niemals** veraltete Patterns aus älteren Versionen kopieren.
+
 ## Important Developer Rules
 1. **Export only public APIs**: When creating new classes, only export the main class or function used by other modules. Helper functions should remain internal and private.
 2. **Private method naming**: Internal private methods should be prefixed with an underscore `_` to indicate they are not part of the public API.

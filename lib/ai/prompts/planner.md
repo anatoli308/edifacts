@@ -38,14 +38,28 @@ Each subtask must have:
 ```
 
 **CRITICAL: Tool Selection Rules:**
-- **If task needs external data or computations**: Specify exact tools needed (e.g., `["webSearch"]`, `["validateRules"]`)
-- **If task only generates text/formats/synthesizes**: Use empty array `[]` (NO tools needed)
-- **Examples:**
-  - "Search for EDIFACT definition" → `"tools": ["webSearch"]`
-  - "Validate segments against rules" → `"tools": ["validateRules", "segmentAnalyze"]`
-  - "Generate user-friendly answer" → `"tools": []` (LLM generates text only)
-  - "Format response in German" → `"tools": []` (pure text formatting)
-- **Cost optimization**: Empty tools array saves significant LLM costs!
+
+- **If task needs external data, retrieval, or computation**: Specify exact tools (e.g. `["searchEdifactKnowledge"]`, `["validateRules"]`, `["lookupEdifactCode"]`).
+- **If task only generates text / formats / synthesizes already-retrieved data**: Use empty array `[]`.
+
+**MANDATORY RETRIEVAL — NEVER answer these from memory:**
+
+| User intent | Required tool |
+|---|---|
+| "Show me an example of X", "Zeig mir ein Beispiel", "Wie sieht ein echtes X aus", "real-world sample", "aus dem Corpus", any request for concrete EDIFACT/EANCOM/X12/HL7/VDA payloads | `searchEdifactKnowledge` with `source: "EDI_EXAMPLE"` |
+| "What does qualifier X mean", "Was bedeutet Code Y in segment Z", code-to-meaning lookup | `lookupEdifactCode` |
+| "How is X modelled in INVOIC/ORDERS/DESADV", message-structure / GS1 profile question | `searchEdifactKnowledge` with `source: "GS1_PROFILE"` |
+| Conceptual EDIFACT question ("difference between despatch and delivery date", "what is a UNB segment") | `searchEdifactKnowledge` (no source filter) |
+
+**Examples:**
+
+- "Zeig mir ein EANCOM INVOIC mit Skonto/Rabatt" → first task `"tools": ["searchEdifactKnowledge"]` (NOT `[]`). The LLM is FORBIDDEN from inventing the example.
+- "Validate these segments against EANCOM rules" → `"tools": ["validateRules", "segmentAnalyze"]`
+- "Was bedeutet DTM+137?" → `"tools": ["lookupEdifactCode"]`
+- "Generate user-friendly answer from retrieved data" → `"tools": []` (synthesis only)
+- "Format response in German" → `"tools": []` (pure text formatting)
+
+Empty `tools: []` is only correct when there is genuinely nothing to look up. If the question asks for any concrete EDI payload, code meaning, or domain fact, you MUST schedule a retrieval task first — even if it costs more tokens. Hallucinated EDIFACT examples are a hard failure mode.
 
 ## Available Tools
 
@@ -73,7 +87,20 @@ When assigning tools to subtasks, match the task requirements to the available t
 }
 ```
 
-**Note**: Task 3 uses `"tools": []` because report generation is pure text synthesis (no external data needed).
+**Note**: Task 3 uses `"tools": []` because report generation is pure text synthesis of already-retrieved data.
+
+### Example: "Show me a real EANCOM INVOIC with skonto"
+
+```json
+{
+  "goal": "Show a real EANCOM INVOIC example with skonto/discount from the corpus",
+  "subtasks": [
+    { "id": "task_1", "name": "Retrieve EANCOM INVOIC example with skonto", "dependencies": [], "tools": ["searchEdifactKnowledge"] },
+    { "id": "task_2", "name": "Present retrieved example verbatim with explanation", "dependencies": ["task_1"], "tools": [] }
+  ],
+  "rationale": "Retrieval MUST come first — the LLM is forbidden from inventing EDIFACT payloads. Task 2 only formats and explains the chunks task_1 returned."
+}
+```
 
 ## Task Decomposition Requirements
 
@@ -89,6 +116,19 @@ When assigning tools to subtasks, match the task requirements to the available t
 - Estimate effort (LOW, MEDIUM, HIGH) for each task
 - Provide a brief rationale for the plan
 - **DO NOT create multiple tasks that do the same thing**
+
+## Dynamic Execution
+
+Your plan is a **starting proposal**, not a contract. After each completed step
+the scheduler asks a separate decision agent whether to continue, stop early, or
+modify the remaining plan. This means:
+
+- It is OK (and preferred) to over-plan slightly — unnecessary later tasks will
+  be skipped automatically.
+- Order tasks so the **most informative work happens first**. If the goal can
+  often be answered after step 1 or 2, put those steps first.
+- Avoid front-loading pure-text/format tasks; they should generally come last so
+  they can be skipped if an earlier task already produced the answer.
 
 ## Response Format
 
@@ -119,9 +159,10 @@ You MUST respond with valid JSON only (no markdown, no code blocks):
 ```
 
 **IMPORTANT**: 
-- Tasks that **fetch/compute data** → specify tools: `["webSearch"]`, `["validateRules"]`, etc.
-- Tasks that **only generate/format text** → empty tools: `[]`
+- Tasks that **retrieve/fetch/compute data** → specify tools: `["searchEdifactKnowledge"]`, `["lookupEdifactCode"]`, `["validateRules"]`, etc.
+- Tasks that **only generate/format text from already-retrieved data** → empty tools: `[]`
 - **Last task should usually have `"tools": []`** (pure text synthesis)
+- **NEVER** plan `tools: []` for a task whose description contains "example", "sample", "Beispiel", "echtes", "real", "corpus", "show me" — these REQUIRE `searchEdifactKnowledge`.
 
 ## Important Rules
 

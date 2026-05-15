@@ -32,11 +32,15 @@
 export * from './segmentTools.js';
 export * from './validationTools.js';
 export * from './llmAnalysisTools.js';
+export * from './codeLookupTools.js';
+export * from './ragTools.js';
 
 // Import all tools for convenient bundling
 import * as segmentTools from './segmentTools.js';
 import * as validationTools from './validationTools.js';
 import * as llmAnalysisTools from './llmAnalysisTools.js';
+import * as codeLookupTools from './codeLookupTools.js';
+import * as ragTools from './ragTools.js';
 
 /**
  * All EDIFACT tools as object (for registry registration)
@@ -55,6 +59,14 @@ export const tools = {
   detectAnomalies: validationTools.detectAnomalies,
   validateDataTypes: validationTools.validateDataTypes,
   suggestFixes: validationTools.suggestFixes,
+
+  // Lookup tools (UN/EDIFACT code lists, party identifiers, GS1 profile checks)
+  lookupEdifactCode: codeLookupTools.lookupEdifactCode,
+  lookupCompanyByVATorGLN: codeLookupTools.lookupCompanyByVATorGLN,
+  validateAgainstGS1Profile: codeLookupTools.validateAgainstGS1Profile,
+
+  // RAG / semantic knowledge search (pgvector-backed)
+  searchEdifactKnowledge: ragTools.searchEdifactKnowledge,
 };
 
 export default tools;

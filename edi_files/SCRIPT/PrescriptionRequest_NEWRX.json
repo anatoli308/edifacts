@@ -1,0 +1,179 @@
+﻿{
+  "UIH": {
+    "MESSAGEIDENTIFIER_01": {
+      "MessageType_01": "SCRIPT",
+      "MessageVersionNumber_02": "010",
+      "MessageReleaseNumber_03": "006",
+      "MessageFunction_04": "NEWRX",
+      "ControllingAgency_05": null,
+      "AssociationAssignedCode_06": null
+    },
+    "MessageReferenceNumber_02": "110072",
+    "DIALOGUEREFERENCE_03": null,
+    "STATUSOFTRANSFER_04": null,
+    "DATEANDTIME_05": {
+      "Date_01": "19971001",
+      "Time_02": "081322",
+      "TimeOffset_03": null
+    },
+    "TestIndicator_06": null
+  },
+  "REQ": null,
+  "PVD": [
+    {
+      "ProviderCoded_01": "P1",
+      "I001_02": [
+        {
+          "ReferenceNumber_01": "7701630",
+          "ReferenceQualifier_02": "D3"
+        }
+      ],
+      "I012_03": null,
+      "I007_04": null,
+      "I002_05": null,
+      "PostcodeIdentification_06": null,
+      "PartyName_07": "MAIN STREET PHARMACY",
+      "I004_08": null,
+      "I016_09": {
+        "CommunicationNumber_01": "6152205656",
+        "CodeListQualifier_02": "TE"
+      },
+      "I002_10": null
+    },
+    {
+      "ProviderCoded_01": "PC",
+      "I001_02": [
+        {
+          "ReferenceNumber_01": "6666666",
+          "ReferenceQualifier_02": "0B"
+        }
+      ],
+      "I012_03": null,
+      "I007_04": null,
+      "I002_05": {
+        "PartyName_01": "JONES",
+        "FirstName_02": "MARK",
+        "MiddleName_03": null,
+        "NameSuffix_04": null,
+        "NamePrefix_05": null
+      },
+      "PostcodeIdentification_06": null,
+      "PartyName_07": null,
+      "I004_08": null,
+      "I016_09": {
+        "CommunicationNumber_01": "6152219800",
+        "CodeListQualifier_02": "TE"
+      },
+      "I002_10": null
+    }
+  ],
+  "PTT": {
+    "IndividivualRelationship_01": null,
+    "CenturyDate_02": "19541225",
+    "I002_03": {
+      "PartyName_01": "SMITH",
+      "FirstName_02": "MARY",
+      "MiddleName_03": null,
+      "NameSuffix_04": null,
+      "NamePrefix_05": null
+    },
+    "Gender_04": "F",
+    "I001_05": [
+      {
+        "ReferenceNumber_01": "333445555",
+        "ReferenceQualifier_02": "SY"
+      }
+    ],
+    "I004_06": null,
+    "I016_07": null,
+    "S020_08": null
+  },
+  "COO": null,
+  "DRULoop": {
+    "DRU": {
+      "I013_01": {
+        "ItemDescriptionIdentification_01": "P",
+        "ItemDescription_02": "CALAN SR 240MG",
+        "ItemNumber_03": null,
+        "CodeListResponsibleAgency_04": null,
+        "CodeListQualifier_05": null,
+        "FreeText_06": "240",
+        "CodeListQualifier_07": null,
+        "ReferenceNumber_08": null,
+        "ReferenceQualifier_09": null,
+        "ItemDescription_10": null,
+        "ItemDescription_11": null,
+        "ItemDescription_12": null,
+        "SourceCodeList_13": "AA",
+        "ItemFormCode_14": "C42998",
+        "SourceCodeList_15": "AB",
+        "ItemStrengthCode_16": "C28253",
+        "DEASchedule_17": null
+      },
+      "I009_02": [
+        {
+          "QuantityQualifier_01": null,
+          "Quantity_02": "60",
+          "CodeListQualifier_03": "38",
+          "SourceCodeList_04": "AC",
+          "PotencyUnitCode_05": "C48542"
+        }
+      ],
+      "I014_03": {
+        "DosageIdentification_01": null,
+        "Dosage_02": "1 TID -TAKE ONE TABLET TWO TIMES A DAY UNTILGONE",
+        "Dosage_03": null
+      },
+      "I006_04": [
+        {
+          "DateTimePeriodQualifier_01": "85",
+          "DateTimePeriod_02": "19971001",
+          "DateTimePeriodFormatqualifier_03": "102"
+        },
+        {
+          "DateTimePeriodQualifier_01": "ZDS",
+          "DateTimePeriod_02": "30",
+          "DateTimePeriodFormatqualifier_03": "804"
+        }
+      ],
+      "ProductServiceSubstitution_05": "0",
+      "I009_06": [
+        {
+          "QuantityQualifier_01": "R",
+          "Quantity_02": "1",
+          "CodeListQualifier_03": null,
+          "SourceCodeList_04": null,
+          "PotencyUnitCode_05": null
+        }
+      ],
+      "I015_07": null,
+      "I001_08": null,
+      "FreeText_09": null,
+      "S018_10": null,
+      "DrugCoverageStatusCode_11": null,
+      "PriorAuthorizationStatus_12": null,
+      "DoNotFillProfileFlag_13": null,
+      "I006_14": null,
+      "E034_15": null,
+      "NeededNoLaterThanReason_16": null
+    },
+    "SIG": null
+  },
+  "OBS": null,
+  "UIT": {
+    "MessageReferenceNumber_01": "110072",
+    "NumberOfSegmentsInMessage_02": "6"
+  },
+  "ErrorContext": {
+    "Name": "NEWRX",
+    "ControlNumber": "110072",
+    "Edition": "010",
+    "Release": "006",
+    "Index": 2,
+    "ValidatedSegmentsCount": 0,
+    "Codes": [],
+    "Errors": [],
+    "HasErrors": false,
+    "Message": null
+  }
+}

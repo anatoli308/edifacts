@@ -8,7 +8,7 @@ import ChatMessageFromUser from '@/app/_components/chat/ChatMessageFromUser';
 import ChatMessageAgentDebug from '@/app/_components/chat/ChatMessageAgentDebug';
 import EdifactAnalysisPanel from '@/app/_components/chat/EdifactAnalysisPanel';
 
-function ChatMessage({ message }) {
+function ChatMessage({ message, sessionId }) {
     const messageAnalysis = message.domainContext?.edifact?._analysis;
 
     const renderAssistantMessage = () => {
@@ -29,6 +29,8 @@ function ChatMessage({ message }) {
                 {/* Main Response */}
                 <ChatMessageContent
                     content={content}
+                    sessionId={sessionId}
+                    messageId={message.id || content.id}
                 />
             </Box>
         );

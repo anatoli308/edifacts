@@ -1,45 +1,36 @@
-// app/api/provider/addProvider/route.js
-import { getAuthenticatedUser, createGuestUser } from '@/lib/auth';
+// app/api/provider/removeProvider/route.js
 import { NextResponse } from 'next/server';
-import ApiKey from '@/app/models/shared/ApiKey';
+import { getAuthenticatedUser } from '@/lib/auth';
+import { apiKeyRepo } from '@/lib/db/repositories';
 
 export async function POST(request) {
     try {
-        // Get authenticated user
         const userId = request.headers.get('x-user-id');
         const token = request.headers.get('x-auth-token');
-        let user = await getAuthenticatedUser(userId, token);
+        const user = await getAuthenticatedUser(userId, token);
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
         const { providerId } = await request.json();
-        if (!user) {
-            user = await createGuestUser(backgroundMode);
+        if (!providerId) {
+            return NextResponse.json({ error: 'providerId is required' }, { status: 400 });
         }
 
-        // WICHTIG: Reihenfolge der Saves (ohne Transaction)
-        // 1. User (falls neu)
-        const isNewUser = user.isNew;
-        if (isNewUser) {
-            await user.save();
-            await user.generateAuthToken('web');
+        const existing = await apiKeyRepo.findOwnedByUser(providerId, user.id);
+        if (!existing) {
+            return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
         }
-
-        const apiKeyToRemove = await ApiKey.findOne({ _id: providerId, ownerId: user._id });
-        if (apiKeyToRemove) {
-            await apiKeyToRemove.deleteOne();
-        }
+        await apiKeyRepo.remove(existing.id);
 
         return NextResponse.json({
             success: true,
-            apiKeyId: apiKeyToRemove._id,
+            apiKeyId: existing.id,
             message: 'Provider removed successfully',
-            token: isNewUser ? user.tokens[user.tokens.length - 1].token : null
         });
 
     } catch (error) {
         console.error('Remove provider error:', error);
-        return NextResponse.json(
-            { error: 'Server error removing provider' },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: 'Server error removing provider' }, { status: 500 });
     }
 }

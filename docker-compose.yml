@@ -9,17 +9,31 @@ services:
     volumes:
       - ./:/app
       - ./node_modules:/app/node_modules
-    command: sh -c "npm install ; npm run dev"
+    command: sh -c "npm install ; npx prisma generate ; npx prisma migrate deploy ; npm run dev"
     depends_on:
-      - mongo
-      - ollama
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
 
-  mongo:
-    image: mongo:latest
+  postgres:
+    # pgvector/pgvector:pg16 is the official pgvector-bundled Postgres 16 image.
+    # Drop-in replacement for postgres:16 — same data directory layout, adds the
+    # `vector` extension required by the RAG knowledge base (lib/ai/rag).
+    image: pgvector/pgvector:pg16
     ports:
-      - "27017:27017"
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: edifacts
+      POSTGRES_PASSWORD: edifacts
+      POSTGRES_DB: edifacts
     volumes:
-      - ./mongo_data:/data/db
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edifacts -d edifacts"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ollama:
     image: ollama/ollama:latest
@@ -36,3 +50,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+volumes:
+  postgres_data:
+

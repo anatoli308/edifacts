@@ -320,6 +320,10 @@ export function useAgentStreaming(sessionId, onMessageUpdate, onAnalysisReceived
                     currentMessageRef.current.content.text = data.result.assistantMessage;
                 }
                 currentMessageRef.current.content.status = 'completed';
+                // DB ids issued by the server — needed for /feedback wiring.
+                if (data.messageId) {
+                    currentMessageRef.current.content.id = data.messageId;
+                }
                 if (onMessageUpdate) {
                     onMessageUpdate(currentMessageRef.current);
                 }

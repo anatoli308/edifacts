@@ -1,0 +1,4 @@
+# Generated eval reports land here. Keep this folder under version control,
+# but ignore the actual JSON files so individual runs don't pollute diffs.
+*.json
+!.gitkeep

@@ -2,21 +2,13 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "@/app/*": [
-        "app/*"
-      ],
-      "@/app/models/*": [
-        "models/*"
-      ],
-      "@/app/theme/*": [
-        "theme/*"
-      ],
-      "@/app/lib/*": [
-        "lib/*"
-      ],
-      "@/lib/auth": [
-        "lib/auth"
-      ]
+      "@/*": ["./*"],
+      "@/app/*": ["app/*"],
+      "@/app/theme/*": ["theme/*"],
+      "@/app/lib/*": ["lib/*"],
+      "@/lib/*": ["lib/*"],
+      "@/theme/*": ["theme/*"],
+      "@/models/*": ["models/*"]
     }
   }
 }

@@ -1,0 +1,147 @@
+[
+  {
+    "id": "memory-roundtrip-preference-recall",
+    "type": "memory",
+    "description": "Remember a user preference and recall it via semantic query",
+    "steps": [
+      { "op": "forget",   "args": { "userId": "eval-user-mem-1" } },
+      { "op": "remember", "args": {
+          "userId": "eval-user-mem-1",
+          "title": "Currency preference",
+          "content": "User prefers all monetary amounts displayed in EUR currency when working with invoices",
+          "category": "PREFERENCE"
+      }},
+      { "op": "recall", "args": {
+          "userId": "eval-user-mem-1",
+          "query": "Which currency does the user want for invoices?",
+          "topK": 3
+      }}
+    ],
+    "expect": {
+      "contains": {
+        "final.success": true,
+        "final.userId": "eval-user-mem-1",
+        "final.longTerm.0.category": "PREFERENCE"
+      },
+      "pathContains": {
+        "final.longTerm.0.content": "EUR"
+      }
+    }
+  },
+  {
+    "id": "memory-scope-isolation-between-users",
+    "type": "memory",
+    "description": "Memory written for user A must not leak to user B",
+    "steps": [
+      { "op": "forget",   "args": { "userId": "eval-user-mem-A" } },
+      { "op": "forget",   "args": { "userId": "eval-user-mem-B" } },
+      { "op": "remember", "args": {
+          "userId": "eval-user-mem-A",
+          "title": "Secret fact",
+          "content": "User A works exclusively with supplier 12345 on INVOIC documents",
+          "category": "FACT"
+      }},
+      { "op": "recall", "args": {
+          "userId": "eval-user-mem-B",
+          "query": "supplier 12345 INVOIC",
+          "topK": 5
+      }}
+    ],
+    "expect": {
+      "contains": {
+        "final.success": true,
+        "final.userId": "eval-user-mem-B",
+        "final.longTerm": []
+      }
+    }
+  },
+  {
+    "id": "memory-gdpr-forget-purges-user-data",
+    "type": "memory",
+    "description": "forget(userId) removes all chunks and subsequent recall returns nothing",
+    "steps": [
+      { "op": "forget",   "args": { "userId": "eval-user-mem-gdpr" } },
+      { "op": "remember", "args": {
+          "userId": "eval-user-mem-gdpr",
+          "title": "Disposable note",
+          "content": "Temporary note about delivery dates that must be erasable",
+          "category": "CONTEXT"
+      }},
+      { "op": "forget",   "args": { "userId": "eval-user-mem-gdpr" } },
+      { "op": "recall", "args": {
+          "userId": "eval-user-mem-gdpr",
+          "query": "delivery dates note",
+          "topK": 3
+      }}
+    ],
+    "expect": {
+      "contains": {
+        "final.success": true,
+        "final.longTerm": []
+      }
+    }
+  },
+  {
+    "id": "memory-recall-missing-userid-fails",
+    "type": "memory",
+    "description": "recall without userId must fail with explicit error",
+    "steps": [
+      { "op": "recall", "args": { "query": "anything" } }
+    ],
+    "expect": {
+      "contains": { "final.success": false },
+      "pathContains": { "final.error": "userId is required" }
+    }
+  },
+  {
+    "id": "memory-remember-rejects-invalid-category",
+    "type": "memory",
+    "description": "remember with unknown category is rejected",
+    "steps": [
+      { "op": "remember", "args": {
+          "userId": "eval-user-mem-x",
+          "title": "x",
+          "content": "x",
+          "category": "BOGUS"
+      }}
+    ],
+    "expect": {
+      "contains": { "final.success": false },
+      "pathContains": { "final.error": "invalid category" }
+    }
+  },
+  {
+    "id": "memory-idempotent-remember-same-content",
+    "type": "memory",
+    "description": "Remembering identical content twice produces one chunk (stable hash upsert)",
+    "steps": [
+      { "op": "forget",   "args": { "userId": "eval-user-mem-idem" } },
+      { "op": "remember", "args": {
+          "userId": "eval-user-mem-idem",
+          "title": "Repeat fact",
+          "content": "User accepts only DESADV messages with embedded RFF qualifier ON",
+          "category": "FACT"
+      }},
+      { "op": "remember", "args": {
+          "userId": "eval-user-mem-idem",
+          "title": "Repeat fact",
+          "content": "User accepts only DESADV messages with embedded RFF qualifier ON",
+          "category": "FACT"
+      }},
+      { "op": "recall", "args": {
+          "userId": "eval-user-mem-idem",
+          "query": "DESADV RFF qualifier",
+          "topK": 5
+      }}
+    ],
+    "expect": {
+      "contains": {
+        "final.success": true,
+        "final.longTerm.0.category": "FACT"
+      },
+      "pathContains": {
+        "final.longTerm.0.content": "DESADV"
+      }
+    }
+  }
+]

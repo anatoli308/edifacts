@@ -1,0 +1,120 @@
+[
+  {
+    "id": "lookup-dtm-137",
+    "type": "tool",
+    "description": "DTM 137 = document/message date",
+    "tool": "lookupEdifactCode",
+    "args": { "code": "137", "codeList": "DTM" },
+    "expect": {
+      "success": true,
+      "contains": { "found": true, "code": "137" },
+      "pathContains": { "matches.0.meaning": "date" }
+    }
+  },
+  {
+    "id": "lookup-dtm-35-delivery",
+    "type": "tool",
+    "description": "DTM 35 = delivery date/time, actual",
+    "tool": "lookupEdifactCode",
+    "args": { "code": "35", "codeList": "DTM" },
+    "expect": {
+      "success": true,
+      "contains": { "found": true },
+      "pathContains": { "matches.0.meaning": "delivery" }
+    }
+  },
+  {
+    "id": "lookup-rff-on-order",
+    "type": "tool",
+    "description": "RFF ON = order number",
+    "tool": "lookupEdifactCode",
+    "args": { "code": "ON", "codeList": "RFF" },
+    "expect": {
+      "success": true,
+      "contains": { "found": true },
+      "pathContains": { "matches.0.meaning": "order" }
+    }
+  },
+  {
+    "id": "lookup-nad-by-buyer",
+    "type": "tool",
+    "description": "NAD BY = buyer party",
+    "tool": "lookupEdifactCode",
+    "args": { "code": "BY", "codeList": "NAD" },
+    "expect": {
+      "success": true,
+      "contains": { "found": true },
+      "pathContains": { "matches.0.meaning": "buyer" }
+    }
+  },
+  {
+    "id": "lookup-nad-su-supplier",
+    "type": "tool",
+    "description": "NAD SU = supplier party",
+    "tool": "lookupEdifactCode",
+    "args": { "code": "SU", "codeList": "NAD" },
+    "expect": {
+      "success": true,
+      "contains": { "found": true },
+      "pathContains": { "matches.0.meaning": "supplier" }
+    }
+  },
+  {
+    "id": "lookup-bgm-380-invoice",
+    "type": "tool",
+    "description": "BGM 380 = commercial invoice",
+    "tool": "lookupEdifactCode",
+    "args": { "code": "380", "codeList": "BGM" },
+    "expect": {
+      "success": true,
+      "contains": { "found": true },
+      "pathContains": { "matches.0.meaning": "invoice" }
+    }
+  },
+  {
+    "id": "lookup-currency-eur",
+    "type": "tool",
+    "description": "ISO 4217 EUR = Euro",
+    "tool": "lookupEdifactCode",
+    "args": { "code": "EUR", "codeList": "CURRENCY" },
+    "expect": {
+      "success": true,
+      "contains": { "found": true },
+      "pathContains": { "matches.0.meaning": "euro" }
+    }
+  },
+  {
+    "id": "lookup-country-de",
+    "type": "tool",
+    "description": "ISO 3166 DE = Germany",
+    "tool": "lookupEdifactCode",
+    "args": { "code": "DE", "codeList": "COUNTRY" },
+    "expect": {
+      "success": true,
+      "contains": { "found": true },
+      "pathContains": { "matches.0.meaning": "germany" }
+    }
+  },
+  {
+    "id": "lookup-unknown-code",
+    "type": "tool",
+    "description": "Unknown code should return success=true, found=false",
+    "tool": "lookupEdifactCode",
+    "args": { "code": "ZZZZ999", "codeList": "AUTO" },
+    "expect": {
+      "success": true,
+      "contains": { "found": false }
+    }
+  },
+  {
+    "id": "lookup-missing-arg",
+    "type": "tool",
+    "description": "Missing code argument should fail gracefully",
+    "tool": "lookupEdifactCode",
+    "args": {},
+    "expect": {
+      "success": false,
+      "shape": ["success", "error"]
+    }
+  }
+]
